@@ -1,38 +1,38 @@
 #include "CSCIx229.h"
 #include <math.h>
 
-// =======================================================
-//                  INTERNAL STATE
-// =======================================================
 static int lastMouseX = 0;
 static int lastMouseY = 0;
 
-// Compute intersection of the mouse ray with y = 0 plane
-static int rayPlaneIntersection(float ox, float oy, float oz,
-                                float dx, float dy, float dz,
-                                float* hitX, float* hitZ)
-{
-    if (fabs(dy) < 1e-6) return 0; // parallel to floor
-    float t = -oy / dy;
-    if (t < 0) return 0;
-    *hitX = ox + t * dx;
-    *hitZ = oz + t * dz;
-    return 1;
-}
+// =======================================================
+//        ROOM BOUNDARIES (MATCHES SCENE.C DIMENSIONS)
+// =======================================================
+static const float ROOM_MIN_X = -18.0f;
+static const float ROOM_MAX_X = 18.0f;
+static const float ROOM_MIN_Z = -28.0f;
+static const float ROOM_MAX_Z = 28.0f;
+
+// Stage boundaries (from scene_display)
+static const float STAGE_MIN_X = -13.0f;
+static const float STAGE_MAX_X =  13.0f;
+static const float STAGE_FRONT_Z = -15.0f;  // front edge
+static const float STAGE_BACK_Z  = -30.0f;  // back wall
 
 // =======================================================
-//             RAY–AABB INTERSECTION CHECK
+//           RAY–AABB INTERSECTION CHECK (WORLD SPACE)
 // =======================================================
-static int rayIntersectsBox(float ox, float oy, float oz,
-                            float dx, float dy, float dz,
-                            const float bbox[6],
-                            float* tmin_out)
+static int rayIntersectsBoxWorld(float ox, float oy, float oz,
+                                 float dx, float dy, float dz,
+                                 const SceneObject* obj,
+                                 float* tmin_out)
 {
     float tmin = -1e9f, tmax = 1e9f;
+
+    // Offset bbox by object world position
     for (int i = 0; i < 3; i++)
     {
-        float minB = bbox[i * 2];
-        float maxB = bbox[i * 2 + 1];
+        float minB = obj->bbox[i * 2] + (i == 0 ? obj->x : (i == 1 ? obj->y : obj->z));
+        float maxB = obj->bbox[i * 2 + 1] + (i == 0 ? obj->x : (i == 1 ? obj->y : obj->z));
         float o = (i == 0 ? ox : (i == 1 ? oy : oz));
         float d = (i == 0 ? dx : (i == 1 ? dy : dz));
 
@@ -80,7 +80,7 @@ static void getRayFromMouse(int x, int y, float* ox, float* oy, float* oz,
 }
 
 // =======================================================
-//                 OBJECT PICKING
+//                 OBJECT PICKING (WORLD)
 // =======================================================
 SceneObject* pickObject3D(int x, int y)
 {
@@ -95,13 +95,8 @@ SceneObject* pickObject3D(int x, int y)
         SceneObject* obj = &objects[i];
         if (!obj->movable) continue;
 
-        // Translate ray into object’s local coordinates
-        float lx = ox - obj->x;
-        float ly = oy - obj->y;
-        float lz = oz - obj->z;
-
         float t;
-        if (rayIntersectsBox(lx, ly, lz, dx, dy, dz, obj->bbox, &t))
+        if (rayIntersectsBoxWorld(ox, oy, oz, dx, dy, dz, obj, &t))
         {
             if (t < closestT)
             {
@@ -150,6 +145,18 @@ void mouse_button(int button, int state, int x, int y)
 // =======================================================
 //          HANDLE MOUSE MOVEMENT (DRAGGING)
 // =======================================================
+static int rayPlaneIntersection(float ox, float oy, float oz,
+                                float dx, float dy, float dz,
+                                float* hitX, float* hitZ)
+{
+    if (fabs(dy) < 1e-6) return 0;
+    float t = -oy / dy;
+    if (t < 0) return 0;
+    *hitX = ox + t * dx;
+    *hitZ = oz + t * dz;
+    return 1;
+}
+
 void mouse_motion(int x, int y)
 {
     if (dragging && selectedObject)
@@ -160,6 +167,29 @@ void mouse_motion(int x, int y)
         float hitX, hitZ;
         if (rayPlaneIntersection(ox, oy, oz, dx, dy, dz, &hitX, &hitZ))
         {
+            // Clamp to room boundaries
+            if (hitX < ROOM_MIN_X) hitX = ROOM_MIN_X;
+            if (hitX > ROOM_MAX_X) hitX = ROOM_MAX_X;
+            if (hitZ < ROOM_MIN_Z) hitZ = ROOM_MIN_Z;
+            if (hitZ > ROOM_MAX_Z) hitZ = ROOM_MAX_Z;
+
+            // === Stage collision logic ===
+            // Prevent entry from front
+            if (hitZ < STAGE_FRONT_Z && hitX > STAGE_MIN_X && hitX < STAGE_MAX_X)
+                hitZ = STAGE_FRONT_Z;
+
+            // Prevent entry from left side
+            if (hitX > STAGE_MIN_X && hitX < STAGE_MAX_X &&
+                hitZ < STAGE_BACK_Z && hitZ > STAGE_FRONT_Z &&
+                ox < STAGE_MIN_X)
+                hitX = STAGE_MIN_X;
+
+            // Prevent entry from right side
+            if (hitX > STAGE_MIN_X && hitX < STAGE_MAX_X &&
+                hitZ < STAGE_BACK_Z && hitZ > STAGE_FRONT_Z &&
+                ox > STAGE_MAX_X)
+                hitX = STAGE_MAX_X;
+
             selectedObject->x = hitX;
             selectedObject->z = hitZ;
         }
@@ -169,4 +199,3 @@ void mouse_motion(int x, int y)
     lastMouseY = y;
     glutPostRedisplay();
 }
-
