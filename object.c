@@ -660,3 +660,62 @@ void drawBanquetChair(float x, float z)
 
     glPopMatrix();
 }
+
+// ============================================================
+//  Object Collision Detection Helpers
+// ============================================================
+#include <math.h>
+#include <stdbool.h>
+#include "CSCIx229.h"
+
+// External scene definitions (provided elsewhere)
+extern SceneObject objects[];
+extern int objectCount;
+
+// ------------------------------------------------------------
+// Compute a reasonable radius from the object's bounding box
+// ------------------------------------------------------------
+static float computeRadius(SceneObject* obj)
+{
+    float width  = obj->bbox[1] - obj->bbox[0];
+    float depth  = obj->bbox[5] - obj->bbox[4];
+    float radius = 0.5f * fmaxf(width, depth);
+    return radius;
+}
+
+// ------------------------------------------------------------
+// Check if movingObj placed at (newX, newZ) collides with others
+// ------------------------------------------------------------
+#include <math.h>
+#include <stdbool.h>
+#include "CSCIx229.h"
+
+extern SceneObject objects[];
+extern int objectCount;
+
+bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ)
+{
+    float minX = newX + movingObj->bbox[0];
+    float maxX = newX + movingObj->bbox[1];
+    float minZ = newZ + movingObj->bbox[4];
+    float maxZ = newZ + movingObj->bbox[5];
+
+    for (int i = 0; i < objectCount; i++)
+    {
+        SceneObject* other = &objects[i];
+        if (other == movingObj || !other->solid) continue;
+
+        float oMinX = other->x + other->bbox[0];
+        float oMaxX = other->x + other->bbox[1];
+        float oMinZ = other->z + other->bbox[4];
+        float oMaxZ = other->z + other->bbox[5];
+
+        if (maxX > oMinX && minX < oMaxX &&
+            maxZ > oMinZ && minZ < oMaxZ)
+        {
+            return true; // Collision detected
+        }
+    }
+
+    return false; // No overlap
+}

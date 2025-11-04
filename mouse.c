@@ -1,5 +1,8 @@
 #include "CSCIx229.h"
 #include <math.h>
+#include <stdbool.h>
+
+extern bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ);
 
 static int lastMouseX = 0;
 static int lastMouseY = 0;
@@ -28,7 +31,6 @@ static int rayIntersectsBoxWorld(float ox, float oy, float oz,
 {
     float tmin = -1e9f, tmax = 1e9f;
 
-    // Offset bbox by object world position
     for (int i = 0; i < 3; i++)
     {
         float minB = obj->bbox[i * 2] + (i == 0 ? obj->x : (i == 1 ? obj->y : obj->z));
@@ -50,6 +52,7 @@ static int rayIntersectsBoxWorld(float ox, float oy, float oz,
             if (tmin > tmax || tmax < 0) return 0;
         }
     }
+
     if (tmin_out) *tmin_out = tmin;
     return 1;
 }
@@ -167,31 +170,37 @@ void mouse_motion(int x, int y)
         float hitX, hitZ;
         if (rayPlaneIntersection(ox, oy, oz, dx, dy, dz, &hitX, &hitZ))
         {
-            // Clamp to room boundaries
+            // ===== Clamp to room boundaries =====
             if (hitX < ROOM_MIN_X) hitX = ROOM_MIN_X;
             if (hitX > ROOM_MAX_X) hitX = ROOM_MAX_X;
             if (hitZ < ROOM_MIN_Z) hitZ = ROOM_MIN_Z;
             if (hitZ > ROOM_MAX_Z) hitZ = ROOM_MAX_Z;
 
-            // === Stage collision logic ===
+            // ===== Stage boundary logic =====
             // Prevent entry from front
             if (hitZ < STAGE_FRONT_Z && hitX > STAGE_MIN_X && hitX < STAGE_MAX_X)
                 hitZ = STAGE_FRONT_Z;
 
-            // Prevent entry from left side
-            if (hitX > STAGE_MIN_X && hitX < STAGE_MAX_X &&
-                hitZ < STAGE_BACK_Z && hitZ > STAGE_FRONT_Z &&
-                ox < STAGE_MIN_X)
-                hitX = STAGE_MIN_X;
+            // Prevent entry from sides while allowing lateral movement
+            if (hitZ < STAGE_FRONT_Z + 1.0f && hitZ > STAGE_BACK_Z - 1.0f)
+            {
+                if (hitX > STAGE_MIN_X - 0.5f && hitX < STAGE_MIN_X + 0.5f)
+                    hitX = STAGE_MIN_X - 0.5f;
+                if (hitX > STAGE_MAX_X - 0.5f && hitX < STAGE_MAX_X + 0.5f)
+                    hitX = STAGE_MAX_X + 0.5f;
+            }
 
-            // Prevent entry from right side
-            if (hitX > STAGE_MIN_X && hitX < STAGE_MAX_X &&
-                hitZ < STAGE_BACK_Z && hitZ > STAGE_FRONT_Z &&
-                ox > STAGE_MAX_X)
-                hitX = STAGE_MAX_X;
-
-            selectedObject->x = hitX;
-            selectedObject->z = hitZ;
+            // ===== Object–object collision logic =====
+            if (!collidesWithAnyObject(selectedObject, hitX, hitZ))
+            {
+                selectedObject->x = hitX;
+                selectedObject->z = hitZ;
+            }
+            else
+            {
+                // Optional visual/audio feedback
+                // printf("Blocked by another object\n");
+            }
         }
     }
 

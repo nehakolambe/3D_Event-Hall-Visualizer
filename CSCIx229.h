@@ -63,6 +63,8 @@ void Fatal(const char* format , ...);
 unsigned int LoadTexBMP(const char* file);
 void ErrCheck(const char* where);
 
+#include <stdbool.h>   // for bool, true, false
+
 // =======================================================
 //                  PROJECT INTERFACES
 // =======================================================
@@ -86,6 +88,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 void controls_key(unsigned char ch, int x, int y);
 void controls_special(int key, int x, int y);
 
+
 // =======================================================
 //                  DEBUG / CAMERA GLOBALS
 // =======================================================
@@ -106,7 +109,10 @@ typedef struct {
     float bbox[6];                // (xmin, xmax, ymin, ymax, zmin, zmax)
     void (*drawFunc)(float, float);
     int movable;                  // 1 = draggable
+    bool solid;
 } SceneObject;
+
+bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ);
 
 #define MAX_OBJECTS 100
 extern SceneObject objects[MAX_OBJECTS];
