@@ -20,6 +20,8 @@ extern SceneObject* selectedObject;
 extern int debugMode;
 extern int debugObjectIndex;
 
+void rotateObject(SceneObject* obj, float angle);
+
 // =======================================================
 //                 KEYBOARD HANDLER
 // =======================================================
@@ -96,6 +98,17 @@ void controls_key(unsigned char key, int x, int y)
     // --- Mode toggle ---
     case 'm': case 'M':
         mode = (mode + 1) % 2; // 0 ↔ 1
+        break;
+
+    // --- Object rotation ---
+    case 'r':
+        if (selectedObject)
+            rotateObject(selectedObject, 15.0f);  // clockwise
+        break;
+
+    case 'R':
+        if (selectedObject)
+            rotateObject(selectedObject, -15.0f); // counter-clockwise
         break;
 
     // --- Reset ---

@@ -88,7 +88,6 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 void controls_key(unsigned char ch, int x, int y);
 void controls_special(int key, int x, int y);
 
-
 // =======================================================
 //                  DEBUG / CAMERA GLOBALS
 // =======================================================
@@ -134,6 +133,14 @@ void screenToWorld(int x, int y, float* worldX, float* worldZ);
 
 // --- Object picking helper ---
 SceneObject* pickObject(float worldX, float worldZ);
+
+// =======================================================
+//              🔄  NEW INTERACTION UTILITIES
+// =======================================================
+
+// Allow object rotation and deselection
+void rotateObject(SceneObject* obj, float angle);
+void deselectObject();
 
 #ifdef __cplusplus
 }

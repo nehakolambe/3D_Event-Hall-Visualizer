@@ -124,26 +124,43 @@ void mouse_button(int button, int state, int x, int y)
             lastMouseX = x;
             lastMouseY = y;
 
-            if (!dragging)
+            // Try picking object under cursor
+            SceneObject* picked = pickObject3D(x, y);
+
+            if (picked)
             {
-                selectedObject = pickObject3D(x, y);
-                if (selectedObject)
+                // If clicked same object again, start dragging it
+                if (selectedObject == picked)
                 {
+                    dragging = 1;
+                }
+                else
+                {
+                    // Select new object
+                    selectedObject = picked;
                     dragging = 1;
                     printf("Selected object: %s\n", selectedObject->name);
                 }
             }
             else
             {
-                dragging = 0;
+                // Clicked empty space -> deselect
                 selectedObject = NULL;
-                printf("Object released.\n");
+                dragging = 0;
+                printf("Deselected all objects.\n");
             }
+        }
+        else if (state == GLUT_UP)
+        {
+            // Stop dragging, but keep selection
+            dragging = 0;
+            printf("Object placed.\n");
         }
     }
 
     glutPostRedisplay();
 }
+
 
 // =======================================================
 //          HANDLE MOUSE MOVEMENT (DRAGGING)

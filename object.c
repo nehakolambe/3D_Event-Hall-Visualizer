@@ -719,3 +719,18 @@ bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ)
 
     return false; // No overlap
 }
+
+// ============================================================
+//  Object Rotation Helper (updated to match header + struct)
+// ============================================================
+void rotateObject(SceneObject* obj, float angle)
+{
+    if (!obj) return;
+
+    // Adjust rotation (in degrees)
+    obj->rotation += angle;
+
+    // Wrap within 0–360
+    if (obj->rotation >= 360.0f) obj->rotation -= 360.0f;
+    if (obj->rotation < 0.0f)    obj->rotation += 360.0f;
+}
