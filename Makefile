@@ -28,6 +28,7 @@ main.o: main.c CSCIx229.h
 scene.o: scene.c CSCIx229.h
 object.o: object.c CSCIx229.h
 controls.o: controls.c CSCIx229.h
+mouse.o: mouse.c CSCIx229.h
 errcheck.o: errcheck.c CSCIx229.h
 print.o: print.c CSCIx229.h
 
@@ -42,7 +43,7 @@ CSCIx229.a: errcheck.o print.o
 	g++ -c $(CFLG) $<
 
 #  Link final executable
-$(EXE): main.o scene.o object.o controls.o CSCIx229.a print.o
+$(EXE): main.o scene.o object.o controls.o CSCIx229.a print.o mouse.o
 	gcc $(CFLG) -o $@ $^ $(LIBS)
 
 #  Clean

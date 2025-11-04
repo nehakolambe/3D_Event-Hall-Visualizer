@@ -18,11 +18,13 @@ double ph = 0;
 int mode = 0;
 
 // --- Debug toggle ---
-int debugMode = 0;        // 0 = scene, 1 = single-object view
+int debugMode = 0;         // 0 = scene, 1 = single-object view
 int debugObjectIndex = -1; // -1 = scene, 0..N = which object
-int totalObjects = 5;     // (table, cocktail table, chair, lamp, door, screen)
+int totalObjects = 6;      // (table, cocktail table, chair, lamp, door, screen)
 
-// --- Projection setup ---
+// =======================================================
+//                 PROJECTION SETUP
+// =======================================================
 void Project(void)
 {
     glMatrixMode(GL_PROJECTION);
@@ -31,7 +33,9 @@ void Project(void)
     glMatrixMode(GL_MODELVIEW);
 }
 
-// --- Display ---
+// =======================================================
+//                 DISPLAY
+// =======================================================
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -67,6 +71,7 @@ void display(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // --- Render entire scene ---
     scene_display();
 
     // === HUD overlay using Print() ===
@@ -97,7 +102,9 @@ void display(void)
     glutSwapBuffers();
 }
 
-// --- Reshape ---
+// =======================================================
+//                 RESHAPE
+// =======================================================
 void reshape(int width, int height)
 {
     asp = (height > 0) ? (double)width / height : 1;
@@ -105,7 +112,24 @@ void reshape(int width, int height)
     Project();
 }
 
-// --- Main ---
+// =======================================================
+//                 PLACEHOLDERS FOR FUTURE MOUSE INPUT
+// =======================================================
+void mouse_click(int button, int state, int x, int y)
+{
+    // TODO: Handle object selection and dragging
+    (void)button; (void)state; (void)x; (void)y;
+}
+
+void mouse_drag(int x, int y)
+{
+    // TODO: Handle dragging for selected objects
+    (void)x; (void)y;
+}
+
+// =======================================================
+//                 MAIN
+// =======================================================
 int main(int argc, char* argv[])
 {
     glutInit(&argc, argv);
@@ -120,10 +144,17 @@ int main(int argc, char* argv[])
     glEnable(GL_NORMALIZE);
     glDisable(GL_CULL_FACE);
 
+    // === Initialize scene and objects ===
+    scene_init();
+
+    // === Register GLUT callbacks ===
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(controls_key);
     glutSpecialFunc(controls_special);
+    glutMouseFunc(mouse_button);
+    glutMotionFunc(mouse_motion);
+
     glutMainLoop();
     return 0;
 }

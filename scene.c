@@ -1,7 +1,19 @@
 #include "CSCIx229.h"
 #include <math.h>
 
-// Utility to draw colored quad
+// =======================================================
+//                GLOBALS FOR OBJECT SYSTEM
+// =======================================================
+SceneObject objects[MAX_OBJECTS];
+int objectCount = 0;
+SceneObject* selectedObject = NULL;
+int dragging = 0;
+
+// =======================================================
+//                INTERNAL UTILITIES
+// =======================================================
+
+// Utility to draw a colored quad
 static void drawQuad(float x1, float y1, float z1,
                      float x2, float y2, float z2,
                      float x3, float y3, float z3,
@@ -17,6 +29,99 @@ static void drawQuad(float x1, float y1, float z1,
     glEnd();
 }
 
+// Draw a wireframe bounding box for debugging
+void drawBBox(SceneObject* o)
+{
+    glPushMatrix();
+    glTranslatef(o->x, o->y, o->z);
+    glColor3f(1, 0, 0);
+    glBegin(GL_LINES);
+
+    float xmin = o->bbox[0], xmax = o->bbox[1];
+    float ymin = o->bbox[2], ymax = o->bbox[3];
+    float zmin = o->bbox[4], zmax = o->bbox[5];
+
+    // bottom square
+    glVertex3f(xmin, ymin, zmin); glVertex3f(xmax, ymin, zmin);
+    glVertex3f(xmax, ymin, zmin); glVertex3f(xmax, ymin, zmax);
+    glVertex3f(xmax, ymin, zmax); glVertex3f(xmin, ymin, zmax);
+    glVertex3f(xmin, ymin, zmax); glVertex3f(xmin, ymin, zmin);
+
+    // top square
+    glVertex3f(xmin, ymax, zmin); glVertex3f(xmax, ymax, zmin);
+    glVertex3f(xmax, ymax, zmin); glVertex3f(xmax, ymax, zmax);
+    glVertex3f(xmax, ymax, zmax); glVertex3f(xmin, ymax, zmax);
+    glVertex3f(xmin, ymax, zmax); glVertex3f(xmin, ymax, zmin);
+
+    // vertical lines
+    glVertex3f(xmin, ymin, zmin); glVertex3f(xmin, ymax, zmin);
+    glVertex3f(xmax, ymin, zmin); glVertex3f(xmax, ymax, zmin);
+    glVertex3f(xmax, ymin, zmax); glVertex3f(xmax, ymax, zmax);
+    glVertex3f(xmin, ymin, zmax); glVertex3f(xmin, ymax, zmax);
+
+    glEnd();
+    glPopMatrix();
+}
+
+// Adds a new object to the scene
+void addObject(const char* name, float x, float z, void (*drawFunc)(float, float), int movable)
+{
+    if (objectCount >= MAX_OBJECTS) return;
+
+    SceneObject* obj = &objects[objectCount];
+    obj->id = objectCount;
+    strncpy(obj->name, name, sizeof(obj->name) - 1);
+    obj->x = x;
+    obj->y = 0;
+    obj->z = z;
+    obj->scale = 1.0;
+    obj->rotation = 0;
+    obj->drawFunc = drawFunc;
+    obj->movable = movable;
+
+    for (int i = 0; i < 6; i++) obj->bbox[i] = 0;
+    objectCount++;
+}
+
+// =======================================================
+//                SCENE INITIALIZATION
+// =======================================================
+void scene_init()
+{
+    objectCount = 0;
+
+    // Chairs, tables, lamps — movable
+    addObject("Table",          0,   0,  drawTable,         1);
+    addObject("CocktailTable",  6,   0,  drawCocktailTable, 1);
+    addObject("BanquetChair",  -4,   0,  drawBanquetChair,  1);
+    addObject("Lamp",          -6,   0,  drawLamp,          1);
+
+    // Door — non-movable
+    addObject("Door",           0,  29.9, (void (*)(float,float))drawDoor, 0);
+
+    // Curved screen — fixed
+    addObject("CurvedScreen",   0, -30, (void (*)(float,float))drawCurvedScreen, 0);
+
+    // Assign bounding boxes (approximate but generous)
+    for (int i = 0; i < objectCount; i++)
+    {
+        SceneObject* o = &objects[i];
+        if (strcmp(o->name, "Table") == 0)
+            memcpy(o->bbox, (float[]){-3,3, 0,3, -3,3}, sizeof(o->bbox));
+        else if (strcmp(o->name, "CocktailTable") == 0)
+            memcpy(o->bbox, (float[]){-2,2, 0,4, -2,2}, sizeof(o->bbox));
+        else if (strcmp(o->name, "BanquetChair") == 0)
+            memcpy(o->bbox, (float[]){-1.5,1.5, 0,3, -1.5,1.5}, sizeof(o->bbox));
+        else if (strcmp(o->name, "Lamp") == 0)
+            memcpy(o->bbox, (float[]){-1,1, 0,6, -1,1}, sizeof(o->bbox));
+        else
+            memcpy(o->bbox, (float[]){-2,2, 0,3, -2,2}, sizeof(o->bbox));
+    }
+}
+
+// =======================================================
+//                SCENE RENDERING
+// =======================================================
 void scene_display()
 {
     glPushMatrix();
@@ -59,34 +164,27 @@ void scene_display()
                  stageWidth, stageTop, stageBack,  stageWidth, stageTop, stageFront,
                  0.32, 0.16, 0.08);
 
-        // ==== Stair ====
-        float stairWidth = 8.0, stairHeight = 1.0, stairDepth = 1.5;
-        float stepBottom = 0.0, stepTop = stairHeight;
-        float stepBackZ = stageFront, stepFrontZ = stageFront + stairDepth;
+        // ==== Draw all scene objects generically ====
+        for (int i = 0; i < objectCount; i++)
+        {
+            SceneObject* obj = &objects[i];
+            glPushMatrix();
+            glTranslatef(obj->x, obj->y, obj->z);
+            glRotatef(obj->rotation, 0, 1, 0);
+            glScalef(obj->scale, obj->scale, obj->scale);
 
-        drawQuad(-stairWidth, stepTop, stepBackZ, stairWidth, stepTop, stepBackZ,
-                 stairWidth, stepTop, stepFrontZ, -stairWidth, stepTop, stepFrontZ,
-                 0.45, 0.25, 0.12);
-        drawQuad(-stairWidth, stepBottom, stepFrontZ, stairWidth, stepBottom, stepFrontZ,
-                 stairWidth, stepTop, stepFrontZ, -stairWidth, stepTop, stepFrontZ,
-                 0.35, 0.18, 0.09);
-        drawQuad(-stairWidth, stepBottom, stepBackZ, stairWidth, stepBottom, stepBackZ,
-                 stairWidth, stepTop, stepBackZ, -stairWidth, stepTop, stepBackZ,
-                 0.35, 0.18, 0.09);
-        drawQuad(-stairWidth, stepBottom, stepBackZ, -stairWidth, stepBottom, stepFrontZ,
-                 -stairWidth, stepTop, stepFrontZ, -stairWidth, stepTop, stepBackZ,
-                 0.32, 0.16, 0.08);
-        drawQuad(stairWidth, stepBottom, stepFrontZ, stairWidth, stepBottom, stepBackZ,
-                 stairWidth, stepTop, stepBackZ, stairWidth, stepTop, stepFrontZ,
-                 0.32, 0.16, 0.08);
+            if (strcmp(obj->name, "CurvedScreen") == 0)
+                drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
+            else if (strcmp(obj->name, "Door") == 0)
+                drawDoor(0.0, 0.0, 3.0, 7.0);
+            else
+                obj->drawFunc(0, 0);
 
-        // ==== Objects ====
-        drawTable(0, 0);
-        drawCocktailTable(6, 0);
-        drawBanquetChair(-4, 0);
-        drawLamp(-6, 0);
-        drawDoor(0.0, 29.9, 3.0, 7.0);
-        drawCurvedScreen(0, -30, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
+            // Draw bounding boxes for debugging
+            if (debugMode) drawBBox(obj);
+
+            glPopMatrix();
+        }
 
         // ==== Windows ====
         glColor3f(0.3, 0.5, 0.9);
@@ -97,9 +195,8 @@ void scene_display()
     }
     else
     {
-        // ==== Debug Mode: Single Object at Origin ====
+        // ==== Debug Mode ====
         glPushMatrix();
-        glTranslatef(0, 0, 0);
         switch (debugObjectIndex)
         {
         case 0: drawTable(0, 0); break;

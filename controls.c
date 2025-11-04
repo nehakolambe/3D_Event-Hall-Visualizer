@@ -7,11 +7,22 @@ extern double th, ph;
 extern double camZ;
 extern double dim;
 
-extern int mode;           // replaces fpvMode
+extern int mode;           // 0 = orbit, 1 = FPV
 extern double fpvX, fpvY, fpvZ;
 extern double yaw, pitch;
 
+// --- Object system globals ---
+extern SceneObject objects[MAX_OBJECTS];
+extern int objectCount;
+extern SceneObject* selectedObject;
 
+// --- Debug controls ---
+extern int debugMode;
+extern int debugObjectIndex;
+
+// =======================================================
+//                 KEYBOARD HANDLER
+// =======================================================
 void controls_key(unsigned char key, int x, int y)
 {
     double speed = 0.8;
@@ -84,7 +95,7 @@ void controls_key(unsigned char key, int x, int y)
 
     // --- Mode toggle ---
     case 'm': case 'M':
-        mode = (mode + 1) % 2; // 0 ↔ 1 (you can expand this later)
+        mode = (mode + 1) % 2; // 0 ↔ 1
         break;
 
     // --- Reset ---
@@ -98,6 +109,7 @@ void controls_key(unsigned char key, int x, int y)
         mode = 0;
         debugMode = 0;
         debugObjectIndex = 0;
+        selectedObject = NULL;
         break;
 
     // --- Exit ---
@@ -108,23 +120,26 @@ void controls_key(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
+// =======================================================
+//                 SPECIAL KEYS (Arrows, F1)
+// =======================================================
 void controls_special(int key, int x, int y)
 {
     switch (key)
     {
-    // --- Debug controls ---
+    // --- Debug controls (F1 cycles object preview) ---
     case GLUT_KEY_F1:
         if (debugObjectIndex == -1)
         {
-            debugObjectIndex = 0;  // start from first object
+            debugObjectIndex = 0;
             debugMode = 1;
         }
         else
         {
             debugObjectIndex++;
-            if (debugObjectIndex >= totalObjects)
+            if (debugObjectIndex >= objectCount)
             {
-                debugObjectIndex = -1; // back to full scene
+                debugObjectIndex = -1;
                 debugMode = 0;
             }
         }
@@ -144,7 +159,7 @@ void controls_special(int key, int x, int y)
     }
     else if (mode == 0)
     {
-        // --- Perspective camera rotation ---
+        // --- Orbit camera rotation ---
         switch (key)
         {
         case GLUT_KEY_RIGHT: th += 5; break;
