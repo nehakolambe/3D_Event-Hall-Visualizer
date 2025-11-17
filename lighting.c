@@ -40,6 +40,7 @@ float specular[] = {1.0, 1.0, 1.0, 1.0};
 float emission[] = {0.0, 0.0, 0.0, 1.0};
 
 float radius = 10.0;
+float lightY = 5.0;
 
 
 // -----------------------------------------------------
@@ -90,7 +91,7 @@ void lighting_update()
 
     lx = radius * Cos(zh);
     lz = radius * Sin(zh);
-    ly = 10.0;
+    ly = lightY;
 
     float position[] = {lx, ly, lz, 1.0};
     glLightfv(GL_LIGHT0, GL_POSITION, position);

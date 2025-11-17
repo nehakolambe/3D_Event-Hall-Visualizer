@@ -226,7 +226,19 @@ void scene_display()
             else if (strcmp(obj->name, "Door") == 0)
                 drawDoor(0, 0, 3.0, 7.0);
             else if (obj->drawFunc)
-                obj->drawFunc(0, 0);
+            {
+                if (debugMode && strcmp(obj->name, "BanquetChair") == 0)
+                {
+                    glPushMatrix();
+                    glScalef(1.8, 1.8, 1.8);   // Make chair bigger in debug mode
+                    obj->drawFunc(0, 0);
+                    glPopMatrix();
+                }
+                else
+                {
+                    obj->drawFunc(0, 0);
+                }
+            }
 
             if (debugMode)
                 drawBBox(obj);

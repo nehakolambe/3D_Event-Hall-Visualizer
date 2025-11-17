@@ -31,6 +31,7 @@ extern int localViewer;
 extern int shininess;
 
 extern int lightOn;
+extern float lightY;
 
 void rotateObject(SceneObject* obj, float angle);
 
@@ -66,12 +67,22 @@ void controls_key(unsigned char key, int x, int y)
 
     case '{':
         radius -= 1;
-        if (radius < 2) radius = 2;
+        // if (radius < 2) radius = 2;
         break;
 
     case '}':
         radius += 1;
         if (radius > 40) radius = 40;
+        break;
+
+    case 'y':
+        lightY -= 0.5;
+        // if (lightY < 0) lightY = 0;
+        break;
+
+    case 'Y':
+        lightY += 0.5;
+        if (lightY > 30) lightY = 30;
         break;
 
     case 'c': case 'C':
