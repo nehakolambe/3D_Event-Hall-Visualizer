@@ -13,20 +13,23 @@ int dragging = 0;
 //                INTERNAL UTILITIES
 // =======================================================
 
-static void drawQuad(float x1, float y1, float z1,
-                     float x2, float y2, float z2,
-                     float x3, float y3, float z3,
-                     float x4, float y4, float z4,
-                     float r, float g, float b)
+static void drawQuadN(float x1,float y1,float z1,
+                      float x2,float y2,float z2,
+                      float x3,float y3,float z3,
+                      float x4,float y4,float z4,
+                      float nx,float ny,float nz,
+                      float r,float g,float b)
 {
-    glColor3f(r, g, b);
+    glColor3f(r,g,b);
     glBegin(GL_QUADS);
-    glVertex3f(x1, y1, z1);
-    glVertex3f(x2, y2, z2);
-    glVertex3f(x3, y3, z3);
-    glVertex3f(x4, y4, z4);
+    glNormal3f(nx,ny,nz);
+    glVertex3f(x1,y1,z1);
+    glVertex3f(x2,y2,z2);
+    glVertex3f(x3,y3,z3);
+    glVertex3f(x4,y4,z4);
     glEnd();
 }
+
 
 void drawBBox(SceneObject* o)
 {
@@ -167,31 +170,37 @@ void scene_display()
     if (!debugMode)
     {
         // ==== Floor ====
-        drawQuad(-20, 0, -30,  20, 0, -30,
-                  20, 0, 30, -20, 0, 30,
-                  0.6, 0.6, 0.6);
+        drawQuadN(-20,0,-30, 20,0,-30,
+          20,0,30, -20,0,30,
+          0,1,0,
+          0.6,0.6,0.6);
 
         // ==== Ceiling ====
-        drawQuad(-20, 15, -30,  20, 15, -30,
-                  20, 15, 30, -20, 15, 30,
-                  0.9, 0.9, 0.9);
+        drawQuadN(-20,15,-30, -20,15,30,
+          20,15,30, 20,15,-30,
+          0,-1,0,
+          0.9,0.9,0.9);
 
         // ==== Walls ====
-        drawQuad(-20, 0, -30,  20, 0, -30,
-                  20, 15, -30, -20, 15, -30,
-                  0.7, 0.7, 0.75);
+        drawQuadN(-20,0,-30, 20,0,-30,
+          20,15,-30, -20,15,-30,
+          0,0,1,
+          0.7,0.7,0.75);
 
-        drawQuad(-20, 0, 30,  20, 0, 30,
-                  20, 15, 30, -20, 15, 30,
-                  0.7, 0.7, 0.75);
+        drawQuadN(-20,0,30, -20,15,30,
+          20,15,30, 20,0,30,
+          0,0,-1,
+          0.7,0.7,0.75);
 
-        drawQuad(-20, 0, -30, -20, 0, 30,
-                -20, 15, 30, -20, 15, -30,
-                 0.8, 0.8, 0.85);
+        drawQuadN(-20,0,-30, -20,15,-30,
+          -20,15,30, -20,0,30,
+          1,0,0,
+          0.8,0.8,0.85);
 
-        drawQuad(20, 0, -30, 20, 0, 30,
-                 20, 15, 30, 20, 15, -30,
-                 0.8, 0.8, 0.85);
+        drawQuadN(20,0,-30, 20,0,30,
+          20,15,30, 20,15,-30,
+          -1,0,0,
+          0.8,0.8,0.85);
 
         // ==== Stage ====
         float stageTop = 2.0;
@@ -199,17 +208,19 @@ void scene_display()
         float stageFront = stageBack + 10;
         float stageWidth = 10.0;
 
-        drawQuad(-stageWidth, stageTop, stageBack,
-                  stageWidth, stageTop, stageBack,
-                  stageWidth, stageTop, stageFront,
-                 -stageWidth, stageTop, stageFront,
-                 0.4, 0.2, 0.1);
+        drawQuadN(-stageWidth,stageTop,stageBack,
+          stageWidth,stageTop,stageBack,
+          stageWidth,stageTop,stageFront,
+          -stageWidth,stageTop,stageFront,
+          0,1,0,
+          0.4,0.2,0.1);
 
-        drawQuad(-stageWidth, 0, stageFront,
-                  stageWidth, 0, stageFront,
-                  stageWidth, stageTop, stageFront,
-                 -stageWidth, stageTop, stageFront,
-                 0.35, 0.17, 0.09);
+        drawQuadN(-stageWidth,0,stageFront,
+          stageWidth,0,stageFront,
+          stageWidth,stageTop,stageFront,
+          -stageWidth,stageTop,stageFront,
+          0,0,-1,
+          0.35,0.17,0.09);
 
         // ==== Objects ====
         for (int i = 0; i < objectCount; i++)
@@ -246,22 +257,29 @@ void scene_display()
         }
 
         // ==== Windows ====
-        glColor3f(0.3, 0.5, 0.9);
-        drawQuad(-19.9, 6, -15, -19.9, 6, -5,
-                 -19.9, 10, -5, -19.9, 10, -15,
-                  0.3, 0.5, 0.9);
+        // Left Window 1
+        drawQuadN(-19.9, 6, -15,  -19.9, 6, -5,
+                -19.9,10, -5,  -19.9,10,-15,
+                1,0,0,          // NORMAL
+                0.3,0.5,0.9);
 
-        drawQuad(-19.9, 6, 5, -19.9, 6, 15,
-                 -19.9, 10, 15, -19.9, 10, 5,
-                  0.3, 0.5, 0.9);
+        // Left Window 2
+        drawQuadN(-19.9, 6, 5,  -19.9, 6, 15,
+                -19.9,10,15, -19.9,10, 5,
+                1,0,0,          // NORMAL
+                0.3,0.5,0.9);
 
-        drawQuad(19.9, 6, -15, 19.9, 6, -5,
-                 19.9, 10, -5, 19.9, 10, -15,
-                 0.3, 0.5, 0.9);
+        // Right Window 1
+        drawQuadN(19.9, 6, -15,  19.9, 6, -5,
+                19.9,10,-5,   19.9,10,-15,
+                -1,0,0,        // NORMAL
+                0.3,0.5,0.9);
 
-        drawQuad(19.9, 6, 5, 19.9, 6, 15,
-                 19.9, 10, 15, 19.9, 10, 5,
-                 0.3, 0.5, 0.9);
+        // Right Window 2
+        drawQuadN(19.9, 6, 5,  19.9, 6, 15,
+                19.9,10,15, 19.9,10, 5,
+                -1,0,0,        // NORMAL
+                0.3,0.5,0.9);
     }
     else
     {

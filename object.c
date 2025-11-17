@@ -380,41 +380,77 @@ void drawCocktailTable(float x, float z)
     glPopMatrix();
 }
 
+//
+// Draw a DOOR with correct normals
+//
 void drawDoor(float x, float z, float width, float height)
 {
     float yBottom = 0.0;
-    float yTop = yBottom + height;
-    float halfW = width / 2.0;
+    float yTop    = height;
+    float halfW   = width / 2.0;
 
-    // Door frame (optional, slightly darker)
+    //
+    // Determine the correct normal direction
+    //
+    float nx = 0.0, ny = 0.0, nz = -1.0;   // Door on FRONT wall (z = +20)
+    // If door on BACK wall (z = -20) -> nz = +1
+    // If door on LEFT wall          -> nx = +1, nz = 0
+    // If door on RIGHT wall         -> nx = -1, nz = 0
+
+    /* ======================================================
+         DOOR FRAME (slightly in front of wall +0.01 offset)
+       ====================================================== */
     glColor3f(0.3, 0.18, 0.05);
+
     glBegin(GL_QUADS);
-    // Left frame
+
+    // ---- Left frame ----
+    glNormal3f(nx, ny, nz);
     glVertex3f(x - halfW - 0.1, yBottom, z + 0.01);
-    glVertex3f(x - halfW, yBottom, z + 0.01);
-    glVertex3f(x - halfW, yTop, z + 0.01);
-    glVertex3f(x - halfW - 0.1, yTop, z + 0.01);
-    // Right frame
-    glVertex3f(x + halfW, yBottom, z + 0.01);
+    glVertex3f(x - halfW,       yBottom, z + 0.01);
+    glVertex3f(x - halfW,       yTop,    z + 0.01);
+    glVertex3f(x - halfW - 0.1, yTop,    z + 0.01);
+
+    // ---- Right frame ----
+    glNormal3f(nx, ny, nz);
+    glVertex3f(x + halfW,       yBottom, z + 0.01);
     glVertex3f(x + halfW + 0.1, yBottom, z + 0.01);
+    glVertex3f(x + halfW + 0.1, yTop,    z + 0.01);
+    glVertex3f(x + halfW,       yTop,    z + 0.01);
+
+    // ---- Top frame ----
+    glNormal3f(nx, ny, nz);
+    glVertex3f(x - halfW - 0.1, yTop, z + 0.01);
     glVertex3f(x + halfW + 0.1, yTop, z + 0.01);
-    glVertex3f(x + halfW, yTop, z + 0.01);
+    glVertex3f(x + halfW + 0.1, yTop + 0.1, z + 0.01);
+    glVertex3f(x - halfW - 0.1, yTop + 0.1, z + 0.01);
+
     glEnd();
 
-    // Door panel
-    glColor3f(0.45, 0.23, 0.1); // wooden door color
+
+    /* ======================================================
+                   DOOR PANEL (wood)
+       ====================================================== */
+    glColor3f(0.45, 0.23, 0.10);
+
     glBegin(GL_QUADS);
+    glNormal3f(nx, ny, nz);
     glVertex3f(x - halfW, yBottom, z);
     glVertex3f(x + halfW, yBottom, z);
-    glVertex3f(x + halfW, yTop, z);
-    glVertex3f(x - halfW, yTop, z);
+    glVertex3f(x + halfW, yTop,    z);
+    glVertex3f(x - halfW, yTop,    z);
     glEnd();
 
-    // Door handle (small metallic knob)
-    glColor3f(0.8, 0.8, 0.6);
+
+    /* ======================================================
+                 DOOR KNOB (emissive metal)
+       ====================================================== */
     glPushMatrix();
-    glTranslatef(x + halfW - 0.3, yBottom + height / 2.0, z + 0.05);
+    glColor3f(0.8, 0.8, 0.6);
+    glTranslatef(x + halfW - 0.3, yBottom + height * 0.5, z + 0.05);
+
     glutSolidSphere(0.08, 16, 16);
+
     glPopMatrix();
 }
 
@@ -619,6 +655,28 @@ void drawLamp(float xPos, float zPos) {
         glVertex3f(x2, shadeTopY, z2);
     }
     glEnd();
+
+// ---- bulb inside the shade ----
+if (lightState == 2)
+{
+    glPushMatrix();
+
+    // place bulb inside shade
+    float bulbY = shadeBottomY + 0.4f;
+
+    glTranslatef(0.0f, bulbY, 0.0f);
+
+    // emission glow
+    float bulbEmission[] = {1.0, 0.9, 0.7, 1.0};
+    glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
+
+    glutSolidSphere(0.25, 20, 20);
+
+    float noEmission[] = {0,0,0,1};
+    glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
+
+    glPopMatrix();
+}
 
     glPopMatrix();
 }

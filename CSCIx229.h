@@ -92,6 +92,11 @@ void controls_special(int key, int x, int y);
 void lighting_init(void);
 void lighting_update(void);
 void lighting_draw_debug_marker(void);
+void drawLampBulb(void);
+extern int lightState;
+extern float lampX;
+extern float lampY;
+extern float lampZ;
 
 // =======================================================
 //                  DEBUG / CAMERA GLOBALS

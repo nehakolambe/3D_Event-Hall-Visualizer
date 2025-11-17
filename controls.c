@@ -30,7 +30,7 @@ extern int emissionEnabled;
 extern int localViewer;
 extern int shininess;
 
-extern int lightOn;
+extern int lightState;
 extern float lightY;
 
 void rotateObject(SceneObject* obj, float angle);
@@ -53,8 +53,9 @@ void controls_key(unsigned char key, int x, int y)
         moveLight = !moveLight;
         break;
 
-    case 'b': case 'B':
-        lightOn = !lightOn;
+    case 'b':
+    case 'B':
+        lightState = (lightState + 1) % 3;   // cycles 0 → 1 → 2 → 0
         break;
 
     case '[':
@@ -206,7 +207,6 @@ void controls_key(unsigned char key, int x, int y)
         dim = 20;
 
         moveLight = 1;
-        lightOn = 1;
         specularEnabled = 1;
         emissionEnabled = 0;
         localViewer = 0;
