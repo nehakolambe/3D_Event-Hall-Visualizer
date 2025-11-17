@@ -30,6 +30,7 @@ object.o: object.c CSCIx229.h
 controls.o: controls.c CSCIx229.h
 mouse.o: mouse.c CSCIx229.h
 errcheck.o: errcheck.c CSCIx229.h
+lighting.o: lighting.c CSCIx229.h
 print.o: print.c CSCIx229.h
 
 #  Create archive (professor’s helper lib)
@@ -43,7 +44,7 @@ CSCIx229.a: errcheck.o print.o
 	g++ -c $(CFLG) $<
 
 #  Link final executable
-$(EXE): main.o scene.o object.o controls.o CSCIx229.a print.o mouse.o
+$(EXE): main.o scene.o object.o controls.o CSCIx229.a print.o mouse.o lighting.o
 	gcc $(CFLG) -o $@ $^ $(LIBS)
 
 #  Clean

@@ -88,6 +88,11 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 void controls_key(unsigned char ch, int x, int y);
 void controls_special(int key, int x, int y);
 
+// --- Lighting ---
+void lighting_init(void);
+void lighting_update(void);
+void lighting_draw_debug_marker(void);
+
 // =======================================================
 //                  DEBUG / CAMERA GLOBALS
 // =======================================================

@@ -64,6 +64,7 @@ void drawBBox(SceneObject* o)
 // =======================================================
 //                SCENE INITIALIZATION
 // =======================================================
+
 void addObject(const char* name, float x, float z, void (*drawFunc)(float, float), int movable)
 {
     if (objectCount >= MAX_OBJECTS) return;
@@ -71,15 +72,19 @@ void addObject(const char* name, float x, float z, void (*drawFunc)(float, float
     SceneObject* obj = &objects[objectCount];
     obj->id = objectCount;
     strncpy(obj->name, name, sizeof(obj->name) - 1);
+
     obj->x = x;
     obj->y = 0;
     obj->z = z;
+
     obj->scale = 1.0;
     obj->rotation = 0;
     obj->drawFunc = drawFunc;
     obj->movable = movable;
     obj->solid = 1;
-    for (int i = 0; i < 6; i++) obj->bbox[i] = 0;
+
+    for (int i = 0; i < 6; i++)
+        obj->bbox[i] = 0;
 
     objectCount++;
 }
@@ -95,24 +100,25 @@ void scene_init()
     addObject("Lamp",          -6,   0,  drawLamp,          1);
 
     // Fixed objects
-    addObject("Door",           0,  29.9, (void (*)(float,float))drawDoor, 0);
-    addObject("CurvedScreen",   0, -30, (void (*)(float,float))drawCurvedScreen, 0);
+    addObject("Door",          0,  29.9, (void (*)(float,float))drawDoor, 0);
+    addObject("CurvedScreen",  0, -30,   (void (*)(float,float))drawCurvedScreen, 0);
 
-    objects[0].y = 0.0f;  // Table base at floor
-    objects[1].y = 0.0f;  // Cocktail table base (adjust if legs sink)
-    objects[2].y = 0.0f;  // Chair base
-    objects[3].y = 0.0f;  // Lamp base
+    // Base heights
+    objects[0].y = 0.0f;
+    objects[1].y = 0.0f;
+    objects[2].y = 0.0f;
+    objects[3].y = 0.0f;
 
+    // Assign bounding boxes
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject* o = &objects[i];
 
         if (strcmp(o->name, "Table") == 0)
         {
-            // Shrinked bounding box for table top only (so chairs can go under it)
             memcpy(o->bbox, (float[]){-1.2, 1.2, 0, 3, -0.6, 0.6}, sizeof(o->bbox));
 
-            // Add four small invisible blockers for legs
+            // Add leg colliders
             addObject("TableLeg_FL", o->x - 0.85f, o->z - 0.45f, NULL, 0);
             addObject("TableLeg_FR", o->x + 0.85f, o->z - 0.45f, NULL, 0);
             addObject("TableLeg_BL", o->x - 0.85f, o->z + 0.45f, NULL, 0);
@@ -136,14 +142,14 @@ void scene_init()
         }
     }
 
-    // Assign leg colliders (tiny cubes)
+    // Leg colliders small bbox
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject* o = &objects[i];
         if (strncmp(o->name, "TableLeg_", 9) == 0)
         {
             memcpy(o->bbox, (float[]){-0.1, 0.1, 0, 3, -0.1, 0.1}, sizeof(o->bbox));
-             o->solid = 1;
+            o->solid = 1;
         }
     }
 }
@@ -151,25 +157,41 @@ void scene_init()
 // =======================================================
 //                SCENE RENDERING
 // =======================================================
+
 void scene_display()
 {
     glPushMatrix();
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_LIGHTING);
+    lighting_update();
+    glEnable(GL_LIGHTING);
 
     if (!debugMode)
     {
         // ==== Floor ====
-        drawQuad(-20, 0, -30,  20, 0, -30,  20, 0, 30,  -20, 0, 30,  0.6, 0.6, 0.6);
+        drawQuad(-20, 0, -30,  20, 0, -30,
+                  20, 0, 30, -20, 0, 30,
+                  0.6, 0.6, 0.6);
 
         // ==== Ceiling ====
-        drawQuad(-20, 15, -30,  20, 15, -30,  20, 15, 30,  -20, 15, 30,  0.9, 0.9, 0.9);
+        drawQuad(-20, 15, -30,  20, 15, -30,
+                  20, 15, 30, -20, 15, 30,
+                  0.9, 0.9, 0.9);
 
         // ==== Walls ====
-        drawQuad(-20, 0, -30,  20, 0, -30,  20, 15, -30,  -20, 15, -30,  0.7, 0.7, 0.75);
-        drawQuad(-20, 0, 30,  20, 0, 30,  20, 15, 30,  -20, 15, 30,  0.7, 0.7, 0.75);
-        drawQuad(-20, 0, -30,  -20, 0, 30,  -20, 15, 30,  -20, 15, -30,  0.8, 0.8, 0.85);
-        drawQuad(20, 0, -30,  20, 0, 30,  20, 15, 30,  20, 15, -30,  0.8, 0.8, 0.85);
+        drawQuad(-20, 0, -30,  20, 0, -30,
+                  20, 15, -30, -20, 15, -30,
+                  0.7, 0.7, 0.75);
+
+        drawQuad(-20, 0, 30,  20, 0, 30,
+                  20, 15, 30, -20, 15, 30,
+                  0.7, 0.7, 0.75);
+
+        drawQuad(-20, 0, -30, -20, 0, 30,
+                -20, 15, 30, -20, 15, -30,
+                 0.8, 0.8, 0.85);
+
+        drawQuad(20, 0, -30, 20, 0, 30,
+                 20, 15, 30, 20, 15, -30,
+                 0.8, 0.8, 0.85);
 
         // ==== Stage ====
         float stageTop = 2.0;
@@ -177,12 +199,16 @@ void scene_display()
         float stageFront = stageBack + 10;
         float stageWidth = 10.0;
 
-        drawQuad(-stageWidth, stageTop, stageBack,  stageWidth, stageTop, stageBack,
-                 stageWidth, stageTop, stageFront, -stageWidth, stageTop, stageFront,
+        drawQuad(-stageWidth, stageTop, stageBack,
+                  stageWidth, stageTop, stageBack,
+                  stageWidth, stageTop, stageFront,
+                 -stageWidth, stageTop, stageFront,
                  0.4, 0.2, 0.1);
 
-        drawQuad(-stageWidth, 0, stageFront,  stageWidth, 0, stageFront,
-                 stageWidth, stageTop, stageFront, -stageWidth, stageTop, stageFront,
+        drawQuad(-stageWidth, 0, stageFront,
+                  stageWidth, 0, stageFront,
+                  stageWidth, stageTop, stageFront,
+                 -stageWidth, stageTop, stageFront,
                  0.35, 0.17, 0.09);
 
         // ==== Objects ====
@@ -190,6 +216,7 @@ void scene_display()
         {
             SceneObject* obj = &objects[i];
             glPushMatrix();
+
             glTranslatef(obj->x, obj->y, obj->z);
             glRotatef(obj->rotation, 0, 1, 0);
             glScalef(obj->scale, obj->scale, obj->scale);
@@ -197,20 +224,32 @@ void scene_display()
             if (strcmp(obj->name, "CurvedScreen") == 0)
                 drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
             else if (strcmp(obj->name, "Door") == 0)
-                drawDoor(0.0, 0.0, 3.0, 7.0);
+                drawDoor(0, 0, 3.0, 7.0);
             else if (obj->drawFunc)
                 obj->drawFunc(0, 0);
 
-            if (debugMode) drawBBox(obj);
+            if (debugMode)
+                drawBBox(obj);
             glPopMatrix();
         }
 
         // ==== Windows ====
         glColor3f(0.3, 0.5, 0.9);
-        drawQuad(-19.9, 6, -15, -19.9, 6, -5, -19.9, 10, -5, -19.9, 10, -15, 0.3, 0.5, 0.9);
-        drawQuad(-19.9, 6, 5, -19.9, 6, 15, -19.9, 10, 15, -19.9, 10, 5, 0.3, 0.5, 0.9);
-        drawQuad(19.9, 6, -15, 19.9, 6, -5, 19.9, 10, -5, 19.9, 10, -15, 0.3, 0.5, 0.9);
-        drawQuad(19.9, 6, 5, 19.9, 6, 15, 19.9, 10, 15, 19.9, 10, 5, 0.3, 0.5, 0.9);
+        drawQuad(-19.9, 6, -15, -19.9, 6, -5,
+                 -19.9, 10, -5, -19.9, 10, -15,
+                  0.3, 0.5, 0.9);
+
+        drawQuad(-19.9, 6, 5, -19.9, 6, 15,
+                 -19.9, 10, 15, -19.9, 10, 5,
+                  0.3, 0.5, 0.9);
+
+        drawQuad(19.9, 6, -15, 19.9, 6, -5,
+                 19.9, 10, -5, 19.9, 10, -15,
+                 0.3, 0.5, 0.9);
+
+        drawQuad(19.9, 6, 5, 19.9, 6, 15,
+                 19.9, 10, 15, 19.9, 10, 5,
+                 0.3, 0.5, 0.9);
     }
     else
     {
@@ -225,6 +264,6 @@ void scene_display()
         }
         glPopMatrix();
     }
-
+    lighting_draw_debug_marker();
     glPopMatrix();
 }

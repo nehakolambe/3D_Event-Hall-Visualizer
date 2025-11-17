@@ -117,13 +117,11 @@ void reshape(int width, int height)
 // =======================================================
 void mouse_click(int button, int state, int x, int y)
 {
-    // TODO: Handle object selection and dragging
     (void)button; (void)state; (void)x; (void)y;
 }
 
 void mouse_drag(int x, int y)
 {
-    // TODO: Handle dragging for selected objects
     (void)x; (void)y;
 }
 
@@ -147,6 +145,9 @@ int main(int argc, char* argv[])
     // === Initialize scene and objects ===
     scene_init();
 
+    // === Initialize lighting ===
+    lighting_init();    // <-- ADDED HERE
+
     // === Register GLUT callbacks ===
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
@@ -154,6 +155,7 @@ int main(int argc, char* argv[])
     glutSpecialFunc(controls_special);
     glutMouseFunc(mouse_button);
     glutMotionFunc(mouse_motion);
+    glutIdleFunc(display); 
 
     glutMainLoop();
     return 0;
