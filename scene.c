@@ -9,6 +9,10 @@ int objectCount = 0;
 SceneObject* selectedObject = NULL;
 int dragging = 0;
 
+// void placeEventTables();
+// void placeCocktailTables();
+// void placeDoorLamps();
+
 // =======================================================
 //                INTERNAL UTILITIES
 // =======================================================
@@ -96,28 +100,104 @@ void scene_init()
 {
     objectCount = 0;
 
-    // Movable furniture
-    addObject("Table",          0,   0,  drawTable,         1);
-    addObject("CocktailTable",  6,   0,  drawCocktailTable, 1);
-    addObject("BanquetChair",  -4,   0,  drawBanquetChair,  1);
-    addObject("Lamp",          -6,   0,  drawLamp,          1);
+    // =======================================================
+    // Base movable prototypes (for user to drag)
+    // =======================================================
+    // addObject("Table",          0,   0,  drawTable,         1);
+    // addObject("CocktailTable",  6,   0,  drawCocktailTable, 1);
+    // addObject("BanquetChair",  -4,   0,  drawBanquetChair,  1);
+    // addObject("Lamp",          -6,   0,  drawLamp,          1);
 
+    // =======================================================
     // Fixed objects
+    // =======================================================
     addObject("Door",          0,  29.9, (void (*)(float,float))drawDoor, 0);
     addObject("CurvedScreen",  0, -30,   (void (*)(float,float))drawCurvedScreen, 0);
 
-    // Base heights
+    // Base heights (only if needed)
     objects[0].y = 0.0f;
     objects[1].y = 0.0f;
     objects[2].y = 0.0f;
     objects[3].y = 0.0f;
 
-    // Assign bounding boxes
+    // =======================================================
+    // EVENT LAYOUT OBJECTS (ALL MOVABLE)
+    // =======================================================
+
+    // ---------------------------
+    // 4 rectangular tables
+    // ---------------------------
+    float tableX[4] = {-10, -10,  10, 10};
+    float tableZ[4] = {-10,   0, -10,  0};
+
+    int tableIndexStart = objectCount;
+
+    for (int i = 0; i < 4; i++)
+    {
+        char name[32];
+        sprintf(name, "EventTable%d", i+1);
+        addObject(name, tableX[i], tableZ[i], drawTable, 1);
+    }
+
+    // ---------------------------
+    // 8 chairs (2 per table)
+    // ---------------------------
+    float chairOffsetX[2] = {0.0, 0.0};
+    float chairOffsetZ[2] = {-1.8, 1.8};
+    float chairRot[2]     = {  0 , 180};
+
+    for (int t = 0; t < 4; t++)
+    {
+        for (int c = 0; c < 2; c++)
+        {
+            char cname[32];
+            sprintf(cname, "EventChair_T%d_C%d", t+1, c+1);
+
+            float cx = tableX[t] + chairOffsetX[c];
+            float cz = tableZ[t] + chairOffsetZ[c];
+
+            addObject(cname, cx, cz, drawBanquetChair, 1);
+
+            // rotate chair towards table
+            objects[objectCount - 1].rotation = chairRot[c];
+        }
+    }
+
+    // ---------------------------
+    // 3 cocktail tables
+    // ---------------------------
+    float ctX[3] = {0, -12, 12};
+    float ctZ[3] = {-5, -3, -3};
+
+    for (int i = 0; i < 3; i++)
+    {
+        char name[32];
+        sprintf(name, "Cocktail_%d", i+1);
+        addObject(name, ctX[i], ctZ[i], drawCocktailTable, 1);
+    }
+
+    // ---------------------------
+    // 2 door lamps
+    // ---------------------------
+    float lampX[2] = {-4, 4};
+    float lampZ = 28.5;
+
+    for (int i = 0; i < 2; i++)
+    {
+        char name[32];
+        sprintf(name, "DoorLamp_%d", i+1);
+        addObject(name, lampX[i], lampZ, drawLamp, 1);
+    }
+
+    // =======================================================
+    // ASSIGN BOUNDING BOXES (including newly added objects)
+    // =======================================================
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject* o = &objects[i];
 
-        if (strcmp(o->name, "Table") == 0)
+        if (strcmp(o->name, "Table") == 0 ||
+            strncmp(o->name, "EventTable", 10) == 0)
         {
             memcpy(o->bbox, (float[]){-1.2, 1.2, 0, 3, -0.6, 0.6}, sizeof(o->bbox));
 
@@ -127,15 +207,18 @@ void scene_init()
             addObject("TableLeg_BL", o->x - 0.85f, o->z + 0.45f, NULL, 0);
             addObject("TableLeg_BR", o->x + 0.85f, o->z + 0.45f, NULL, 0);
         }
-        else if (strcmp(o->name, "CocktailTable") == 0)
+        else if (strcmp(o->name, "CocktailTable") == 0 ||
+                 strncmp(o->name, "Cocktail_", 9) == 0)
         {
             memcpy(o->bbox, (float[]){-0.7, 0.7, 0, 4, -0.7, 0.7}, sizeof(o->bbox));
         }
-        else if (strcmp(o->name, "BanquetChair") == 0)
+        else if (strcmp(o->name, "BanquetChair") == 0 ||
+                 strncmp(o->name, "EventChair", 10) == 0)
         {
             memcpy(o->bbox, (float[]){-0.5, 0.5, 0, 3, -0.5, 0.5}, sizeof(o->bbox));
         }
-        else if (strcmp(o->name, "Lamp") == 0)
+        else if (strcmp(o->name, "Lamp") == 0 ||
+                 strncmp(o->name, "DoorLamp", 8) == 0)
         {
             memcpy(o->bbox, (float[]){-0.5, 0.5, 0, 6, -0.5, 0.5}, sizeof(o->bbox));
         }
@@ -145,7 +228,9 @@ void scene_init()
         }
     }
 
-    // Leg colliders small bbox
+    // =======================================================
+    // Fix table leg collider bbox
+    // =======================================================
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject* o = &objects[i];
@@ -156,6 +241,7 @@ void scene_init()
         }
     }
 }
+
 
 // =======================================================
 //                SCENE RENDERING
@@ -256,6 +342,13 @@ void scene_display()
             glPopMatrix();
         }
 
+        // -----------------------------
+        // EVENT LAYOUT (tables/chairs)
+        // -----------------------------
+        // placeEventTables();
+        // placeCocktailTables();
+        // placeDoorLamps();
+
         // ==== Windows ====
         // Left Window 1
         drawQuadN(-19.9, 6, -15,  -19.9, 6, -5,
@@ -297,3 +390,69 @@ void scene_display()
     lighting_draw_debug_marker();
     glPopMatrix();
 }
+
+// void placeEventTables()
+// {
+//     // Table positions (4 tables)
+//     float tx[] = {-10, -10, 10, 10};
+//     float tz[] = {-10,  0, -10,  0};
+
+//     // 2 chairs per table, placed on opposite sides
+//     float cx[] = {0.0, 0.0};      // X offset for chairs
+//     float cz[] = {-1.8, 1.8};     // Z offset for chairs (front/back)
+
+//     for (int t = 0; t < 4; t++)
+//     {
+//         // Draw the table
+//         glPushMatrix();
+//         glTranslatef(tx[t], 0, tz[t]);
+//         drawTable(0, 0);
+//         glPopMatrix();
+
+//         // Draw 2 chairs per table
+//         for (int c = 0; c < 2; c++)
+//         {
+//             glPushMatrix();
+//             glTranslatef(tx[t] + cx[c], 0, tz[t] + cz[c]);
+
+//             // Chair faces the table
+//             if (c == 0) glRotatef(0, 0, 1, 0);     // front chair
+//             if (c == 1) glRotatef(180, 0, 1, 0);   // back chair
+
+//             drawBanquetChair(0, 0);
+//             glPopMatrix();
+//         }
+//     }
+// }
+
+
+
+// void placeCocktailTables()
+// {
+//     float x[] = {0, -12, 12};
+//     float z[] = {-5, -3, -3};
+
+//     for (int i = 0; i < 3; i++)
+//     {
+//         glPushMatrix();
+//         glTranslatef(x[i], 0, z[i]);
+//         drawCocktailTable(0, 0);
+//         glPopMatrix();
+//     }
+// }
+
+
+// void placeDoorLamps()
+// {
+//     // Lamps left & right of door
+//     float x[] = {-4, 4};
+//     float z = 28.5;
+
+//     for (int i = 0; i < 2; i++)
+//     {
+//         glPushMatrix();
+//         glTranslatef(x[i], 0, z);
+//         drawLamp(0, 0);
+//         glPopMatrix();
+//     }
+// }
