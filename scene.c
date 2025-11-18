@@ -12,6 +12,15 @@ int dragging = 0;
 unsigned int wallTex;   // Texture ID for wall texture
 unsigned int floorTex;  // Texture ID for floor texture
 unsigned int screenTex;  // Texture ID for screen texture
+unsigned int cocktailTableTex; // Texture ID for cocktail table texture
+unsigned int tableTex; // Texture ID for table texture
+unsigned int stageTex; // Texture ID for stage texture
+unsigned int lampRodTex; // Texture ID for lamp rod texture
+unsigned int lampShadeTex; // Texture ID for lamp shade texture
+unsigned int chairCushionTex; // Texture ID for chair cushion texture
+unsigned int chairLegTex; // Texture ID for chair leg texture
+unsigned int doorFrameTex; // Texture ID for door texture
+unsigned int doorKnobTex; // Texture ID for door knob texture
 
 // void placeEventTables();
 // void placeCocktailTables();
@@ -236,6 +245,15 @@ void scene_init()
     wallTex = LoadTexBMP("textures/wall.bmp");
     floorTex = LoadTexBMP("textures/carpet.bmp");
     screenTex = LoadTexBMP("textures/screen.bmp");
+    cocktailTableTex = LoadTexBMP("textures/cocktail.bmp");
+    tableTex = LoadTexBMP("textures/table.bmp");
+    stageTex = LoadTexBMP("textures/stage.bmp");
+    lampRodTex = LoadTexBMP("textures/lamprod.bmp");
+    lampShadeTex = LoadTexBMP("textures/lampshade.bmp");
+    chairCushionTex = LoadTexBMP("textures/chaircushion.bmp");
+    chairLegTex = LoadTexBMP("textures/chairleg.bmp");
+    doorFrameTex = LoadTexBMP("textures/door.bmp");
+    doorKnobTex = LoadTexBMP("textures/doorknob.bmp");
     objectCount = 0;
 
     // =======================================================
@@ -425,25 +443,82 @@ drawTiledSurface(20,0,-30, 20,15,30, -1,0,0, 2.0);
 glDisable(GL_TEXTURE_2D);
 
 
-        // ==== Stage ====
-        float stageTop = 2.0;
-        float stageBack = -30;
-        float stageFront = stageBack + 10;
-        float stageWidth = 10.0;
+// ==== Stage ====
 
-        drawQuadN(-stageWidth,stageTop,stageBack,
-          stageWidth,stageTop,stageBack,
-          stageWidth,stageTop,stageFront,
-          -stageWidth,stageTop,stageFront,
-          0,1,0,
-          0.4,0.2,0.1);
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, stageTex);
 
-        drawQuadN(-stageWidth,0,stageFront,
-          stageWidth,0,stageFront,
-          stageWidth,stageTop,stageFront,
-          -stageWidth,stageTop,stageFront,
-          0,0,-1,
-          0.35,0.17,0.09);
+float stageTop   = 2.0;
+float stageBack  = -30;
+float stageFront = stageBack + 10;
+float stageWidth = 10.0;
+
+// --------------------
+// TOP FACE
+// --------------------
+drawQuadN(
+    -stageWidth, stageTop, stageBack,
+     stageWidth, stageTop, stageBack,
+     stageWidth, stageTop, stageFront,
+    -stageWidth, stageTop, stageFront,
+    0, 1, 0,
+    1, 1, 1
+);
+
+// --------------------
+// FRONT FACE
+// --------------------
+drawQuadN(
+    -stageWidth, 0, stageFront,
+     stageWidth, 0, stageFront,
+     stageWidth, stageTop, stageFront,
+    -stageWidth, stageTop, stageFront,
+    0, 0, -1,
+    1, 1, 1
+);
+
+// --------------------
+// LEFT FACE
+// --------------------
+drawQuadN(
+    -stageWidth, 0, stageBack,
+    -stageWidth, 0, stageFront,
+    -stageWidth, stageTop, stageFront,
+    -stageWidth, stageTop, stageBack,
+    -1, 0, 0,
+    1, 1, 1
+);
+
+// --------------------
+// RIGHT FACE
+// --------------------
+drawQuadN(
+     stageWidth, 0, stageFront,
+     stageWidth, 0, stageBack,
+     stageWidth, stageTop, stageBack,
+     stageWidth, stageTop, stageFront,
+     1, 0, 0,
+     1, 1, 1
+);
+
+// --------------------
+// BACK FACE (touching wall)
+// You can make this flush with wall or slightly forward
+// --------------------
+drawQuadN(
+    -stageWidth, 0, stageBack,
+     stageWidth, 0, stageBack,
+     stageWidth, stageTop, stageBack,
+    -stageWidth, stageTop, stageBack,
+    0, 0, 1,
+    1, 1, 1
+);
+
+glDisable(GL_TEXTURE_2D);
+
+// Disable texture after drawing stage
+glDisable(GL_TEXTURE_2D);
+
 
         // ==== Objects ====
         for (int i = 0; i < objectCount; i++)

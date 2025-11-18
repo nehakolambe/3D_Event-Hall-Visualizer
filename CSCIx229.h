@@ -145,6 +145,15 @@ void screenToWorld(int x, int y, float* worldX, float* worldZ);
 SceneObject* pickObject(float worldX, float worldZ);
 
 extern unsigned int screenTex;
+extern unsigned int cocktailTableTex;
+extern unsigned int tableTex;
+extern unsigned int stageTex;
+extern unsigned int lampRodTex;
+extern unsigned int lampShadeTex;
+extern unsigned int chairCushionTex;
+extern unsigned int chairLegTex;
+extern unsigned int doorFrameTex;
+extern unsigned int doorKnobTex;
 
 // =======================================================
 //              🔄  NEW INTERACTION UTILITIES

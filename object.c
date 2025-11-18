@@ -51,17 +51,25 @@
 static void drawLeg(float x, float z, float height, float radius)
 {
     GLUquadric* q = gluNewQuadric();
-    gluQuadricNormals(q, GLU_SMOOTH);   // <-- IMPORTANT: adds smooth normals
+    gluQuadricNormals(q, GLU_SMOOTH);
+    gluQuadricTexture(q, GL_TRUE);  // <-- ENABLE TEXTURE COORDS
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
 
     glPushMatrix();
     glTranslatef(x, 0, z);
     glRotatef(-90, 1, 0, 0);
-    glColor3f(0.35, 0.2, 0.1);
+
+    glColor3f(1,1,1);  // let texture show fully
     gluCylinder(q, radius, radius, height, 32, 4);
+
     glPopMatrix();
 
+    glDisable(GL_TEXTURE_2D);
     gluDeleteQuadric(q);
 }
+
 
 
 //
@@ -72,33 +80,55 @@ static void drawDisk(float radius, float y, float thickness)
     int segs = 48;
     float topY = y + thickness;
 
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+    glColor3f(1,1,1);   // allow texture colors to show fully
+
     /* ===== TOP FACE ===== */
-    glColor3f(0.55, 0.27, 0.07);
     glBegin(GL_TRIANGLE_FAN);
-    glNormal3f(0,1,0);     // normal for all top vertices
+    glNormal3f(0,1,0);
+
+    glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, topY, 0);
+
     for (int i = 0; i <= segs; i++)
     {
         float angle = 2 * M_PI * i / segs;
-        glVertex3f(radius * cos(angle), topY, radius * sin(angle));
+        float x = radius * cos(angle);
+        float z = radius * sin(angle);
+
+        float u = 0.5f + 0.5f * cos(angle);
+        float v = 0.5f + 0.5f * sin(angle);
+
+        glTexCoord2f(u, v);
+        glVertex3f(x, topY, z);
     }
     glEnd();
 
 
     /* ===== BOTTOM FACE ===== */
-    glColor3f(0.35, 0.18, 0.05);
     glBegin(GL_TRIANGLE_FAN);
-    glNormal3f(0, -1, 0);    // Bottom normal
+    glNormal3f(0,-1,0);
+
+    glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, y, 0);
+
     for (int i = 0; i <= segs; i++)
     {
         float angle = 2 * M_PI * i / segs;
-        glVertex3f(radius * cos(angle), y, radius * sin(angle));
+        float x = radius * cos(angle);
+        float z = radius * sin(angle);
+
+        float u = 0.5f + 0.5f * cos(angle);
+        float v = 0.5f + 0.5f * sin(angle);
+
+        glTexCoord2f(u, v);
+        glVertex3f(x, y, z);
     }
     glEnd();
 
+
     /* ===== SIDE WALL ===== */
-    glColor3f(0.45, 0.23, 0.1);
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= segs; i++)
     {
@@ -106,13 +136,24 @@ static void drawDisk(float radius, float y, float thickness)
         float x = radius * cos(angle);
         float z = radius * sin(angle);
 
-        glNormal3f(cos(angle), 0, sin(angle));  // radial outward normal
+        float nx = cos(angle);
+        float nz = sin(angle);
 
+        glNormal3f(nx, 0, nz);
+
+        float u = (float)i / segs;
+
+        glTexCoord2f(u, 0);
         glVertex3f(x, y, z);
+
+        glTexCoord2f(u, 1);
         glVertex3f(x, topY, z);
     }
     glEnd();
+
+    glDisable(GL_TEXTURE_2D);
 }
+
 
 static void drawCuboid(float width, float height, float depth)
 {
@@ -122,46 +163,57 @@ static void drawCuboid(float width, float height, float depth)
 
     glBegin(GL_QUADS);
 
-    // FRONT (+Z)
+    /* ===== FRONT (+Z) ===== */
     glNormal3f(0,0,1);
-    glVertex3f(-w,-h, d); glVertex3f( w,-h, d);
-    glVertex3f( w, h, d); glVertex3f(-w, h, d);
+    glTexCoord2f(0,0); glVertex3f(-w,-h, d);
+    glTexCoord2f(1,0); glVertex3f( w,-h, d);
+    glTexCoord2f(1,1); glVertex3f( w, h, d);
+    glTexCoord2f(0,1); glVertex3f(-w, h, d);
 
-    // BACK (−Z)
+    /* ===== BACK (−Z) ===== */
     glNormal3f(0,0,-1);
-    glVertex3f( w,-h,-d); glVertex3f(-w,-h,-d);
-    glVertex3f(-w, h,-d); glVertex3f( w, h,-d);
+    glTexCoord2f(0,0); glVertex3f( w,-h,-d);
+    glTexCoord2f(1,0); glVertex3f(-w,-h,-d);
+    glTexCoord2f(1,1); glVertex3f(-w, h,-d);
+    glTexCoord2f(0,1); glVertex3f( w, h,-d);
 
-    // LEFT (−X)
+    /* ===== LEFT (−X) ===== */
     glNormal3f(-1,0,0);
-    glVertex3f(-w,-h,-d); glVertex3f(-w,-h, d);
-    glVertex3f(-w, h, d); glVertex3f(-w, h,-d);
+    glTexCoord2f(0,0); glVertex3f(-w,-h,-d);
+    glTexCoord2f(1,0); glVertex3f(-w,-h, d);
+    glTexCoord2f(1,1); glVertex3f(-w, h, d);
+    glTexCoord2f(0,1); glVertex3f(-w, h,-d);
 
-    // RIGHT (+X)
+    /* ===== RIGHT (+X) ===== */
     glNormal3f(1,0,0);
-    glVertex3f( w,-h, d); glVertex3f( w,-h,-d);
-    glVertex3f( w, h,-d); glVertex3f( w, h, d);
+    glTexCoord2f(0,0); glVertex3f( w,-h, d);
+    glTexCoord2f(1,0); glVertex3f( w,-h,-d);
+    glTexCoord2f(1,1); glVertex3f( w, h,-d);
+    glTexCoord2f(0,1); glVertex3f( w, h, d);
 
-    // TOP (+Y)
+    /* ===== TOP (+Y) ===== */
     glNormal3f(0,1,0);
-    glVertex3f(-w, h,-d); glVertex3f(-w, h, d);
-    glVertex3f( w, h, d); glVertex3f( w, h,-d);
+    glTexCoord2f(0,0); glVertex3f(-w, h,-d);
+    glTexCoord2f(1,0); glVertex3f(-w, h, d);
+    glTexCoord2f(1,1); glVertex3f( w, h, d);
+    glTexCoord2f(0,1); glVertex3f( w, h,-d);
 
-    // BOTTOM (−Y)
+    /* ===== BOTTOM (−Y) ===== */
     glNormal3f(0,-1,0);
-    glVertex3f(-w,-h, d); glVertex3f( w,-h, d);
-    glVertex3f( w,-h,-d); glVertex3f(-w,-h,-d);
+    glTexCoord2f(0,0); glVertex3f(-w,-h, d);
+    glTexCoord2f(1,0); glVertex3f( w,-h, d);
+    glTexCoord2f(1,1); glVertex3f( w,-h,-d);
+    glTexCoord2f(0,1); glVertex3f(-w,-h,-d);
 
     glEnd();
 }
 
 
+
 //
 // Draw a rectangular table with rounded corners (no GLU/GLUT)
 //
-//
-// Draw a rectangular table with rounded corners WITH NORMALS
-//
+
 void drawTable(float x, float z)
 {
     glPushMatrix();
@@ -181,55 +233,61 @@ void drawTable(float x, float z)
     float innerX = length/2 - radius;
     float innerZ = width /2 - radius;
 
-    /*===============================
-      TOP SURFACE  (flat normal +Y)
-    ===============================*/
-    glColor3f(0.55f,0.27f,0.07f);
-    glNormal3f(0,1,0);
+    /* =====================================
+          ENABLE TEXTURE FOR WHOLE TABLE
+    ===================================== */
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tableTex);
+    glColor3f(1,1,1);  // allow texture to show
 
+
+    /*===============================
+       TOP SURFACE (with texture)
+    ===============================*/
+    glNormal3f(0,1,0);
     glBegin(GL_QUADS);
-    glVertex3f(-innerX, yTop, -innerZ);
-    glVertex3f( innerX, yTop, -innerZ);
-    glVertex3f( innerX, yTop,  innerZ);
-    glVertex3f(-innerX, yTop,  innerZ);
+        glTexCoord2f(0,0); glVertex3f(-innerX, yTop, -innerZ);
+        glTexCoord2f(1,0); glVertex3f( innerX, yTop, -innerZ);
+        glTexCoord2f(1,1); glVertex3f( innerX, yTop,  innerZ);
+        glTexCoord2f(0,1); glVertex3f(-innerX, yTop,  innerZ);
     glEnd();
 
 
     /*===============================
-      FLAT EDGE PADS (flat normals)
+        FLAT EDGE PADS (textured)
     ===============================*/
     glBegin(GL_QUADS);
 
     // front
     glNormal3f(0,1,0);
-    glVertex3f(-innerX, yTop,  innerZ);
-    glVertex3f( innerX, yTop,  innerZ);
-    glVertex3f( innerX, yTop,  innerZ + radius);
-    glVertex3f(-innerX, yTop,  innerZ + radius);
+    glTexCoord2f(0,0); glVertex3f(-innerX, yTop, innerZ);
+    glTexCoord2f(1,0); glVertex3f( innerX, yTop, innerZ);
+    glTexCoord2f(1,1); glVertex3f( innerX, yTop, innerZ + radius);
+    glTexCoord2f(0,1); glVertex3f(-innerX, yTop, innerZ + radius);
 
     // back
-    glVertex3f(-innerX, yTop, -innerZ - radius);
-    glVertex3f( innerX, yTop, -innerZ - radius);
-    glVertex3f( innerX, yTop, -innerZ);
-    glVertex3f(-innerX, yTop, -innerZ);
+    glTexCoord2f(0,0); glVertex3f(-innerX, yTop, -innerZ - radius);
+    glTexCoord2f(1,0); glVertex3f( innerX, yTop, -innerZ - radius);
+    glTexCoord2f(1,1); glVertex3f( innerX, yTop, -innerZ);
+    glTexCoord2f(0,1); glVertex3f(-innerX, yTop, -innerZ);
 
     // left
-    glVertex3f(-innerX - radius, yTop, -innerZ);
-    glVertex3f(-innerX,          yTop, -innerZ);
-    glVertex3f(-innerX,          yTop,  innerZ);
-    glVertex3f(-innerX - radius, yTop,  innerZ);
+    glTexCoord2f(0,0); glVertex3f(-innerX - radius, yTop, -innerZ);
+    glTexCoord2f(1,0); glVertex3f(-innerX,          yTop, -innerZ);
+    glTexCoord2f(1,1); glVertex3f(-innerX,          yTop,  innerZ);
+    glTexCoord2f(0,1); glVertex3f(-innerX - radius, yTop,  innerZ);
 
     // right
-    glVertex3f(innerX,          yTop, -innerZ);
-    glVertex3f(innerX + radius, yTop, -innerZ);
-    glVertex3f(innerX + radius, yTop,  innerZ);
-    glVertex3f(innerX,          yTop,  innerZ);
+    glTexCoord2f(0,0); glVertex3f(innerX,          yTop, -innerZ);
+    glTexCoord2f(1,0); glVertex3f(innerX + radius, yTop, -innerZ);
+    glTexCoord2f(1,1); glVertex3f(innerX + radius, yTop,  innerZ);
+    glTexCoord2f(0,1); glVertex3f(innerX,          yTop,  innerZ);
 
     glEnd();
 
 
     /*===============================
-      ROUNDED CORNERS (smooth normals)
+      ROUNDED CORNERS (top texture)
     ===============================*/
     for (int c = 0; c < 4; c++)
     {
@@ -244,12 +302,19 @@ void drawTable(float x, float z)
 
         glBegin(GL_TRIANGLE_FAN);
         glNormal3f(0,1,0);
+
+        glTexCoord2f(0.5f, 0.5f);
         glVertex3f(cx, yTop, cz);
 
         for(int i=0;i<=segs;i++){
             float a = (start + i*(end-start)/segs) * M_PI/180.0f;
             float xPos = cx + radius*cos(a);
             float zPos = cz + radius*sin(a);
+
+            float u = 0.5f + 0.5f*cos(a);
+            float v = 0.5f + 0.5f*sin(a);
+
+            glTexCoord2f(u, v);
             glVertex3f(xPos, yTop, zPos);
         }
         glEnd();
@@ -257,10 +322,8 @@ void drawTable(float x, float z)
 
 
     /*===============================
-      CURVED SIDE WALLS (smooth normals)
+      CURVED SIDE WALLS (textured)
     ===============================*/
-    glColor3f(0.45f,0.23f,0.1f);
-
     for (int c = 0; c < 4; c++)
     {
         float cx = (c==0||c==3) ? innerX : -innerX;
@@ -279,57 +342,58 @@ void drawTable(float x, float z)
 
             float xPos = cx + radius*cos(a);
             float zPos = cz + radius*sin(a);
-
-            // Smooth outward normal
             float nx = cos(a);
             float nz = sin(a);
+
             glNormal3f(nx,0,nz);
 
-            glVertex3f(xPos,yBottom,zPos);
-            glVertex3f(xPos,yTop,   zPos);
+            float u = (float)i/segs;
+
+            glTexCoord2f(u,0); glVertex3f(xPos,yBottom,zPos);
+            glTexCoord2f(u,1); glVertex3f(xPos,yTop,   zPos);
         }
         glEnd();
     }
 
 
     /*===============================
-      FLAT SIDE WALLS (flat normals)
+      FLAT SIDE WALLS (textured)
     ===============================*/
     glBegin(GL_QUADS);
 
     // front
     glNormal3f(0,0,1);
-    glVertex3f(-innerX, yBottom, innerZ+radius);
-    glVertex3f( innerX, yBottom, innerZ+radius);
-    glVertex3f( innerX, yTop,    innerZ+radius);
-    glVertex3f(-innerX, yTop,    innerZ+radius);
+    glTexCoord2f(0,0); glVertex3f(-innerX, yBottom, innerZ+radius);
+    glTexCoord2f(1,0); glVertex3f( innerX, yBottom, innerZ+radius);
+    glTexCoord2f(1,1); glVertex3f( innerX, yTop,    innerZ+radius);
+    glTexCoord2f(0,1); glVertex3f(-innerX, yTop,    innerZ+radius);
 
     // back
     glNormal3f(0,0,-1);
-    glVertex3f(-innerX, yBottom, -innerZ-radius);
-    glVertex3f( innerX, yBottom, -innerZ-radius);
-    glVertex3f( innerX, yTop,    -innerZ-radius);
-    glVertex3f(-innerX, yTop,    -innerZ-radius);
+    glTexCoord2f(0,0); glVertex3f(-innerX, yBottom, -innerZ-radius);
+    glTexCoord2f(1,0); glVertex3f( innerX, yBottom, -innerZ-radius);
+    glTexCoord2f(1,1); glVertex3f( innerX, yTop,    -innerZ-radius);
+    glTexCoord2f(0,1); glVertex3f(-innerX, yTop,    -innerZ-radius);
 
     // left
     glNormal3f(-1,0,0);
-    glVertex3f(-innerX-radius, yBottom, -innerZ);
-    glVertex3f(-innerX-radius, yBottom,  innerZ);
-    glVertex3f(-innerX-radius, yTop,     innerZ);
-    glVertex3f(-innerX-radius, yTop,    -innerZ);
+    glTexCoord2f(0,0); glVertex3f(-innerX-radius, yBottom, -innerZ);
+    glTexCoord2f(1,0); glVertex3f(-innerX-radius, yBottom,  innerZ);
+    glTexCoord2f(1,1); glVertex3f(-innerX-radius, yTop,     innerZ);
+    glTexCoord2f(0,1); glVertex3f(-innerX-radius, yTop,    -innerZ);
 
     // right
     glNormal3f(1,0,0);
-    glVertex3f(innerX+radius, yBottom, -innerZ);
-    glVertex3f(innerX+radius, yBottom,  innerZ);
-    glVertex3f(innerX+radius, yTop,     innerZ);
-    glVertex3f(innerX+radius, yTop,    -innerZ);
+    glTexCoord2f(0,0); glVertex3f(innerX+radius, yBottom, -innerZ);
+    glTexCoord2f(1,0); glVertex3f(innerX+radius, yBottom,  innerZ);
+    glTexCoord2f(1,1); glVertex3f(innerX+radius, yTop,     innerZ);
+    glTexCoord2f(0,1); glVertex3f(innerX+radius, yTop,    -innerZ);
 
     glEnd();
 
 
     /*===============================
-      LEGS (drawCuboid already has normals)
+      LEGS  (use drawCuboid)
     ===============================*/
     float offsetX = innerX;
     float offsetZ = innerZ;
@@ -341,16 +405,17 @@ void drawTable(float x, float z)
         { offsetX, -offsetZ}
     };
 
-    glColor3f(0.35f,0.2f,0.1f);
     for(int i=0;i<4;i++){
         glPushMatrix();
         glTranslatef(pos[i][0], legHeight/2, pos[i][1]);
-        drawCuboid(legSize, legHeight, legSize);
+        drawCuboid(legSize, legHeight, legSize);  // supports texture if implemented
         glPopMatrix();
     }
 
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
+
 
 
 
@@ -367,15 +432,19 @@ void drawCocktailTable(float x, float z)
     glPushMatrix();
     glTranslatef(x, 0, z);
 
-    // Draw leg (central cylinder)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+
+    // Draw leg (textured cylinder)
     drawLeg(0, 0, height, legRadius);
 
-    // Draw circular tabletop
+    // Draw circular tabletop (textured disk)
     drawDisk(topRadius, height, topThickness);
 
-    // Optional base disk for stability
-    glColor3f(0.35, 0.2, 0.1);
+    // Draw base disk (also textured)
     drawDisk(0.6f, 0.0f, 0.05f);
+
+    glDisable(GL_TEXTURE_2D);
 
     glPopMatrix();
 }
@@ -389,67 +458,82 @@ void drawDoor(float x, float z, float width, float height)
     float yTop    = height;
     float halfW   = width / 2.0;
 
-    //
-    // Determine the correct normal direction
-    //
-    float nx = 0.0, ny = 0.0, nz = -1.0;   // Door on FRONT wall (z = +20)
-    // If door on BACK wall (z = -20) -> nz = +1
-    // If door on LEFT wall          -> nx = +1, nz = 0
-    // If door on RIGHT wall         -> nx = -1, nz = 0
+    float nx = 0.0, ny = 0.0, nz = -1.0;   // front wall
 
     /* ======================================================
-         DOOR FRAME (slightly in front of wall +0.01 offset)
+                DOOR FRAME  (uses doorFrameTex)
        ====================================================== */
-    glColor3f(0.3, 0.18, 0.05);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, doorFrameTex);
 
     glBegin(GL_QUADS);
 
     // ---- Left frame ----
     glNormal3f(nx, ny, nz);
-    glVertex3f(x - halfW - 0.1, yBottom, z + 0.01);
-    glVertex3f(x - halfW,       yBottom, z + 0.01);
-    glVertex3f(x - halfW,       yTop,    z + 0.01);
-    glVertex3f(x - halfW - 0.1, yTop,    z + 0.01);
+    glTexCoord2f(0, 0); glVertex3f(x - halfW - 0.1, yBottom, z + 0.01);
+    glTexCoord2f(1, 0); glVertex3f(x - halfW,       yBottom, z + 0.01);
+    glTexCoord2f(1, 1); glVertex3f(x - halfW,       yTop,    z + 0.01);
+    glTexCoord2f(0, 1); glVertex3f(x - halfW - 0.1, yTop,    z + 0.01);
 
     // ---- Right frame ----
     glNormal3f(nx, ny, nz);
-    glVertex3f(x + halfW,       yBottom, z + 0.01);
-    glVertex3f(x + halfW + 0.1, yBottom, z + 0.01);
-    glVertex3f(x + halfW + 0.1, yTop,    z + 0.01);
-    glVertex3f(x + halfW,       yTop,    z + 0.01);
+    glTexCoord2f(0, 0); glVertex3f(x + halfW,       yBottom, z + 0.01);
+    glTexCoord2f(1, 0); glVertex3f(x + halfW + 0.1, yBottom, z + 0.01);
+    glTexCoord2f(1, 1); glVertex3f(x + halfW + 0.1, yTop,    z + 0.01);
+    glTexCoord2f(0, 1); glVertex3f(x + halfW,       yTop,    z + 0.01);
 
     // ---- Top frame ----
     glNormal3f(nx, ny, nz);
-    glVertex3f(x - halfW - 0.1, yTop, z + 0.01);
-    glVertex3f(x + halfW + 0.1, yTop, z + 0.01);
-    glVertex3f(x + halfW + 0.1, yTop + 0.1, z + 0.01);
-    glVertex3f(x - halfW - 0.1, yTop + 0.1, z + 0.01);
+    glTexCoord2f(0, 0); glVertex3f(x - halfW - 0.1, yTop, z + 0.01);
+    glTexCoord2f(1, 0); glVertex3f(x + halfW + 0.1, yTop, z + 0.01);
+    glTexCoord2f(1, 1); glVertex3f(x + halfW + 0.1, yTop + 0.1, z + 0.01);
+    glTexCoord2f(0, 1); glVertex3f(x - halfW - 0.1, yTop + 0.1, z + 0.01);
 
     glEnd();
 
 
     /* ======================================================
-                   DOOR PANEL (wood)
+                   DOOR PANEL (flat front)  
+                   Uses *same* texture as frame
        ====================================================== */
-    glColor3f(0.45, 0.23, 0.10);
+
+    glBindTexture(GL_TEXTURE_2D, doorFrameTex);
 
     glBegin(GL_QUADS);
     glNormal3f(nx, ny, nz);
-    glVertex3f(x - halfW, yBottom, z);
-    glVertex3f(x + halfW, yBottom, z);
-    glVertex3f(x + halfW, yTop,    z);
-    glVertex3f(x - halfW, yTop,    z);
+
+    glTexCoord2f(0, 0); glVertex3f(x - halfW, yBottom, z);
+    glTexCoord2f(1, 0); glVertex3f(x + halfW, yBottom, z);
+    glTexCoord2f(1, 1); glVertex3f(x + halfW, yTop,    z);
+    glTexCoord2f(0, 1); glVertex3f(x - halfW, yTop,    z);
+
     glEnd();
+
+    glDisable(GL_TEXTURE_2D);
 
 
     /* ======================================================
-                 DOOR KNOB (emissive metal)
+                  DOOR KNOB (textured sphere)
        ====================================================== */
     glPushMatrix();
-    glColor3f(0.8, 0.8, 0.6);
     glTranslatef(x + halfW - 0.3, yBottom + height * 0.5, z + 0.05);
 
-    glutSolidSphere(0.08, 16, 16);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, doorKnobTex);
+
+    // enable automatic texture coords for sphere
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+
+    glutSolidSphere(0.12, 20, 20);
+
+    // disable automatic coords
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+
+    glDisable(GL_TEXTURE_2D);
 
     glPopMatrix();
 }
@@ -545,7 +629,8 @@ glDisable(GL_TEXTURE_2D);
 }
 
 
-void drawLamp(float xPos, float zPos) {
+void drawLamp(float xPos, float zPos)
+{
     int segments = 32;
 
     float baseRadius = 0.25f;
@@ -559,28 +644,37 @@ void drawLamp(float xPos, float zPos) {
     glPushMatrix();
     glTranslatef(xPos, baseHeight, zPos);
 
-    /* BASE */
-    glColor3f(0.85f, 0.85f, 0.85f);
-    glBegin(GL_TRIANGLES);
-    for (int i = 0; i < segments; i++) {
-        float t1 = 2 * PI * i / segments;
-        float t2 = 2 * PI * (i + 1) / segments;
 
-        float x1 = baseRadius * cos(t1);
-        float z1 = baseRadius * sin(t1);
-        float x2 = baseRadius * cos(t2);
-        float z2 = baseRadius * sin(t2);
 
-        glNormal3f(0, -1, 0);
-        glVertex3f(0, 0, 0);
-        glVertex3f(x1, 0, z1);
-        glVertex3f(x2, 0, z2);
+    /* ============================================================
+         BASE  (textured using lampRodTex)
+       ============================================================ */
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, lampRodTex);
+
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0,-1,0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0, 0, 0);
+
+    for (int i = 0; i <= segments; i++)
+    {
+        float t = 2 * PI * i / segments;
+        float u = (cos(t) + 1) * 0.5f;
+        float v = (sin(t) + 1) * 0.5f;
+
+        glTexCoord2f(u, v);
+        glVertex3f(baseRadius*cos(t), 0, baseRadius*sin(t));
     }
     glEnd();
 
-    /* POLE */
-    glColor3f(0.95f, 0.95f, 0.95f);
-    for (int i = 0; i < segments; i++) {
+
+
+    /* ============================================================
+         POLE (cylinder, textured using lampRodTex)
+       ============================================================ */
+    for (int i = 0; i < segments; i++)
+    {
         float t1 = 2 * PI * i / segments;
         float t2 = 2 * PI * (i + 1) / segments;
 
@@ -593,19 +687,27 @@ void drawLamp(float xPos, float zPos) {
         float nx2 = cos(t2), nz2 = sin(t2);
 
         glBegin(GL_QUADS);
-        glNormal3f(nx1, 0, nz1); glVertex3f(x1, 0, z1);
-        glNormal3f(nx2, 0, nz2); glVertex3f(x2, 0, z2);
-        glNormal3f(nx2, 0, nz2); glVertex3f(x2, poleHeight, z2);
-        glNormal3f(nx1, 0, nz1); glVertex3f(x1, poleHeight, z1);
+
+        glNormal3f(nx1,0,nz1);  glTexCoord2f((float)i/segments,0); glVertex3f(x1,0,z1);
+        glNormal3f(nx2,0,nz2);  glTexCoord2f((float)(i+1)/segments,0); glVertex3f(x2,0,z2);
+        glNormal3f(nx2,0,nz2);  glTexCoord2f((float)(i+1)/segments,1); glVertex3f(x2,poleHeight,z2);
+        glNormal3f(nx1,0,nz1);  glTexCoord2f((float)i/segments,1); glVertex3f(x1,poleHeight,z1);
+
         glEnd();
     }
 
-    /* SHADE */
+
+
+    /* ============================================================
+         SHADE (cone trunk, textured using lampShadeTex)
+       ============================================================ */
+    glBindTexture(GL_TEXTURE_2D, lampShadeTex);
+
     float shadeBottomY = poleHeight;
     float shadeTopY    = poleHeight + shadeHeight;
 
-    glColor3f(0.95f, 0.95f, 0.85f);
-    for (int i = 0; i < segments; i++) {
+    for (int i = 0; i < segments; i++)
+    {
         float t1 = 2 * PI * i / segments;
         float t2 = 2 * PI * (i + 1) / segments;
 
@@ -623,56 +725,62 @@ void drawLamp(float xPos, float zPos) {
         float nx2 = cos(t2), nz2 = sin(t2);
 
         glBegin(GL_QUADS);
-        glNormal3f(nx1, 0, nz1); glVertex3f(x1b, shadeBottomY, z1b);
-        glNormal3f(nx2, 0, nz2); glVertex3f(x2b, shadeBottomY, z2b);
-        glNormal3f(nx2, 0, nz2); glVertex3f(x2t, shadeTopY,    z2t);
-        glNormal3f(nx1, 0, nz1); glVertex3f(x1t, shadeTopY,    z1t);
+
+        glNormal3f(nx1,0,nz1);  glTexCoord2f((float)i/segments,0); glVertex3f(x1b,shadeBottomY,z1b);
+        glNormal3f(nx2,0,nz2);  glTexCoord2f((float)(i+1)/segments,0); glVertex3f(x2b,shadeBottomY,z2b);
+        glNormal3f(nx2,0,nz2);  glTexCoord2f((float)(i+1)/segments,1); glVertex3f(x2t,shadeTopY,z2t);
+        glNormal3f(nx1,0,nz1);  glTexCoord2f((float)i/segments,1); glVertex3f(x1t,shadeTopY,z1t);
+
         glEnd();
     }
 
-    /* SHADE TOP */
-    glBegin(GL_TRIANGLES);
-    for (int i = 0; i < segments; i++) {
-        float t1 = 2 * PI * i / segments;
-        float t2 = 2 * PI * (i + 1) / segments;
 
-        float x1 = shadeTopRadius * cos(t1);
-        float z1 = shadeTopRadius * sin(t1);
-        float x2 = shadeTopRadius * cos(t2);
-        float z2 = shadeTopRadius * sin(t2);
 
-        glNormal3f(0, 1, 0);
-        glVertex3f(0, shadeTopY, 0);
-        glVertex3f(x1, shadeTopY, z1);
-        glVertex3f(x2, shadeTopY, z2);
+    /* ============================================================
+         SHADE TOP CAP  (textured, but inverted UV center)
+       ============================================================ */
+    glBegin(GL_TRIANGLE_FAN);
+
+    glNormal3f(0, 1, 0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0, shadeTopY, 0);
+
+    for (int i = 0; i <= segments; i++)
+    {
+        float t = 2 * PI * i / segments;
+        float u = (cos(t) + 1) * 0.5f;
+        float v = (sin(t) + 1) * 0.5f;
+
+        glTexCoord2f(u, v);
+        glVertex3f(shadeTopRadius*cos(t), shadeTopY, shadeTopRadius*sin(t));
     }
+
     glEnd();
 
+    glDisable(GL_TEXTURE_2D);
 
-    /* ======================================================
-       BULB + LIGHT1 POSITION  (UPDATED SECTION)
-       ====================================================== */
+
+
+    /* ============================================================
+         BULB + LIGHT — UNCHANGED
+       ============================================================ */
     if (lightState == 2)
     {
         glPushMatrix();
 
         float bulbLocalY = shadeBottomY + 0.4f;
-
         glTranslatef(0, bulbLocalY, 0);
 
-        // bulb glow
-        float bulbEmission[] = {1.0, 0.9, 0.7, 1.0};
+        float bulbEmission[] = {1.0,0.9,0.7,1.0};
         glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
 
-        glutSolidSphere(0.25, 20, 20);
+        glutSolidSphere(0.25,20,20);
 
-        // disable emission again
         float noEmission[] = {0,0,0,1};
         glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
 
         glPopMatrix();
 
-        // ---- Set GL_LIGHT1 position here (world space) ----
         float bulbWorldX = xPos;
         float bulbWorldY = baseHeight + bulbLocalY;
         float bulbWorldZ = zPos;
@@ -681,8 +789,10 @@ void drawLamp(float xPos, float zPos) {
         glLightfv(GL_LIGHT1, GL_POSITION, pos1);
     }
 
+
     glPopMatrix();
 }
+
 
 
 void drawBanquetChair(float x, float z)
@@ -690,9 +800,8 @@ void drawBanquetChair(float x, float z)
     glPushMatrix();
     glTranslatef(x, 0, z);
 
-    // ==== Parameters ====
     float seatY = 1.0f;
-    float thickness = 0.25f;   // shared thickness for seat and backrest
+    float thickness = 0.25f;
     float seatW = 1.0f;
     float seatD = 1.0f;
     float legH = 1.0f;
@@ -701,53 +810,74 @@ void drawBanquetChair(float x, float z)
     float curveDepth = 0.25f;
     int segments = 20;
 
-    // ==== Seat (solid rectangular block) ====
-    glColor3f(0.9f, 0.9f, 0.8f);
+    float halfT = thickness * 0.5f;
+    float baseZ = -seatD / 2.0f;
+    float backBaseY = seatY - thickness / 2.0f;
+
+    /* ============================================================
+                    SEAT — CUSHION TEXTURE
+       ============================================================ */
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, chairCushionTex);
+
     glBegin(GL_QUADS);
-    // top
-    glVertex3f(-seatW/2, seatY + thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY + thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY + thickness/2,  seatD/2);
-    glVertex3f(-seatW/2, seatY + thickness/2,  seatD/2);
 
-    // bottom
-    glVertex3f(-seatW/2, seatY - thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY - thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY - thickness/2,  seatD/2);
-    glVertex3f(-seatW/2, seatY - thickness/2,  seatD/2);
+    // Top
+    glNormal3f(0,1,0);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, seatY+halfT, -seatD/2);
+    glTexCoord2f(1,0); glVertex3f( seatW/2, seatY+halfT, -seatD/2);
+    glTexCoord2f(1,1); glVertex3f( seatW/2, seatY+halfT,  seatD/2);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, seatY+halfT,  seatD/2);
 
-    // left
-    glVertex3f(-seatW/2, seatY - thickness/2, -seatD/2);
-    glVertex3f(-seatW/2, seatY + thickness/2, -seatD/2);
-    glVertex3f(-seatW/2, seatY + thickness/2,  seatD/2);
-    glVertex3f(-seatW/2, seatY - thickness/2,  seatD/2);
+    // Bottom
+    glNormal3f(0,-1,0);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,0); glVertex3f( seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,1); glVertex3f( seatW/2, seatY-halfT,  seatD/2);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, seatY-halfT,  seatD/2);
 
-    // right
-    glVertex3f(seatW/2, seatY - thickness/2, -seatD/2);
-    glVertex3f(seatW/2, seatY + thickness/2, -seatD/2);
-    glVertex3f(seatW/2, seatY + thickness/2,  seatD/2);
-    glVertex3f(seatW/2, seatY - thickness/2,  seatD/2);
+    // Left
+    glNormal3f(-1,0,0);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,0); glVertex3f(-seatW/2, seatY+halfT, -seatD/2);
+    glTexCoord2f(1,1); glVertex3f(-seatW/2, seatY+halfT,  seatD/2);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, seatY-halfT,  seatD/2);
 
-    // front
-    glVertex3f(-seatW/2, seatY - thickness/2, seatD/2);
-    glVertex3f(seatW/2,  seatY - thickness/2, seatD/2);
-    glVertex3f(seatW/2,  seatY + thickness/2, seatD/2);
-    glVertex3f(-seatW/2, seatY + thickness/2, seatD/2);
+    // Right
+    glNormal3f(1,0,0);
+    glTexCoord2f(0,0); glVertex3f(seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,0); glVertex3f(seatW/2, seatY+halfT, -seatD/2);
+    glTexCoord2f(1,1); glVertex3f(seatW/2, seatY+halfT,  seatD/2);
+    glTexCoord2f(0,1); glVertex3f(seatW/2, seatY-halfT,  seatD/2);
 
-    // back
-    glVertex3f(-seatW/2, seatY - thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY - thickness/2, -seatD/2);
-    glVertex3f(seatW/2,  seatY + thickness/2, -seatD/2);
-    glVertex3f(-seatW/2, seatY + thickness/2, -seatD/2);
+    // Front
+    glNormal3f(0,0,1);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, seatY-halfT, seatD/2);
+    glTexCoord2f(1,0); glVertex3f( seatW/2, seatY-halfT, seatD/2);
+    glTexCoord2f(1,1); glVertex3f( seatW/2, seatY+halfT, seatD/2);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, seatY+halfT, seatD/2);
+
+    // Back
+    glNormal3f(0,0,-1);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,0); glVertex3f( seatW/2, seatY-halfT, -seatD/2);
+    glTexCoord2f(1,1); glVertex3f( seatW/2, seatY+halfT, -seatD/2);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, seatY+halfT, -seatD/2);
+
     glEnd();
 
-    // ==== Legs ====
-    glColor3f(0.8f, 0.6f, 0.2f);
+
+
+    /* ============================================================
+                    LEGS — LEG TEXTURE
+       ============================================================ */
+    glBindTexture(GL_TEXTURE_2D, chairLegTex);
+
     float legW = 0.07f;
     float halfW = seatW/2 - 0.1f;
     float halfD = seatD/2 - 0.1f;
 
-    float legTop = seatY - thickness/2;
+    float legTop = seatY - halfT;
     float legBottom = legTop - legH;
 
     for (int i = -1; i <= 1; i += 2)
@@ -757,110 +887,127 @@ void drawBanquetChair(float x, float z)
         float lz = j * halfD;
 
         glBegin(GL_QUADS);
-        // front
-        glVertex3f(lx - legW/2, legBottom, lz - legW/2);
-        glVertex3f(lx + legW/2, legBottom, lz - legW/2);
-        glVertex3f(lx + legW/2, legTop,    lz - legW/2);
-        glVertex3f(lx - legW/2, legTop,    lz - legW/2);
+        // Front
+        glNormal3f(0,0,1);
+        glTexCoord2f(0,0); glVertex3f(lx-legW/2, legBottom, lz-legW/2);
+        glTexCoord2f(1,0); glVertex3f(lx+legW/2, legBottom, lz-legW/2);
+        glTexCoord2f(1,1); glVertex3f(lx+legW/2, legTop,    lz-legW/2);
+        glTexCoord2f(0,1); glVertex3f(lx-legW/2, legTop,    lz-legW/2);
 
-        // back
-        glVertex3f(lx - legW/2, legBottom, lz + legW/2);
-        glVertex3f(lx + legW/2, legBottom, lz + legW/2);
-        glVertex3f(lx + legW/2, legTop,    lz + legW/2);
-        glVertex3f(lx - legW/2, legTop,    lz + legW/2);
+        // Back
+        glNormal3f(0,0,-1);
+        glTexCoord2f(0,0); glVertex3f(lx-legW/2, legBottom, lz+legW/2);
+        glTexCoord2f(1,0); glVertex3f(lx+legW/2, legBottom, lz+legW/2);
+        glTexCoord2f(1,1); glVertex3f(lx+legW/2, legTop,    lz+legW/2);
+        glTexCoord2f(0,1); glVertex3f(lx-legW/2, legTop,    lz+legW/2);
 
-        // left
-        glVertex3f(lx - legW/2, legBottom, lz - legW/2);
-        glVertex3f(lx - legW/2, legBottom, lz + legW/2);
-        glVertex3f(lx - legW/2, legTop,    lz + legW/2);
-        glVertex3f(lx - legW/2, legTop,    lz - legW/2);
+        // Left
+        glNormal3f(-1,0,0);
+        glTexCoord2f(0,0); glVertex3f(lx-legW/2, legBottom, lz-legW/2);
+        glTexCoord2f(1,0); glVertex3f(lx-legW/2, legBottom, lz+legW/2);
+        glTexCoord2f(1,1); glVertex3f(lx-legW/2, legTop,    lz+legW/2);
+        glTexCoord2f(0,1); glVertex3f(lx-legW/2, legTop,    lz-legW/2);
 
-        // right
-        glVertex3f(lx + legW/2, legBottom, lz - legW/2);
-        glVertex3f(lx + legW/2, legBottom, lz + legW/2);
-        glVertex3f(lx + legW/2, legTop,    lz + legW/2);
-        glVertex3f(lx + legW/2, legTop,    lz - legW/2);
+        // Right
+        glNormal3f(1,0,0);
+        glTexCoord2f(0,0); glVertex3f(lx+legW/2, legBottom, lz-legW/2);
+        glTexCoord2f(1,0); glVertex3f(lx+legW/2, legBottom, lz+legW/2);
+        glTexCoord2f(1,1); glVertex3f(lx+legW/2, legTop,    lz+legW/2);
+        glTexCoord2f(0,1); glVertex3f(lx+legW/2, legTop,    lz-legW/2);
+
         glEnd();
     }
 
-/* ====================================================
-      CURVED BACKREST — WITH FULL THICKNESS + NORMALS
-   ==================================================== */
 
-glColor3f(0.9f, 0.9f, 0.8f);
 
-float baseZ = -seatD/2;      
-float halfT = thickness / 2.0f;
-float backBaseY = seatY - thickness/2;
+    /* ============================================================
+          CURVED BACKREST — CUSHION TEXTURE
+       ============================================================ */
+    glBindTexture(GL_TEXTURE_2D, chairCushionTex);
 
-// each segment draws front, back, left, right
-for (int i = 0; i < segments; i++)
-{
-    float t1 = (float)i / segments;
-    float t2 = (float)(i + 1) / segments;
+    for (int i = 0; i < segments; i++)
+    {
+        float t1 = (float)i / segments;
+        float t2 = (float)(i+1) / segments;
 
-    float y1 = backBaseY + t1 * backHeight;
-    float y2 = backBaseY + t2 * backHeight;
+        float y1 = backBaseY + t1 * backHeight;
+        float y2 = backBaseY + t2 * backHeight;
 
-    float z1 = baseZ - curveDepth * (t1 * t1);
-    float z2 = baseZ - curveDepth * (t2 * t2);
+        float z1 = baseZ - curveDepth * (t1 * t1);
+        float z2 = baseZ - curveDepth * (t2 * t2);
 
-    float dy = (y2 - y1);
-    float dz = (z2 - z1);
-    float len = sqrtf(dy*dy + dz*dz);
-    float ny = dy/len;
-    float nz = dz/len;
+        float dy = (y2 - y1);
+        float dz = (z2 - z1);
+        float len = sqrtf(dy*dy + dz*dz);
+        float ny = dy/len;
+        float nz = dz/len;
 
-    // ===== FRONT FACE =====
+        float u1 = 0, u2 = 1;
+
+        /* FRONT */
+        glBegin(GL_QUADS);
+        glNormal3f(0, ny, nz);
+        glTexCoord2f(u1, t1);
+        glVertex3f(-seatW/2, y1, z1+halfT);
+
+        glTexCoord2f(u2, t1);
+        glVertex3f( seatW/2, y1, z1+halfT);
+
+        glTexCoord2f(u2, t2);
+        glVertex3f( seatW/2, y2, z2+halfT);
+
+        glTexCoord2f(u1, t2);
+        glVertex3f(-seatW/2, y2, z2+halfT);
+        glEnd();
+
+        /* BACK */
+        glBegin(GL_QUADS);
+        glNormal3f(0, ny, -nz);
+        glTexCoord2f(u1, t1);
+        glVertex3f(-seatW/2, y1, z1-halfT);
+
+        glTexCoord2f(u2, t1);
+        glVertex3f( seatW/2, y1, z1-halfT);
+
+        glTexCoord2f(u2, t2);
+        glVertex3f( seatW/2, y2, z2-halfT);
+
+        glTexCoord2f(u1, t2);
+        glVertex3f(-seatW/2, y2, z2-halfT);
+        glEnd();
+
+        /* LEFT side */
+        glBegin(GL_QUADS);
+        glNormal3f(-1,0,0);
+        glTexCoord2f(0, t1); glVertex3f(-seatW/2, y1, z1-halfT);
+        glTexCoord2f(1, t1); glVertex3f(-seatW/2, y1, z1+halfT);
+        glTexCoord2f(1, t2); glVertex3f(-seatW/2, y2, z2+halfT);
+        glTexCoord2f(0, t2); glVertex3f(-seatW/2, y2, z2-halfT);
+        glEnd();
+
+        /* RIGHT side */
+        glBegin(GL_QUADS);
+        glNormal3f(1,0,0);
+        glTexCoord2f(0, t1); glVertex3f(seatW/2, y1, z1-halfT);
+        glTexCoord2f(1, t1); glVertex3f(seatW/2, y1, z1+halfT);
+        glTexCoord2f(1, t2); glVertex3f(seatW/2, y2, z2+halfT);
+        glTexCoord2f(0, t2); glVertex3f(seatW/2, y2, z2-halfT);
+        glEnd();
+    }
+
+    /* TOP CAP */
+    float yTop = backBaseY + backHeight;
+    float zTop = baseZ - curveDepth;
+
     glBegin(GL_QUADS);
-    glNormal3f(0, ny, nz);
-    glVertex3f(-seatW/2, y1, z1 + halfT);
-    glVertex3f( seatW/2, y1, z1 + halfT);
-    glVertex3f( seatW/2, y2, z2 + halfT);
-    glVertex3f(-seatW/2, y2, z2 + halfT);
+    glNormal3f(0,1,0);
+    glTexCoord2f(0,0); glVertex3f(-seatW/2, yTop, zTop-halfT);
+    glTexCoord2f(1,0); glVertex3f( seatW/2, yTop, zTop-halfT);
+    glTexCoord2f(1,1); glVertex3f( seatW/2, yTop, zTop+halfT);
+    glTexCoord2f(0,1); glVertex3f(-seatW/2, yTop, zTop+halfT);
     glEnd();
 
-    // ===== BACK FACE =====
-    glBegin(GL_QUADS);
-    glNormal3f(0, ny, -nz);
-    glVertex3f(-seatW/2, y1, z1 - halfT);
-    glVertex3f( seatW/2, y1, z1 - halfT);
-    glVertex3f( seatW/2, y2, z2 - halfT);
-    glVertex3f(-seatW/2, y2, z2 - halfT);
-    glEnd();
-
-    // ===== LEFT SIDE =====
-    glBegin(GL_QUADS);
-    glNormal3f(-1, 0, 0);
-    glVertex3f(-seatW/2, y1, z1 - halfT);
-    glVertex3f(-seatW/2, y1, z1 + halfT);
-    glVertex3f(-seatW/2, y2, z2 + halfT);
-    glVertex3f(-seatW/2, y2, z2 - halfT);
-    glEnd();
-
-    // ===== RIGHT SIDE =====
-    glBegin(GL_QUADS);
-    glNormal3f(1, 0, 0);
-    glVertex3f(seatW/2, y1, z1 - halfT);
-    glVertex3f(seatW/2, y1, z1 + halfT);
-    glVertex3f(seatW/2, y2, z2 + halfT);
-    glVertex3f(seatW/2, y2, z2 - halfT);
-    glEnd();
-}
-
-// ====== TOP CAP (with normal pointing up) ======
-float yTop = backBaseY + backHeight;
-float zTop = baseZ - curveDepth;
-
-glBegin(GL_QUADS);
-glNormal3f(0,1,0);
-glVertex3f(-seatW/2, yTop, zTop - halfT);
-glVertex3f( seatW/2, yTop, zTop - halfT);
-glVertex3f( seatW/2, yTop, zTop + halfT);
-glVertex3f(-seatW/2, yTop, zTop + halfT);
-glEnd();
-
-
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
 
