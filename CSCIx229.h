@@ -83,6 +83,8 @@ void drawLamp(float x, float z);
 void drawDoor(float x, float z, float width, float height);
 void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                       float yBase, float radiusH, float radiusV, float zOffset);
+void drawCocktailTable2(float x, float z);
+void drawCocktailTable3(float x, float z);
 
 // --- Controls ---
 void controls_key(unsigned char ch, int x, int y);

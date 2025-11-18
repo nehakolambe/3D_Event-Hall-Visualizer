@@ -325,12 +325,9 @@ void scene_init()
     float ctX[3] = {0, -12, 12};
     float ctZ[3] = {-5, -3, -3};
 
-    for (int i = 0; i < 3; i++)
-    {
-        char name[32];
-        sprintf(name, "Cocktail_%d", i+1);
-        addObject(name, ctX[i], ctZ[i], drawCocktailTable, 1);
-    }
+    addObject("Cocktail_1", ctX[0], ctZ[0], drawCocktailTable, 1);
+    addObject("Cocktail_2", ctX[1], ctZ[1] + 10.0f, drawCocktailTable2, 1);
+    addObject("Cocktail_3", ctX[2], ctZ[2] + 10.0f, drawCocktailTable3, 1);
 
     // ---------------------------
     // 2 door lamps

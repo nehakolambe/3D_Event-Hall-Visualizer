@@ -1084,3 +1084,275 @@ void rotateObject(SceneObject* obj, float angle)
     if (obj->rotation >= 360.0f) obj->rotation -= 360.0f;
     if (obj->rotation < 0.0f)    obj->rotation += 360.0f;
 }
+
+
+//-----------------------------------------------------------
+//  NEW SNOWFLAKE COCKTAIL TABLE
+//-----------------------------------------------------------
+void drawCocktailTable2(float x, float z)
+{
+    const int N = 8;
+    const int ARC_STEPS = 12;
+    const float R = 1.4f;
+    const float CURVE_IN = 0.22f;
+    const float THICK = 0.12f;
+
+    // MATCH CocktailTable1 height
+    const float HEIGHT = 4.0f;    
+    const float LEG_H  = HEIGHT;
+
+    const float LEG_TOP_R = 0.10f;
+    const float LEG_BOTTOM_R = 0.04f;
+
+    glPushMatrix();
+    glTranslatef(x, 0, z);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+
+    //------------------------------------------------
+    // 1. SNOWFLAKE TOP — now at HEIGHT + THICK
+    //------------------------------------------------
+    float wedgeAngle = 2 * M_PI / N;
+
+    glBegin(GL_TRIANGLES);
+    for (int w = 0; w < N; w++)
+    {
+        float a0 = w * wedgeAngle;
+        float a1 = (w + 1) * wedgeAngle;
+
+        float prev_x = 0, prev_z = 0;
+
+        for (int i = 0; i <= ARC_STEPS; i++)
+        {
+            float t = (float)i / ARC_STEPS;
+            float a = a0 + t * (a1 - a0);
+
+            float mid = fabs(t - 0.5f) * 2.0f;
+            float curve = CURVE_IN * (1 - mid);
+            float r = R - curve;
+
+            float xArc = r * cos(a);
+            float zArc = r * sin(a);
+
+            if (i > 0)
+            {
+                glNormal3f(0,1,0);
+
+                glTexCoord2f(0.5f,0.5f);
+                glVertex3f(0, HEIGHT + THICK, 0);
+
+                glTexCoord2f((cos(a0)+1)/2, (sin(a0)+1)/2);
+                glVertex3f(prev_x, HEIGHT + THICK, prev_z);
+
+                glTexCoord2f((cos(a)+1)/2, (sin(a)+1)/2);
+                glVertex3f(xArc, HEIGHT + THICK, zArc);
+            }
+
+            prev_x = xArc;
+            prev_z = zArc;
+        }
+    }
+    glEnd();
+
+    //------------------------------------------------
+    // 2. Tabletop side wall
+    //------------------------------------------------
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= N * ARC_STEPS; i++)
+    {
+        float a = (float)i / (N * ARC_STEPS) * 2 * M_PI;
+
+        float wedgePos = fmod(a, wedgeAngle) / wedgeAngle;
+        float mid = fabs(wedgePos - 0.5f) * 2.0f;
+        float curve = CURVE_IN * (1 - mid);
+
+        float r = R - curve;
+        float x = r * cos(a);
+        float z = r * sin(a);
+
+        glNormal3f(cos(a), 0, sin(a));
+        glTexCoord2f((float)i/(N*ARC_STEPS), 1);
+        glVertex3f(x, HEIGHT, z);
+
+        glTexCoord2f((float)i/(N*ARC_STEPS), 0);
+        glVertex3f(x, HEIGHT + THICK, z);
+    }
+    glEnd();
+
+    //------------------------------------------------
+    // 3. Underside
+    //------------------------------------------------
+    glBegin(GL_TRIANGLES);
+    for (int w = 0; w < N; w++)
+    {
+        float a0 = w * wedgeAngle;
+        float a1 = (w + 1) * wedgeAngle;
+        float prev_x = 0, prev_z = 0;
+
+        for (int i = 0; i <= ARC_STEPS; i++)
+        {
+            float t = (float)i / ARC_STEPS;
+            float a = a0 + t * (a1 - a0);
+
+            float mid = fabs(t - 0.5f) * 2.0f;
+            float curve = CURVE_IN * (1 - mid);
+            float r = R - curve;
+
+            float xArc = r * cos(a);
+            float zArc = r * sin(a);
+
+            if (i > 0)
+            {
+                glNormal3f(0,-1,0);
+                glVertex3f(0, HEIGHT, 0);
+                glVertex3f(prev_x, HEIGHT, prev_z);
+                glVertex3f(xArc, HEIGHT, zArc);
+            }
+
+            prev_x = xArc;
+            prev_z = zArc;
+        }
+    }
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+
+    //------------------------------------------------
+    // 4. Three tapered legs — EXACT SAME HEIGHT
+    //------------------------------------------------
+    for (int i = 0; i < 3; i++)
+    {
+        float ang = i * 2 * M_PI / 3;
+        float lx = 0.8f * cos(ang);
+        float lz = 0.8f * sin(ang);
+
+        glPushMatrix();
+        glTranslatef(lx, HEIGHT, lz);
+        glRotatef(-10, sin(ang), 0, -cos(ang));
+
+        glBegin(GL_QUAD_STRIP);
+        for (int s = 0; s <= 24; s++)
+        {
+            float t = 2 * M_PI * s / 24.0f;
+
+            float nx = cos(t);
+            float nz = sin(t);
+
+            glNormal3f(nx,0,nz);
+            glVertex3f(nx * LEG_BOTTOM_R, -LEG_H, nz * LEG_BOTTOM_R);
+            glVertex3f(nx * LEG_TOP_R, 0, nz * LEG_TOP_R);
+        }
+        glEnd();
+
+        glPopMatrix();
+    }
+
+    glPopMatrix();
+}
+
+
+void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
+{
+    float angleStep = (2.0f * M_PI) / slices;
+
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < slices; i++)
+    {
+        float a0 = i * angleStep;
+        float a1 = (i + 1) * angleStep;
+
+        float x0b = bottomRadius * cos(a0);
+        float z0b = bottomRadius * sin(a0);
+        float x1b = bottomRadius * cos(a1);
+        float z1b = bottomRadius * sin(a1);
+
+        float x0t = topRadius * cos(a0);
+        float z0t = topRadius * sin(a0);
+        float x1t = topRadius * cos(a1);
+        float z1t = topRadius * sin(a1);
+
+        // texture coordinates (cylindrical)
+        float u0 = (float)i / slices;
+        float u1 = (float)(i + 1) / slices;
+
+        // normals for smooth shading
+        float nx0 = x0b + x0t;
+        float nz0 = z0b + z0t;
+        float len0 = sqrt(nx0 * nx0 + nz0 * nz0);
+        nx0 /= len0; nz0 /= len0;
+
+        float nx1 = x1b + x1t;
+        float nz1 = z1b + z1t;
+        float len1 = sqrt(nx1 * nx1 + nz1 * nz1);
+        nx1 /= len1; nz1 /= len1;
+
+        // --- Triangle 1 ---
+        glNormal3f(nx0, 0, nz0);
+        glTexCoord2f(u0, 0); glVertex3f(x0b, 0, z0b);
+        glTexCoord2f(u0, 1); glVertex3f(x0t, height, z0t);
+        glNormal3f(nx1, 0, nz1);
+        glTexCoord2f(u1, 1); glVertex3f(x1t, height, z1t);
+
+        // --- Triangle 2 ---
+        glNormal3f(nx0, 0, nz0);
+        glTexCoord2f(u0, 0); glVertex3f(x0b, 0, z0b);
+        glNormal3f(nx1, 0, nz1);
+        glTexCoord2f(u1, 1); glVertex3f(x1t, height, z1t);
+        glTexCoord2f(u1, 0); glVertex3f(x1b, 0, z1b);
+    }
+    glEnd();
+}
+
+void drawCocktailTable3(float x, float z)
+{
+    glPushMatrix();
+    glTranslatef(x, 0, z);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+
+    int slices = 40;
+
+    //-----------------------------------------
+    // Match CocktailTable height = 4.0f total
+    //-----------------------------------------
+    float bottomHeight = 2.3f;
+    float topHeight    = 1.7f;       // together = 4.0f
+
+    //-----------------------------------------
+    // Bottom frustum
+    //-----------------------------------------
+    drawFrustum(0.85f, 0.45f, bottomHeight, slices);
+
+    glTranslatef(0, bottomHeight, 0);
+
+    //-----------------------------------------
+    // Upper frustum
+    //-----------------------------------------
+    drawFrustum(0.45f, 1.35f, topHeight, slices);
+
+    //-----------------------------------------
+    // Top disk
+    //-----------------------------------------
+    float R = 1.35f;
+
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0,1,0);
+    glTexCoord2f(0.5f,0.5f);
+    glVertex3f(0, topHeight, 0);
+
+    for (int i = 0; i <= slices; i++)
+    {
+        float ang = 2 * M_PI * i / slices;
+        float cx = cos(ang);
+        float cz = sin(ang);
+
+        glTexCoord2f((cx + 1) * 0.5f, (cz + 1) * 0.5f);
+        glVertex3f(R * cx, topHeight, R * cz);
+    }
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+}
