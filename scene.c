@@ -56,6 +56,118 @@ static void drawQuadN(float x1,float y1,float z1,
     glEnd();
 }
 
+// =======================================================
+//    Reusable tiled surface drawer
+//    Draws a surface subdivided into many 2×2 tiles
+// =======================================================
+//
+//  xmin,xmax   → width direction (horizontal)
+//  ymin,ymax   → height direction (vertical)
+//  zmin,zmax   → depth direction
+//
+//  nx,ny,nz    → normal for entire surface
+//
+//  dir         → plane selector
+//                0 = XZ plane (floor/ceiling)
+//                1 = XY plane (front/back walls)
+//                2 = ZY plane (left/right walls)
+//
+//  tileSize    → recommended = 2.0
+//
+void drawTiledSurface(
+    float x1, float y1, float z1,
+    float x2, float y2, float z2,
+    float nx, float ny, float nz,
+    float tileSize
+)
+{
+    // Determine orientation
+    int dir;
+
+    if (y1 == y2)      dir = 0; // XZ plane (floor, ceiling)
+    else if (z1 == z2) dir = 1; // XY plane (front/back)
+    else               dir = 2; // ZY plane (left/right)
+
+    glNormal3f(nx, ny, nz);
+
+    // Floor/Ceiling (XZ)
+    if (dir == 0)
+    {
+        float xmin = x1, xmax = x2;
+        float zmin = z1, zmax = z2;
+        float y = y1;
+
+        for (float x = xmin; x < xmax; x += tileSize)
+        {
+            for (float z = zmin; z < zmax; z += tileSize)
+            {
+                float xA = x;
+                float xB = fmin(x + tileSize, xmax);
+                float zA = z;
+                float zB = fmin(z + tileSize, zmax);
+
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0,0); glVertex3f(xA, y, zA);
+                    glTexCoord2f(1,0); glVertex3f(xB, y, zA);
+                    glTexCoord2f(1,1); glVertex3f(xB, y, zB);
+                    glTexCoord2f(0,1); glVertex3f(xA, y, zB);
+                glEnd();
+            }
+        }
+    }
+
+    // Front/Back walls (XY)
+    else if (dir == 1)
+    {
+        float xmin = x1, xmax = x2;
+        float ymin = y1, ymax = y2;
+        float z = z1;
+
+        for (float x = xmin; x < xmax; x += tileSize)
+        {
+            for (float y = ymin; y < ymax; y += tileSize)
+            {
+                float xA = x;
+                float xB = fmin(x + tileSize, xmax);
+                float yA = y;
+                float yB = fmin(y + tileSize, ymax);
+
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0,0); glVertex3f(xA, yA, z);
+                    glTexCoord2f(1,0); glVertex3f(xB, yA, z);
+                    glTexCoord2f(1,1); glVertex3f(xB, yB, z);
+                    glTexCoord2f(0,1); glVertex3f(xA, yB, z);
+                glEnd();
+            }
+        }
+    }
+
+    // Left/Right walls (ZY)
+    else
+    {
+        float zmin = z1, zmax = z2;
+        float ymin = y1, ymax = y2;
+        float x = x1;
+
+        for (float z = zmin; z < zmax; z += tileSize)
+        {
+            for (float y = ymin; y < ymax; y += tileSize)
+            {
+                float zA = z;
+                float zB = fmin(z + tileSize, zmax);
+                float yA = y;
+                float yB = fmin(y + tileSize, ymax);
+
+                glBegin(GL_QUADS);
+                    glTexCoord2f(0,0); glVertex3f(x, yA, zA);
+                    glTexCoord2f(1,0); glVertex3f(x, yA, zB);
+                    glTexCoord2f(1,1); glVertex3f(x, yB, zB);
+                    glTexCoord2f(0,1); glVertex3f(x, yB, zA);
+                glEnd();
+            }
+        }
+    }
+}
 
 
 void drawBBox(SceneObject* o)
@@ -276,45 +388,42 @@ void scene_display()
 
     if (!debugMode)
     {
-        // ==== Floor ====
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, floorTex);
-        drawQuadN(-20,0,-30, 20,0,-30,
-          20,0,30, -20,0,30,
-          0,1,0,
-          0.6,0.6,0.6);
-        glDisable(GL_TEXTURE_2D);
+        // ==== Floor (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, floorTex);
+drawTiledSurface(-20,0,-30, 20,0,30, 0,1,0, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-        // ==== Ceiling ====
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawQuadN(-20,15,-30, -20,15,30,
-          20,15,30, 20,15,-30,
-          0,-1,0,
-          0.9,0.9,0.9);
+// ==== Ceiling (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, wallTex);
+drawTiledSurface(-20,15,-30, 20,15,30, 0,-1,0, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-        // ==== Walls ====
-        drawQuadN(-20,0,-30, 20,0,-30,
-          20,15,-30, -20,15,-30,
-          0,0,1,
-          0.7,0.7,0.75);
+// ==== Back Wall (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, wallTex);
+drawTiledSurface(-20,0,-30, 20,15,-30, 0,0,1, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-        drawQuadN(-20,0,30, -20,15,30,
-          20,15,30, 20,0,30,
-          0,0,-1,
-          0.7,0.7,0.75);
+// ==== Front Wall (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, wallTex);
+drawTiledSurface(-20,0,30, 20,15,30, 0,0,-1, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-        drawQuadN(-20,0,-30, -20,15,-30,
-          -20,15,30, -20,0,30,
-          1,0,0,
-          0.8,0.8,0.85);
+// ==== Left Wall (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, wallTex);
+drawTiledSurface(-20,0,-30, -20,15,30, 1,0,0, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-        drawQuadN(20,0,-30, 20,0,30,
-          20,15,30, 20,15,-30,
-          -1,0,0,
-          0.8,0.8,0.85);
+// ==== Right Wall (tiled) ====
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, wallTex);
+drawTiledSurface(20,0,-30, 20,15,30, -1,0,0, 2.0);
+glDisable(GL_TEXTURE_2D);
 
-          glDisable(GL_TEXTURE_2D);
 
         // ==== Stage ====
         float stageTop = 2.0;
@@ -370,37 +479,6 @@ void scene_display()
             glPopMatrix();
         }
 
-        // -----------------------------
-        // EVENT LAYOUT (tables/chairs)
-        // -----------------------------
-        // placeEventTables();
-        // placeCocktailTables();
-        // placeDoorLamps();
-
-        // ==== Windows ====
-        // Left Window 1
-        drawQuadN(-19.9, 6, -15,  -19.9, 6, -5,
-                -19.9,10, -5,  -19.9,10,-15,
-                1,0,0,          // NORMAL
-                0.3,0.5,0.9);
-
-        // Left Window 2
-        drawQuadN(-19.9, 6, 5,  -19.9, 6, 15,
-                -19.9,10,15, -19.9,10, 5,
-                1,0,0,          // NORMAL
-                0.3,0.5,0.9);
-
-        // Right Window 1
-        drawQuadN(19.9, 6, -15,  19.9, 6, -5,
-                19.9,10,-5,   19.9,10,-15,
-                -1,0,0,        // NORMAL
-                0.3,0.5,0.9);
-
-        // Right Window 2
-        drawQuadN(19.9, 6, 5,  19.9, 6, 15,
-                19.9,10,15, 19.9,10, 5,
-                -1,0,0,        // NORMAL
-                0.3,0.5,0.9);
     }
     else
     {
