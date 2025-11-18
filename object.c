@@ -1479,3 +1479,312 @@ float lz = halfW * 0.45f;
 
     glPopMatrix();
 }
+
+/*******************************************************
+ *                 CEILING LIGHT OBJECTS
+ *******************************************************/
+
+static void drawRope(float length)
+{
+    glColor3f(0.6, 0.5, 0.4);
+
+    glPushMatrix();
+
+    // Attach rope at ceiling (top of cube touches 0,0,0)
+    glTranslatef(0, -length/2.0f, 0);
+
+    glScalef(0.05, length, 0.05);
+    glutSolidCube(1.0);
+
+    glPopMatrix();
+}
+
+void drawStarShape()
+{
+    glColor3f(1.0f, 1.0f, 0.0f);   // bright yellow star
+    const float outerR = 1.0f;
+    const float innerR = 0.55f;
+    const float depth  = 0.35f;
+    const int numPoints = 5;
+
+    /* --------------------------
+       FRONT FACE  (+Z normal)
+    --------------------------- */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 0, 1);         // <-- THIS WAS MISSING
+    // glColor3f(1.0f, 0.95f, 0.2f);
+    glVertex3f(0, 0, depth);
+
+    for (int i = 0; i <= numPoints * 2; i++)
+    {
+        float ang = i * M_PI / numPoints;
+        float r = (i % 2 == 0 ? outerR : innerR);
+        glVertex3f(r * cos(ang), r * sin(ang), depth);
+    }
+    glEnd();
+
+    /* --------------------------
+       BACK FACE  (−Z normal)
+    --------------------------- */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 0, -1);        // <-- IMPORTANT
+    // glColor3f(1.0f, 0.9f, 0.15f);
+    glVertex3f(0, 0, -depth);
+
+    for (int i = 0; i <= numPoints * 2; i++)
+    {
+        float ang = i * M_PI / numPoints;
+        float r = (i % 2 == 0 ? outerR : innerR);
+        glVertex3f(r * cos(ang), r * sin(ang), -depth);
+    }
+    glEnd();
+
+    /* --------------------------
+       SIDE WALLS (normals perp)
+    --------------------------- */
+    glBegin(GL_QUAD_STRIP);
+    // glColor3f(1.0f, 0.9f, 0.1f);
+
+    for (int i = 0; i <= numPoints * 2; i++)
+    {
+        float ang = i * M_PI / numPoints;
+        float r = (i % 2 == 0 ? outerR : innerR);
+
+        float x = r * cos(ang);
+        float y = r * sin(ang);
+
+        // outward normal (normalized)
+        float len = sqrt(x*x + y*y);
+        glNormal3f(x/len, y/len, 0);
+
+        glVertex3f(x, y,  depth);
+        glVertex3f(x, y, -depth);
+    }
+    glEnd();
+}
+
+
+void drawCloudShape()
+{
+    glColor3f(0.6f, 0.8f, 1.0f);   // sky blue cloud
+
+    // brighter cloud
+    // glColor3f(1.0f, 1.0f, 0.8f);
+
+    // center puff
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 0.0f);
+    glScalef(1.4f, 1.2f, 1.0f);
+    glutSolidSphere(0.5, 32, 32);
+    glPopMatrix();
+
+    // right big puff
+    glPushMatrix();
+    glTranslatef(0.65f, -0.05f, 0.0f);
+    glScalef(1.2f, 1.0f, 1.0f);
+    glutSolidSphere(0.45, 32, 32);
+    glPopMatrix();
+
+    // left big puff
+    glPushMatrix();
+    glTranslatef(-0.65f, -0.05f, 0.0f);
+    glScalef(1.2f, 1.0f, 1.0f);
+    glutSolidSphere(0.45, 32, 32);
+    glPopMatrix();
+
+    // small lower-left puff
+    glPushMatrix();
+    glTranslatef(-0.35f, -0.35f, 0.0f);
+    glScalef(0.9f, 0.8f, 1.0f);
+    glutSolidSphere(0.35, 32, 32);
+    glPopMatrix();
+
+    // small lower-right puff
+    glPushMatrix();
+    glTranslatef(0.35f, -0.35f, 0.0f);
+    glScalef(0.9f, 0.8f, 1.0f);
+    glutSolidSphere(0.35, 32, 32);
+    glPopMatrix();
+
+    // top-right puff
+    glPushMatrix();
+    glTranslatef(0.30f, 0.35f, 0.0f);
+    glScalef(0.8f, 0.8f, 1.0f);
+    glutSolidSphere(0.30, 32, 32);
+    glPopMatrix();
+
+    // top-left puff
+    glPushMatrix();
+    glTranslatef(-0.30f, 0.35f, 0.0f);
+    glScalef(0.8f, 0.8f, 1.0f);
+    glutSolidSphere(0.30, 32, 32);
+    glPopMatrix();
+}
+
+
+static void drawMoonShape()
+{
+    glColor3f(1.0f, 1.0f, 1.0f);   // white moon
+
+    float outerR  = 0.9f;
+    float innerR  = 0.60f;
+    float offset  = 0.35f;
+    float depth   = 0.15f;
+    int steps     = 300;
+
+    glPushMatrix();
+
+    /* ============================
+       FRONT FACE
+       ============================ */
+    glNormal3f(0, 0, 1);
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = (float)i / steps * 2.0f * M_PI;
+
+        float ox = outerR * cos(a);
+        float oy = outerR * sin(a);
+
+        float ix = innerR * cos(a) + offset;
+        float iy = innerR * sin(a);
+
+        if ((ox*ox + oy*oy) > (ix*ix + iy*iy))
+        {
+            glNormal3f(0, 0, 1);  // front normal
+            glVertex3f(ox, oy, depth);
+            glVertex3f(ix, iy, depth);
+        }
+    }
+    glEnd();
+
+
+    /* ============================
+       BACK FACE
+       ============================ */
+    glBegin(GL_TRIANGLE_STRIP);
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = (float)i / steps * 2.0f * M_PI;
+
+        float ox = outerR * cos(a);
+        float oy = outerR * sin(a);
+
+        float ix = innerR * cos(a) + offset;
+        float iy = innerR * sin(a);
+
+        if ((ox*ox + oy*oy) > (ix*ix + iy*iy))
+        {
+            glNormal3f(0, 0, -1); // back normal
+            glVertex3f(ox, oy, -depth);
+            glVertex3f(ix, iy, -depth);
+        }
+    }
+    glEnd();
+
+
+    /* ============================
+       OUTER WALLS  (needs radial normals)
+       ============================ */
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = (float)i / steps * 2.0f * M_PI;
+        float ox = outerR * cos(a);
+        float oy = outerR * sin(a);
+
+        float ix = innerR * cos(a) + offset;
+        float iy = innerR * sin(a);
+
+        if ((ox*ox + oy*oy) > (ix*ix + iy*iy))
+        {
+            // OUTER WALL normal → pointing outward
+            float len = sqrtf(ox*ox + oy*oy);
+            glNormal3f(ox/len, oy/len, 0);
+
+            glVertex3f(ox, oy, depth);
+            glVertex3f(ox, oy, -depth);
+        }
+    }
+    glEnd();
+
+
+    /* ============================
+       INNER WALLS  (needs inward radial normals)
+       ============================ */
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = (float)i / steps * 2.0f * M_PI;
+        float ix = innerR * cos(a) + offset;
+        float iy = innerR * sin(a);
+
+        float ox = outerR * cos(a);
+        float oy = outerR * sin(a);
+
+        if ((ox*ox + oy*oy) > (ix*ix + iy*iy))
+        {
+            // INNER WALL normal → opposite direction
+            float len = sqrtf((ix-offset)*(ix-offset) + iy*iy);
+            float nx = -(ix - offset) / len; // inward
+            float ny = -iy / len;
+
+            glNormal3f(nx, ny, 0);
+
+            glVertex3f(ix, iy, -depth);
+            glVertex3f(ix, iy, depth);
+        }
+    }
+    glEnd();
+
+    glPopMatrix();
+}
+
+
+void drawCeilingLight(float x, float y, float z, int shapeType)
+{
+    float ropeLength  = 2.0f;
+    float shapeOffset = ropeLength + 0.45f;
+
+    glPushMatrix();
+    glTranslatef(x, y, z);
+
+    // draw rope
+    drawRope(ropeLength);
+
+    // move to shape
+    glPushMatrix();
+    glTranslatef(0, -shapeOffset, 0);
+
+    // draw shape only (no lighting)
+    switch (shapeType)
+    {
+        case 0: drawStarShape();  break;
+        case 1: drawCloudShape(); break;
+        case 2: drawMoonShape();  break;
+    }
+
+    glPopMatrix();
+    glPopMatrix();
+}
+
+
+void drawCeilingLights()
+{
+    // Example layout (modify as you like)
+
+    // Row 1
+    drawCeilingLight(-10, 14.5f, -10, 0);   // Star
+    drawCeilingLight(  0, 14.5f, -10, 1);   // Cloud
+    drawCeilingLight( 10, 14.5f, -10, 2);   // Moon
+
+    // Row 2
+    drawCeilingLight(-10, 14.5f,   0, 1);   // Cloud
+    drawCeilingLight(  0, 14.5f,   0, 2);   // Moon
+    drawCeilingLight( 10, 14.5f,   0, 0);   // Star
+
+    // Row 3
+    drawCeilingLight(-10, 14.5f,  10, 2);   // Moon
+    drawCeilingLight(  0, 14.5f,  10, 0);   // Star
+    drawCeilingLight( 10, 14.5f,  10, 1);   // Cloud
+}

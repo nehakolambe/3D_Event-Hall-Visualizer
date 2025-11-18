@@ -139,7 +139,11 @@ int main(int argc, char* argv[])
     glewInit();
 #endif
 
-    glEnable(GL_NORMALIZE);
+    glEnable(GL_LIGHTING);
+glEnable(GL_NORMALIZE);
+glEnable(GL_COLOR_MATERIAL);
+glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     glDisable(GL_CULL_FACE);
 
     // === Initialize scene and objects ===

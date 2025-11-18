@@ -133,6 +133,8 @@ extern int objectCount;
 extern SceneObject* selectedObject;
 extern int dragging;
 
+void drawCeilingLights();
+
 // =======================================================
 //                  MOUSE INTERACTION
 // =======================================================

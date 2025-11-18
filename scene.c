@@ -26,6 +26,7 @@ unsigned int doorKnobTex; // Texture ID for door knob texture
 // void placeCocktailTables();
 // void placeDoorLamps();
 
+
 // =======================================================
 //                INTERNAL UTILITIES
 // =======================================================
@@ -286,8 +287,6 @@ void scene_init()
     float tableX[4] = {-10, -10,  10, 10};
     float tableZ[4] = {-10,   0, -10,  0};
 
-    int tableIndexStart = objectCount;
-
     for (int i = 0; i < 4; i++)
     {
         char name[32];
@@ -332,17 +331,15 @@ void scene_init()
     // ---------------------------
     // 2 door lamps
     // ---------------------------
-    float lampX[2] = {-4, 4};
-    float lampZ = 28.5;
 
-    addObject("DoorLamp_1", -3, 22, drawLamp, 1);
+    addObject("DoorLamp_1", -5, 11, drawLamp, 1);
 
   // =======================================================
 // MEETING TABLE BEHIND THE DOOR
 // =======================================================
 
 float meetX = 0.0f;
-float meetZ = 23.0f;
+float meetZ = 11.0f;
 
 // Add the meeting table
 addObject("MeetingTable", meetX, meetZ, drawMeetingTable, 1);
@@ -626,6 +623,14 @@ glDisable(GL_TEXTURE_2D);
         }
         glPopMatrix();
     }
+
+    // =====================================================
+    // DRAW CEILING LIGHTS (static, non-movable)
+    // =====================================================
+    glPushMatrix();
+    drawCeilingLights();
+    glPopMatrix();
+
     lighting_draw_debug_marker();
     glPopMatrix();
 }
