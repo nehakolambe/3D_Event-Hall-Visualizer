@@ -1,9 +1,6 @@
 //
 //  lighting.c
-//  Updated with 3-state lighting system:
-//  0 = all off
-//  1 = moving light
-//  2 = lamp bulb
+//  Updated for drawLamp() controlled lamp light
 //
 
 #include "CSCIx229.h"
@@ -41,13 +38,6 @@ float specular[] = {1.0, 1.0, 1.0, 1.0};
 // Emission color
 float emission[] = {0.0, 0.0, 0.0, 1.0};
 
-// -------------------------------------------
-// Lamp bulb position (set your coordinates)
-// -------------------------------------------
-float lampX = -5.0f;
-float lampY = 5.45f;
-float lampZ = -5.0f;
-
 
 // -----------------------------------------------------
 //  lighting_init()
@@ -62,8 +52,9 @@ void lighting_init()
     glShadeModel(GL_SMOOTH);
 
     glEnable(GL_LIGHT0);     // moving light
-    glEnable(GL_LIGHT1);     // lamp light (off by default)
+    glEnable(GL_LIGHT1);     // lamp light
 }
+
 
 
 // -----------------------------------------------------
@@ -71,9 +62,9 @@ void lighting_init()
 // -----------------------------------------------------
 void lighting_update()
 {
-    // ------------------------------
+    //
     // MODE 0 → ALL LIGHTS OFF
-    // ------------------------------
+    //
     if (lightState == 0)
     {
         glDisable(GL_LIGHTING);
@@ -84,9 +75,9 @@ void lighting_update()
 
     glEnable(GL_LIGHTING);
 
-    // ------------------------------
+    //
     // MODE 1 → MOVING LIGHT ONLY
-    // ------------------------------
+    //
     if (lightState == 1)
     {
         glEnable(GL_LIGHT0);
@@ -105,43 +96,47 @@ void lighting_update()
         glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
         glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse);
         glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-
     }
     else
+    {
         glDisable(GL_LIGHT0);
+    }
 
 
-    // ------------------------------
+    //
     // MODE 2 → LAMP BULB ONLY
-    // ------------------------------
+    //
     if (lightState == 2)
     {
         glDisable(GL_LIGHT0);
         glEnable(GL_LIGHT1);
 
-        float bulbPos[] = {lampX, lampY, lampZ, 1.0};
-        float bulbAmb[]  = {0.30, 0.25, 0.15, 1.0};   // warm soft ambient
-        float bulbDif[]  = {1.00, 0.85, 0.40, 1.0};   // strong warm yellow
-        float bulbSpec[] = {0.60, 0.50, 0.30, 1.0};   // warm highlights
+        // NOTE:
+        // -----------------------------------------
+        // DO NOT SET GL_LIGHT1 POSITION HERE!
+        // drawLamp() sets the correct bulb position.
+        // -----------------------------------------
 
-        glLightfv(GL_LIGHT1, GL_POSITION, bulbPos);
+        float bulbAmb[]  = {0.30, 0.25, 0.15, 1.0};
+        float bulbDif[]  = {1.00, 0.85, 0.40, 1.0};
+        float bulbSpec[] = {0.60, 0.50, 0.30, 1.0};
+
         glLightfv(GL_LIGHT1, GL_AMBIENT,  bulbAmb);
         glLightfv(GL_LIGHT1, GL_DIFFUSE,  bulbDif);
         glLightfv(GL_LIGHT1, GL_SPECULAR, bulbSpec);
-
-
     }
     else
+    {
         glDisable(GL_LIGHT1);
+    }
 
 
-    // ------------------------------
+    //
     // MATERIAL SETTINGS
-    // ------------------------------
+    //
     shinyVector[0] = shininess;
     glMaterialfv(GL_FRONT, GL_SHININESS, shinyVector);
 
-    // Specular toggle
     if (specularEnabled)
         glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
     else
@@ -150,7 +145,6 @@ void lighting_update()
         glMaterialfv(GL_FRONT, GL_SPECULAR, off);
     }
 
-    // Emission toggle
     if (emissionEnabled)
         glMaterialfv(GL_FRONT, GL_EMISSION, emission);
     else
@@ -163,12 +157,13 @@ void lighting_update()
 }
 
 
+
 // -----------------------------------------------------
-//  lighting_draw_debug_marker()
+//  Debug Marker for Moving Light
 // -----------------------------------------------------
 void lighting_draw_debug_marker()
 {
-    if (lightState != 1) return;   // ONLY show marker for moving light
+    if (lightState != 1) return;   // Only for moving light
 
     glDisable(GL_LIGHTING);
 
@@ -180,28 +175,3 @@ void lighting_draw_debug_marker()
 
     glEnable(GL_LIGHTING);
 }
-
-
-// -----------------------------------------------------
-//  drawLampBulb()  -- CALL THIS FROM YOUR SCENE
-// -----------------------------------------------------
-void drawLampBulb()
-{
-    if (lightState != 2) return;
-
-    glPushMatrix();
-    glTranslatef(lampX, lampY, lampZ);
-
-    // Warm golden glow
-    float glow[] = {1.0, 0.75, 0.25, 1.0};
-    glMaterialfv(GL_FRONT, GL_EMISSION, glow);
-
-    glutSolidSphere(0.35, 20, 20);
-
-    // Stop glowing for rest of scene
-    float off[] = {0,0,0,1};
-    glMaterialfv(GL_FRONT, GL_EMISSION, off);
-
-    glPopMatrix();
-}
-

@@ -559,9 +559,7 @@ void drawLamp(float xPos, float zPos) {
     glPushMatrix();
     glTranslatef(xPos, baseHeight, zPos);
 
-    /* ============================================
-       BASE — bottom disk (normal = -Y)
-       ============================================ */
+    /* BASE */
     glColor3f(0.85f, 0.85f, 0.85f);
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < segments; i++) {
@@ -573,16 +571,14 @@ void drawLamp(float xPos, float zPos) {
         float x2 = baseRadius * cos(t2);
         float z2 = baseRadius * sin(t2);
 
-        glNormal3f(0, -1, 0);   // base faces floor
+        glNormal3f(0, -1, 0);
         glVertex3f(0, 0, 0);
         glVertex3f(x1, 0, z1);
         glVertex3f(x2, 0, z2);
     }
     glEnd();
 
-    /* ============================================
-       POLE — vertical cylinder with smooth normals
-       ============================================ */
+    /* POLE */
     glColor3f(0.95f, 0.95f, 0.95f);
     for (int i = 0; i < segments; i++) {
         float t1 = 2 * PI * i / segments;
@@ -597,16 +593,14 @@ void drawLamp(float xPos, float zPos) {
         float nx2 = cos(t2), nz2 = sin(t2);
 
         glBegin(GL_QUADS);
-        glNormal3f(nx1, 0, nz1); glVertex3f(x1, 0,        z1);
-        glNormal3f(nx2, 0, nz2); glVertex3f(x2, 0,        z2);
+        glNormal3f(nx1, 0, nz1); glVertex3f(x1, 0, z1);
+        glNormal3f(nx2, 0, nz2); glVertex3f(x2, 0, z2);
         glNormal3f(nx2, 0, nz2); glVertex3f(x2, poleHeight, z2);
         glNormal3f(nx1, 0, nz1); glVertex3f(x1, poleHeight, z1);
         glEnd();
     }
 
-    /* ============================================
-       SHADE — truncated cone with smooth normals
-       ============================================ */
+    /* SHADE */
     float shadeBottomY = poleHeight;
     float shadeTopY    = poleHeight + shadeHeight;
 
@@ -625,11 +619,8 @@ void drawLamp(float xPos, float zPos) {
         float x2t = shadeTopRadius * cos(t2);
         float z2t = shadeTopRadius * sin(t2);
 
-        // Smooth normals for cone surface
-        float nx1 = cos(t1);
-        float nz1 = sin(t1);
-        float nx2 = cos(t2);
-        float nz2 = sin(t2);
+        float nx1 = cos(t1), nz1 = sin(t1);
+        float nx2 = cos(t2), nz2 = sin(t2);
 
         glBegin(GL_QUADS);
         glNormal3f(nx1, 0, nz1); glVertex3f(x1b, shadeBottomY, z1b);
@@ -639,9 +630,7 @@ void drawLamp(float xPos, float zPos) {
         glEnd();
     }
 
-    /* ============================================
-       SHADE TOP — disk (normal = +Y)
-       ============================================ */
+    /* SHADE TOP */
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < segments; i++) {
         float t1 = 2 * PI * i / segments;
@@ -652,37 +641,49 @@ void drawLamp(float xPos, float zPos) {
         float x2 = shadeTopRadius * cos(t2);
         float z2 = shadeTopRadius * sin(t2);
 
-        glNormal3f(0, 1, 0);   // top faces upward
+        glNormal3f(0, 1, 0);
         glVertex3f(0, shadeTopY, 0);
         glVertex3f(x1, shadeTopY, z1);
         glVertex3f(x2, shadeTopY, z2);
     }
     glEnd();
 
-// ---- bulb inside the shade ----
-if (lightState == 2)
-{
-    glPushMatrix();
 
-    // place bulb inside shade
-    float bulbY = shadeBottomY + 0.4f;
+    /* ======================================================
+       BULB + LIGHT1 POSITION  (UPDATED SECTION)
+       ====================================================== */
+    if (lightState == 2)
+    {
+        glPushMatrix();
 
-    glTranslatef(0.0f, bulbY, 0.0f);
+        float bulbLocalY = shadeBottomY + 0.4f;
 
-    // emission glow
-    float bulbEmission[] = {1.0, 0.9, 0.7, 1.0};
-    glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
+        glTranslatef(0, bulbLocalY, 0);
 
-    glutSolidSphere(0.25, 20, 20);
+        // bulb glow
+        float bulbEmission[] = {1.0, 0.9, 0.7, 1.0};
+        glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
 
-    float noEmission[] = {0,0,0,1};
-    glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
+        glutSolidSphere(0.25, 20, 20);
+
+        // disable emission again
+        float noEmission[] = {0,0,0,1};
+        glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
+
+        glPopMatrix();
+
+        // ---- Set GL_LIGHT1 position here (world space) ----
+        float bulbWorldX = xPos;
+        float bulbWorldY = baseHeight + bulbLocalY;
+        float bulbWorldZ = zPos;
+
+        float pos1[] = {bulbWorldX, bulbWorldY, bulbWorldZ, 1.0};
+        glLightfv(GL_LIGHT1, GL_POSITION, pos1);
+    }
 
     glPopMatrix();
 }
 
-    glPopMatrix();
-}
 
 void drawBanquetChair(float x, float z)
 {

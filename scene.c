@@ -208,12 +208,7 @@ void scene_init()
     float lampX[2] = {-4, 4};
     float lampZ = 28.5;
 
-    for (int i = 0; i < 2; i++)
-    {
-        char name[32];
-        sprintf(name, "DoorLamp_%d", i+1);
-        addObject(name, lampX[i], lampZ, drawLamp, 1);
-    }
+    addObject("DoorLamp_1", -3, 22, drawLamp, 1);
 
     // =======================================================
     // ASSIGN BOUNDING BOXES (including newly added objects)
