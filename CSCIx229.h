@@ -144,6 +144,8 @@ void screenToWorld(int x, int y, float* worldX, float* worldZ);
 // --- Object picking helper ---
 SceneObject* pickObject(float worldX, float worldZ);
 
+extern unsigned int screenTex;
+
 // =======================================================
 //              🔄  NEW INTERACTION UTILITIES
 // =======================================================

@@ -474,69 +474,72 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
     glPushMatrix();
     glTranslatef(wallX, yBase + halfHeight, wallZ);
 
-    glColor3f(0.0, 0.3, 0.8);
+    glColor3f(1, 1, 1);
 
-    glBegin(GL_QUADS);
-    for (int i = 0; i < segH; i++)
+    glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, screenTex);
+
+glBegin(GL_QUADS);
+for (int i = 0; i < segH; i++)
+{
+    float u1 = (float)i     / segH;
+    float u2 = (float)(i+1) / segH;
+
+    float t1 = -angleH/2 + angleH * u1;
+    float t2 = -angleH/2 + angleH * u2;
+
+    for (int j = 0; j < segV; j++)
     {
-        float t1 = -angleH/2 + angleH * i     / segH;
-        float t2 = -angleH/2 + angleH * (i+1) / segH;
+        float v1 = (float)j     / segV;
+        float v2 = (float)(j+1) / segV;
 
-        for (int j = 0; j < segV; j++)
-        {
-            float p1 = -angleV/2 + angleV * j     / segV;
-            float p2 = -angleV/2 + angleV * (j+1) / segV;
+        float p1 = -angleV/2 + angleV * v1;
+        float p2 = -angleV/2 + angleV * v2;
 
-            //
-            // Precompute positions
-            //
-            float x11 = radiusH * sin(t1);
-            float z11 = -radiusH * cos(t1) + radiusH + zOffset;
-            float y11 = radiusV * sin(p1);
+        // Compute vertex positions
+        float x11 = radiusH * sin(t1);
+        float z11 = -radiusH * cos(t1) + radiusH + zOffset;
+        float y11 = radiusV * sin(p1);
 
-            float x21 = radiusH * sin(t2);
-            float z21 = -radiusH * cos(t2) + radiusH + zOffset;
-            float y21 = radiusV * sin(p1);
+        float x21 = radiusH * sin(t2);
+        float z21 = -radiusH * cos(t2) + radiusH + zOffset;
+        float y21 = radiusV * sin(p1);
 
-            float x22 = radiusH * sin(t2);
-            float z22 = -radiusH * cos(t2) + radiusH + zOffset;
-            float y22 = radiusV * sin(p2);
+        float x22 = radiusH * sin(t2);
+        float z22 = -radiusH * cos(t2) + radiusH + zOffset;
+        float y22 = radiusV * sin(p2);
 
-            float x12 = radiusH * sin(t1);
-            float z12 = -radiusH * cos(t1) + radiusH + zOffset;
-            float y12 = radiusV * sin(p2);
+        float x12 = radiusH * sin(t1);
+        float z12 = -radiusH * cos(t1) + radiusH + zOffset;
+        float y12 = radiusV * sin(p2);
 
-            //
-            // Compute normals (smooth)
-            //
-            // Horizontal normal component from horizontal curvature
-            float nx_t1 = sin(t1);
-            float nz_t1 = cos(t1);
+        // compute normals (your existing code)
+        float nx_t1 = sin(t1), nz_t1 = cos(t1);
+        float nx_t2 = sin(t2), nz_t2 = cos(t2);
+        float ny_p1 = sin(p1), ny_p2 = sin(p2);
 
-            float nx_t2 = sin(t2);
-            float nz_t2 = cos(t2);
+        // --- draw with UV mapping ---
+        glNormal3f(nx_t1, ny_p1, nz_t1);
+        glTexCoord2f(u1, v1);
+        glVertex3f(x11, y11, z11);
 
-            // Vertical component from vertical curvature
-            float ny_p1 = sin(p1);
-            float ny_p2 = sin(p2);
+        glNormal3f(nx_t2, ny_p1, nz_t2);
+        glTexCoord2f(u2, v1);
+        glVertex3f(x21, y21, z21);
 
-            //
-            // Draw the quad with 4 normals
-            //
-            glNormal3f(nx_t1, ny_p1, nz_t1);
-            glVertex3f(x11, y11, z11);
+        glNormal3f(nx_t2, ny_p2, nz_t2);
+        glTexCoord2f(u2, v2);
+        glVertex3f(x22, y22, z22);
 
-            glNormal3f(nx_t2, ny_p1, nz_t2);
-            glVertex3f(x21, y21, z21);
-
-            glNormal3f(nx_t2, ny_p2, nz_t2);
-            glVertex3f(x22, y22, z22);
-
-            glNormal3f(nx_t1, ny_p2, nz_t1);
-            glVertex3f(x12, y12, z12);
-        }
+        glNormal3f(nx_t1, ny_p2, nz_t1);
+        glTexCoord2f(u1, v2);
+        glVertex3f(x12, y12, z12);
     }
-    glEnd();
+}
+glEnd();
+
+glDisable(GL_TEXTURE_2D);
+
 
     glPopMatrix();
 }

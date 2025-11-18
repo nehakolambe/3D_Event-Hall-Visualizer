@@ -106,8 +106,6 @@ void lighting_update()
         glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse);
         glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
 
-        Print("Moving Light -> x: %.2f y: %.2f z: %.2f angle: %.2f\n",
-              lx, ly, lz, zh);
     }
     else
         glDisable(GL_LIGHT0);
@@ -131,8 +129,7 @@ void lighting_update()
         glLightfv(GL_LIGHT1, GL_DIFFUSE,  bulbDif);
         glLightfv(GL_LIGHT1, GL_SPECULAR, bulbSpec);
 
-        Print("Lamp Bulb Light -> x: %.2f y: %.2f z: %.2f\n",
-              lampX, lampY, lampZ);
+
     }
     else
         glDisable(GL_LIGHT1);

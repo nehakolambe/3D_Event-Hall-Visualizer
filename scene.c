@@ -9,6 +9,10 @@ int objectCount = 0;
 SceneObject* selectedObject = NULL;
 int dragging = 0;
 
+unsigned int wallTex;   // Texture ID for wall texture
+unsigned int floorTex;  // Texture ID for floor texture
+unsigned int screenTex;  // Texture ID for screen texture
+
 // void placeEventTables();
 // void placeCocktailTables();
 // void placeDoorLamps();
@@ -24,15 +28,34 @@ static void drawQuadN(float x1,float y1,float z1,
                       float nx,float ny,float nz,
                       float r,float g,float b)
 {
-    glColor3f(r,g,b);
+    GLboolean texEnabled;
+    glGetBooleanv(GL_TEXTURE_2D, &texEnabled);
+
+    // if no texture bound → keep your color shading
+    if (!texEnabled)
+        glColor3f(r, g, b);
+
+    glNormal3f(nx, ny, nz);
     glBegin(GL_QUADS);
-    glNormal3f(nx,ny,nz);
-    glVertex3f(x1,y1,z1);
-    glVertex3f(x2,y2,z2);
-    glVertex3f(x3,y3,z3);
-    glVertex3f(x4,y4,z4);
+
+    if (texEnabled)
+    {
+        glTexCoord2f(0,0);  glVertex3f(x1,y1,z1);
+        glTexCoord2f(1,0);  glVertex3f(x2,y2,z2);
+        glTexCoord2f(1,1);  glVertex3f(x3,y3,z3);
+        glTexCoord2f(0,1);  glVertex3f(x4,y4,z4);
+    }
+    else
+    {
+        glVertex3f(x1,y1,z1);
+        glVertex3f(x2,y2,z2);
+        glVertex3f(x3,y3,z3);
+        glVertex3f(x4,y4,z4);
+    }
+
     glEnd();
 }
+
 
 
 void drawBBox(SceneObject* o)
@@ -98,6 +121,9 @@ void addObject(const char* name, float x, float z, void (*drawFunc)(float, float
 
 void scene_init()
 {
+    wallTex = LoadTexBMP("textures/wall.bmp");
+    floorTex = LoadTexBMP("textures/carpet.bmp");
+    screenTex = LoadTexBMP("textures/screen.bmp");
     objectCount = 0;
 
     // =======================================================
@@ -256,12 +282,17 @@ void scene_display()
     if (!debugMode)
     {
         // ==== Floor ====
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, floorTex);
         drawQuadN(-20,0,-30, 20,0,-30,
           20,0,30, -20,0,30,
           0,1,0,
           0.6,0.6,0.6);
+        glDisable(GL_TEXTURE_2D);
 
         // ==== Ceiling ====
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
         drawQuadN(-20,15,-30, -20,15,30,
           20,15,30, 20,15,-30,
           0,-1,0,
@@ -287,6 +318,8 @@ void scene_display()
           20,15,30, 20,15,-30,
           -1,0,0,
           0.8,0.8,0.85);
+
+          glDisable(GL_TEXTURE_2D);
 
         // ==== Stage ====
         float stageTop = 2.0;
