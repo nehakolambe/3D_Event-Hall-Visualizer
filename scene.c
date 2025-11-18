@@ -337,6 +337,62 @@ void scene_init()
 
     addObject("DoorLamp_1", -3, 22, drawLamp, 1);
 
+  // =======================================================
+// MEETING TABLE BEHIND THE DOOR
+// =======================================================
+
+float meetX = 0.0f;
+float meetZ = 23.0f;
+
+// Add the meeting table
+addObject("MeetingTable", meetX, meetZ, drawMeetingTable, 1);
+
+// -----------------------------------------
+// 2 chairs per side
+// -----------------------------------------
+
+// Two chair positions left/right from center
+float mChairX[2] = {-1.8f, 1.8f};
+
+// Distance from table
+float mChairZfront = -2.2f;   // chairs on SCREEN side -> facing door
+float mChairZback  =  2.2f;   // chairs on DOOR side -> facing screen
+
+// -----------------------------
+// 2 chairs (front side)
+// -----------------------------
+for (int i = 0; i < 2; i++)
+{
+    char cname[32];
+    sprintf(cname, "MeetChair_F%d", i+1);
+
+    addObject(cname,
+              meetX + mChairX[i],
+              meetZ + mChairZfront,
+              drawBanquetChair,
+              1);
+
+    objects[objectCount - 1].rotation = 0;  // facing the door
+}
+
+// -----------------------------
+// 2 chairs (back side)
+// -----------------------------
+for (int i = 0; i < 2; i++)
+{
+    char cname[32];
+    sprintf(cname, "MeetChair_B%d", i+1);
+
+    addObject(cname,
+              meetX + mChairX[i],
+              meetZ + mChairZback,
+              drawBanquetChair,
+              1);
+
+    objects[objectCount - 1].rotation = 180;  // facing the screen
+}
+
+
     // =======================================================
     // ASSIGN BOUNDING BOXES (including newly added objects)
     // =======================================================
@@ -361,7 +417,8 @@ void scene_init()
             memcpy(o->bbox, (float[]){-0.7, 0.7, 0, 4, -0.7, 0.7}, sizeof(o->bbox));
         }
         else if (strcmp(o->name, "BanquetChair") == 0 ||
-                 strncmp(o->name, "EventChair", 10) == 0)
+                 strncmp(o->name, "EventChair", 10) == 0 ||
+                 strncmp(o->name, "MeetChair", 9) == 0)
         {
             memcpy(o->bbox, (float[]){-0.5, 0.5, 0, 3, -0.5, 0.5}, sizeof(o->bbox));
         }
@@ -369,6 +426,10 @@ void scene_init()
                  strncmp(o->name, "DoorLamp", 8) == 0)
         {
             memcpy(o->bbox, (float[]){-0.5, 0.5, 0, 6, -0.5, 0.5}, sizeof(o->bbox));
+        }
+        else if (strcmp(o->name, "MeetingTable") == 0)
+        {
+            memcpy(o->bbox, (float[]){-4.0, 4.0, 0, 2.2, -1.5, 1.5}, sizeof(o->bbox));
         }
         else
         {

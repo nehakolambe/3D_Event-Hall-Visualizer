@@ -1356,3 +1356,126 @@ void drawCocktailTable3(float x, float z)
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
+
+void drawMeetingTable(float x, float z)
+{
+    float length = 8.0f;
+    float width  = 2.6f;
+
+    float tabletopY = 2.0f;      // top height
+    float thickness = 0.15f;     // solid thickness
+    float legHeight = tabletopY; 
+    float legSize   = 0.25f;     // square legs
+
+    int segments = 140;
+
+    float halfL = length * 0.5f;
+    float halfW = width  * 0.5f;
+
+
+    /* ============================
+       DRAW LEGS
+       ============================ */
+    glPushMatrix();
+    glTranslatef(x, legHeight * 0.5f, z);  // center legs
+
+    glColor3f(0.6f, 0.45f, 0.3f); // darker wood
+
+    float lx = halfL * 0.55f;
+float lz = halfW * 0.45f;
+
+    // 4 legs
+    glPushMatrix(); glTranslatef( lx, 0,  lz); drawCuboid(legSize, legHeight, legSize); glPopMatrix();
+    glPushMatrix(); glTranslatef(-lx, 0,  lz); drawCuboid(legSize, legHeight, legSize); glPopMatrix();
+    glPushMatrix(); glTranslatef( lx, 0, -lz); drawCuboid(legSize, legHeight, legSize); glPopMatrix();
+    glPushMatrix(); glTranslatef(-lx, 0, -lz); drawCuboid(legSize, legHeight, legSize); glPopMatrix();
+
+    glPopMatrix();
+
+
+    /* ============================
+       TABLETOP (solid)
+       ============================ */
+    glPushMatrix();
+    glTranslatef(x, tabletopY, z);
+
+    glColor3f(0.88f, 0.78f, 0.62f);  // light wood color
+
+
+    /* --------------------------------
+       1. Precompute shape points
+       -------------------------------- */
+    static float px[200], pz[200];
+    int N = segments;
+
+    for (int i = 0; i < N; i++)
+    {
+        float t = (float)i / (N - 1);
+        float angle = t * 2.0f * M_PI;
+
+        float nx = cos(angle);
+        float ny = sin(angle);
+
+        float rx = halfL * (0.7f + 0.3f * fabs(ny));
+        float ry = halfW;
+
+        float bulge = 1.0f + 0.20f * exp(-pow((fabs(nx) - 0.3f) * 5.0f, 2.0f));
+        float pinch = 1.0f - 0.08f * exp(-pow(nx * 4.0f, 2.0f));
+
+        float finalWidth = ry * bulge * pinch;
+
+        px[i] = rx * nx;
+        pz[i] = finalWidth * ny;
+    }
+
+
+    /* --------------------------------
+       2. TOP SURFACE
+       -------------------------------- */
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < N; i++)
+    {
+        glNormal3f(0,1,0);
+        glVertex3f(px[i], 0, pz[i]);
+    }
+    glEnd();
+
+
+    /* --------------------------------
+       3. BOTTOM SURFACE
+       -------------------------------- */
+    glBegin(GL_POLYGON);
+    for (int i = 0; i < N; i++)
+    {
+        glNormal3f(0,-1,0);
+        glVertex3f(px[i], -thickness, pz[i]);
+    }
+    glEnd();
+
+
+    /* --------------------------------
+       4. SIDE WALLS (solid thickness)
+       -------------------------------- */
+    glBegin(GL_QUAD_STRIP);
+
+    for (int i = 0; i <= N; i++)
+    {
+        int k = i % N;
+
+        float sx = px[k];
+        float sz = pz[k];
+
+        float len = sqrt(sx*sx + sz*sz);
+        float nx = sx / len;
+        float nz = sz / len;
+
+        glNormal3f(nx, 0, nz);
+
+        glVertex3f(sx, 0,          sz);   // top edge
+        glVertex3f(sx, -thickness, sz);   // bottom edge
+    }
+
+    glEnd();
+
+    glPopMatrix();
+}
