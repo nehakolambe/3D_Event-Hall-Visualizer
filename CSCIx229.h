@@ -134,7 +134,7 @@ extern SceneObject* selectedObject;
 extern int dragging;
 
 void drawCeilingLights();
-
+void drawBarChairObj(float x, float z);
 // =======================================================
 //                  MOUSE INTERACTION
 // =======================================================

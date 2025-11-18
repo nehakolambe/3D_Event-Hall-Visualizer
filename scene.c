@@ -327,7 +327,27 @@ void scene_init()
     addObject("Cocktail_1", ctX[0], ctZ[0], drawCocktailTable, 1);
     addObject("Cocktail_2", ctX[1], ctZ[1] + 10.0f, drawCocktailTable2, 1);
     addObject("Cocktail_3", ctX[2], ctZ[2] + 10.0f, drawCocktailTable3, 1);
+// place chair behind table, slightly to the right
+addObject(
+    "BarChair_3",
+    ctX[2] + 1.25f,      // shift right so legs are aligned with table center
+    ctZ[2] + 11.8f,       // perfectly behind the table
+    drawBarChairObj,
+    1
+);
 
+objects[objectCount - 1].rotation = 200;   // rotate to face the stage/screen
+
+// place chair behind table, slightly to the right
+addObject(
+    "BarChair_4",
+    ctX[2] - 1.25f,      // shift right so legs are aligned with table center
+    ctZ[2] + 11.8f,       // perfectly behind the table
+    drawBarChairObj,
+    1
+);
+
+objects[objectCount - 1].rotation = 160;   // rotate to face the stage/screen
     // ---------------------------
     // 2 door lamps
     // ---------------------------
@@ -424,6 +444,11 @@ for (int i = 0; i < 2; i++)
         {
             memcpy(o->bbox, (float[]){-0.5, 0.5, 0, 6, -0.5, 0.5}, sizeof(o->bbox));
         }
+        else if (strncmp(o->name, "BarChair", 8) == 0)
+{
+    // bar chair is slimmer and taller
+    memcpy(o->bbox, (float[]){-0.4, 0.4, 0, 4.2, -0.4, 0.4}, sizeof(o->bbox));
+}
         else if (strcmp(o->name, "MeetingTable") == 0)
         {
             memcpy(o->bbox, (float[]){-4.0, 4.0, 0, 2.2, -1.5, 1.5}, sizeof(o->bbox));

@@ -1788,3 +1788,487 @@ void drawCeilingLights()
     drawCeilingLight(  0, 14.5f,  10, 0);   // Star
     drawCeilingLight( 10, 14.5f,  10, 1);   // Cloud
 }
+
+//----------------------------------
+// Dimensions (easy to adjust)
+//----------------------------------
+//----------------------------------
+// Dimensions (easy to adjust)
+//----------------------------------
+float CHAIR_SCALE = 1.8f;   // <— make chair taller overall
+
+// raw globals (no formulas here!)
+float BASE_THICK;
+float CUSHION_THICK;
+float LEG_HEIGHT;
+float SEAT_HEIGHT;
+float ROD_HEIGHT;
+float ROD_BOTTOM;
+float ROD_TOP;
+
+float LEG_OFFSET_X = 0.45f;   // left-right
+float LEG_OFFSET_Z = 0.35f;   // forward-back
+
+//----------------------------------
+// Cushion
+//----------------------------------
+void drawSeat()
+{
+    glPushMatrix();
+    glColor3f(0.95f, 0.95f, 0.92f);
+
+    // ------------------------
+    // Dimensions
+    // ------------------------
+    float width = 1.0f;       // left <-> right
+    float halfW = width * 0.5f;
+
+    float rectDepth = 0.55f;  // straight front section
+    float radius = halfW;     // semicircle radius
+
+    int steps = 48;           // smooth back arc
+
+    float h = CUSHION_THICK;  // thickness (top to bottom)
+
+    // Move to correct height (same as the cube version)
+    float bottomY = SEAT_HEIGHT - CUSHION_THICK;
+    glTranslatef(0, bottomY + h*0.5f, 0);
+
+
+    // =====================================================
+    // 1. TOP FACE
+    // =====================================================
+    glBegin(GL_POLYGON);
+
+    // front straight edge
+    glVertex3f(-halfW, h/2, rectDepth);
+    glVertex3f(+halfW, h/2, rectDepth);
+
+    // semicircle back
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+        glVertex3f(x, h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 2. BOTTOM FACE
+    // =====================================================
+    glBegin(GL_POLYGON);
+
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, -h/2, rectDepth);
+
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+        glVertex3f(x, -h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 3. FRONT WALL (straight)
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, rectDepth);
+    glEnd();
+
+
+    // =====================================================
+    // 4. SEMICIRCLE WALL (curved back)
+    // =====================================================
+    glBegin(GL_QUAD_STRIP);
+
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+
+        glVertex3f(x, -h/2, z);
+        glVertex3f(x, +h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 5. LEFT WALL (vertical)
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, 0);
+    glVertex3f(-halfW, -h/2, 0);
+    glEnd();
+
+    // =====================================================
+    // 6. RIGHT WALL (vertical)
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(+halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, 0);
+    glVertex3f(+halfW, -h/2, 0);
+    glEnd();
+
+
+    glPopMatrix();
+}
+
+//----------------------------------
+// Wooden seat base UNDER cushion
+//----------------------------------
+void drawSeatBase()
+{
+    glPushMatrix();
+    glColor3f(0.55f, 0.38f, 0.22f);   // darker wood
+
+    // ------------------------
+    // Dimensions
+    // ------------------------
+    float width = 1.12f;       // little wider than cushion
+    float halfW = width * 0.5f;
+
+    float rectDepth = 0.62f;   // slightly deeper
+    float radius = halfW;      // semicircle radius
+
+    int steps = 48;
+
+    float h = BASE_THICK;      // base thickness
+
+    // Position base under cushion
+    float bottomY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK;
+    glTranslatef(0, bottomY + h*0.5f, 0);
+
+
+    // =====================================================
+    // 1. TOP FACE
+    // =====================================================
+    glBegin(GL_POLYGON);
+
+    glVertex3f(-halfW, h/2, rectDepth);
+    glVertex3f(+halfW, h/2, rectDepth);
+
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+        glVertex3f(x, h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 2. BOTTOM FACE
+    // =====================================================
+    glBegin(GL_POLYGON);
+
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, -h/2, rectDepth);
+
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+        glVertex3f(x, -h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 3. FRONT WALL
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, rectDepth);
+    glEnd();
+
+
+    // =====================================================
+    // 4. CURVED BACK WALL
+    // =====================================================
+    glBegin(GL_QUAD_STRIP);
+
+    for (int i = 0; i <= steps; i++)
+    {
+        float a = 3.14159f * i / steps;
+        float x = radius * cos(a);
+        float z = -radius * sin(a);
+
+        glVertex3f(x, -h/2, z);
+        glVertex3f(x, +h/2, z);
+    }
+
+    glEnd();
+
+
+    // =====================================================
+    // 5. LEFT SIDE WALL
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(-halfW, -h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, rectDepth);
+    glVertex3f(-halfW, +h/2, 0);
+    glVertex3f(-halfW, -h/2, 0);
+    glEnd();
+
+
+    // =====================================================
+    // 6. RIGHT SIDE WALL
+    // =====================================================
+    glBegin(GL_QUADS);
+    glVertex3f(+halfW, -h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, rectDepth);
+    glVertex3f(+halfW, +h/2, 0);
+    glVertex3f(+halfW, -h/2, 0);
+    glEnd();
+
+
+    glPopMatrix();
+}
+
+
+//----------------------------------
+// Legs (start from bottom of base)
+//----------------------------------
+void drawLegN(float x, float z) {
+    glPushMatrix();
+    glColor3f(0.45f, 0.30f, 0.18f);
+
+    float legStartY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK;
+
+    glTranslatef(x, legStartY - LEG_HEIGHT/2, z);
+    glScalef(0.12f, LEG_HEIGHT, 0.12f);
+    glutSolidCube(1.0);
+
+    glPopMatrix();
+}
+
+//----------------------------------
+// Horizontal bar between legs
+//----------------------------------
+void drawFootBar(float x1, float z1, float x2, float z2, float y) {
+
+    glPushMatrix();
+    glColor3f(0.45f, 0.30f, 0.18f);
+
+    glTranslatef((x1 + x2)/2, y, (z1 + z2)/2);
+
+    float dx = x2-x1, dz = z2-z1;
+    float len = sqrt(dx*dx + dz*dz);
+    float ang = atan2(dx, dz)*57.2958f;
+
+    glRotatef(ang, 0,1,0);
+    glScalef(len, 0.08f, 0.08f);
+
+    glutSolidCube(1.0);
+    glPopMatrix();
+}
+
+//----------------------------------
+// Backrest
+//----------------------------------
+// ----------------------------------
+// Curved, thick, solid wooden backrest
+// ----------------------------------
+void drawCurvedBackrest() {
+
+float rodBottom = SEAT_HEIGHT - CUSHION_THICK + 0.02f;
+float rodHeight = 0.75f * CHAIR_SCALE;
+float rodTop = rodBottom + rodHeight;
+
+    // Move backrest in front of rods
+    float backrestZ = -0.2f;
+
+    glPushMatrix();
+    glColor3f(0.70f, 0.55f, 0.35f);
+
+    // Position plate at the top of rods
+    glTranslatef(0.0f, rodTop, backrestZ);
+
+    glRotatef(-10, 1, 0, 0);      // slight backward tilt
+    glRotatef(180, 0, 1, 0);
+
+    // Make backrest BIGGER
+    float radius    = 0.65f;      // ← BIGGER curve
+    float height    = 0.35f;      // ← TALLER shape
+    float thickness = 0.3f;      // ← THICKER wood
+
+    int steps = 160;              // ← smoother
+
+        // Light brown plate color
+    float plateR = 0.75f, plateG = 0.60f, plateB = 0.40f;
+
+    // Dark brown side/thickness color
+    float sideR = 0.45f, sideG = 0.30f, sideB = 0.18f;
+
+    for (int j = 0; j < steps; j++) {
+
+        float a1 = (j - steps/2) * 0.017453f;
+        float a2 = (j - steps/2 + 1) * 0.017453f;
+
+        float x1 = radius * sin(a1);
+        float z1 = radius * cos(a1);
+        float x2 = radius * sin(a2);
+        float z2 = radius * cos(a2);
+
+        glBegin(GL_QUADS);
+
+         // -------- FRONT PLATE (light brown) --------
+        glColor3f(plateR, plateG, plateB);
+        glVertex3f(x1, 0,      z1);
+        glVertex3f(x2, 0,      z2);
+        glVertex3f(x2, height, z2);
+        glVertex3f(x1, height, z1);
+
+        // -------- BACK PLATE (light brown) --------
+        glColor3f(plateR, plateG, plateB);
+        glVertex3f(x1, 0,      z1 - thickness);
+        glVertex3f(x2, 0,      z2 - thickness);
+        glVertex3f(x2, height, z2 - thickness);
+        glVertex3f(x1, height, z1 - thickness);
+
+        // -------- TOP THICKNESS EDGE (dark brown) --------
+        glColor3f(sideR, sideG, sideB);
+        glVertex3f(x1, height, z1);
+        glVertex3f(x2, height, z2);
+        glVertex3f(x2, height, z2 - thickness);
+        glVertex3f(x1, height, z1 - thickness);
+
+        // -------- BOTTOM THICKNESS EDGE (dark brown) --------
+        glColor3f(sideR, sideG, sideB);
+        glVertex3f(x1, 0, z1);
+        glVertex3f(x2, 0, z2);
+        glVertex3f(x2, 0, z2 - thickness);
+        glVertex3f(x1, 0, z1 - thickness);
+
+        // LEFT side
+        if (j == 0) {
+            glVertex3f(x1, 0,      z1);
+            glVertex3f(x1, 0,      z1 - thickness);
+            glVertex3f(x1, height, z1 - thickness);
+            glVertex3f(x1, height, z1);
+        }
+
+        // RIGHT side
+        if (j == steps - 1) {
+            glVertex3f(x2, 0,      z2);
+            glVertex3f(x2, 0,      z2 - thickness);
+            glVertex3f(x2, height, z2 - thickness);
+            glVertex3f(x2, height, z2);
+        }
+
+        glEnd();
+    }
+
+    glPopMatrix();
+}
+
+
+
+void drawBackrestRod(float x, float z)
+{
+    glPushMatrix();
+    glColor3f(0.45f, 0.30f, 0.18f);
+
+    glTranslatef(x, ROD_BOTTOM + ROD_HEIGHT/2, z);
+
+    glScalef(0.08f, ROD_HEIGHT, 0.08f);
+    glutSolidCube(1.0);
+
+    glPopMatrix();
+}
+
+
+
+//----------------------------------
+// Full chair
+//----------------------------------
+void drawBarChair() {
+        // ----------------------------------
+    // SCALE ALL DIMENSIONS HERE
+    // ----------------------------------
+    BASE_THICK     = 0.15f * CHAIR_SCALE;
+    CUSHION_THICK  = 0.18f * CHAIR_SCALE;
+    LEG_HEIGHT     = 1.2f  * CHAIR_SCALE;
+    // height from cushion to top of rods
+ROD_HEIGHT = 0.75f * CHAIR_SCALE;
+
+ROD_BOTTOM = SEAT_HEIGHT - CUSHION_THICK + 0.02f;
+ROD_TOP    = ROD_BOTTOM + ROD_HEIGHT;
+
+    SEAT_HEIGHT = LEG_HEIGHT + BASE_THICK + CUSHION_THICK;
+
+    float barY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK - 0.5f*LEG_HEIGHT;
+
+    glPushMatrix();
+
+    drawSeatBase();
+    drawSeat();
+
+    // legs
+drawLegN(+LEG_OFFSET_X, +LEG_OFFSET_Z);
+drawLegN(-LEG_OFFSET_X, +LEG_OFFSET_Z);
+drawLegN(+LEG_OFFSET_X, -LEG_OFFSET_Z);
+drawLegN(-LEG_OFFSET_X, -LEG_OFFSET_Z);
+
+    // footrest bars at mid-height
+    // float restY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK - LEG_HEIGHT * 0.5f;
+
+    // drawFootBar(-LEG_OFFSET, +LEG_OFFSET, +LEG_OFFSET, +LEG_OFFSET, restY); // front
+    // drawFootBar(-LEG_OFFSET, -LEG_OFFSET, +LEG_OFFSET, -LEG_OFFSET, restY); // back
+    // drawFootBar(-LEG_OFFSET, -LEG_OFFSET, -LEG_OFFSET, +LEG_OFFSET, restY); // left
+    // drawFootBar(+LEG_OFFSET, -LEG_OFFSET, +LEG_OFFSET, +LEG_OFFSET, restY); // right
+
+    float rodHeight = 0.55f;
+
+drawBackrestRod(0.0f, -0.50f);     // center rod
+drawBackrestRod(+0.20f, -0.50f);   // right rod
+drawBackrestRod(-0.20f, -0.50f);   // left rodv
+
+    // backrest
+    drawCurvedBackrest();
+
+    glPopMatrix();
+}
+
+
+//----------------------------------
+// Placement near cocktail table
+//----------------------------------
+//----------------------------------
+// Placement near cocktail table
+//----------------------------------
+void drawBarChairObj(float x, float z)
+{
+    glPushMatrix();
+
+    float Y_OFFSET = 0.0f;    // <-- FIX: lift chair onto floor
+                            // adjust 1.0 , 1.2 , 1.4 until perfect
+
+    glTranslatef(x, Y_OFFSET, z);
+    glScalef(1.0f, 1.2f, 1.0f);
+
+    drawBarChair();
+
+    glPopMatrix();
+}
