@@ -171,6 +171,13 @@ void Fatal(const char *format, ...);
     extern unsigned int barChairWoodTex;
     extern unsigned int barChairBackTex;
 
+    // geometry utilities
+    void drawCuboid(float width, float height, float depth);
+    void drawDisk(float radius, float y, float thickness);
+    void drawSphere(float radius, int slices, int stacks); 
+    void drawCylinder(float radius, float height, int slices);
+    void drawFrustum(float bottomRadius, float topRadius, float height, int slices);
+
     // Interaction utilities
     void rotateObject(SceneObject *obj, float angle);
     void deselectObject(void);
