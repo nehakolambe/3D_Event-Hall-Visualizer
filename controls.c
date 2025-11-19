@@ -1,21 +1,22 @@
 #include "CSCIx229.h"
-#include <math.h>
 
-// --- External variables ---
+// External camera state
 extern double fov;
 extern double th, ph;
 extern double camZ;
 extern double dim;
 
-extern int mode;
+// FPV camera
+extern int mode;                 // 0 = projection, 1 = FPV
 extern double fpvX, fpvY, fpvZ;
 extern double yaw, pitch;
 
+// Scene
 extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
-extern SceneObject *selectedObject;
+extern SceneObject* selectedObject;
 
-// --- Lighting externs ---
+// Lighting state
 extern float zh;
 extern float lightSpeed;
 extern float radius;
@@ -24,15 +25,10 @@ extern int specularEnabled;
 extern int emissionEnabled;
 extern int localViewer;
 extern int shininess;
-
 extern int lightState;
 extern float lightY;
 
-void rotateObject(SceneObject *obj, float angle);
-
-// =======================================================
-//                 KEYBOARD HANDLER
-// =======================================================
+// Keyboard Input Handler
 void controls_key(unsigned char key, int x, int y)
 {
     const double speed = 0.8;
@@ -40,241 +36,203 @@ void controls_key(unsigned char key, int x, int y)
 
     switch (key)
     {
-    // --- Lighting controls ---
-    case 'l':
-    case 'L':
-        moveLight = !moveLight;
-        break;
+        // Toggle dynamic light motion
+        case 'l':
+        case 'L':
+            moveLight = !moveLight;
+            break;
 
-    case 'b':
-    case 'B':
-        lightState = (lightState + 1) % 3;
-        break;
+        // Cycle through light modes
+        case 'b':
+        case 'B':
+            lightState = (lightState + 1) % 3;
+            break;
 
-    case '[':
-        zh -= 5;
-        break;
+        // Rotate light horizontally (left)
+        case '[':
+            zh -= 5;
+            break;
 
-    case ']':
-        zh += 5;
-        break;
+        // Rotate light horizontally (right)
+        case ']':
+            zh += 5;
+            break;
 
-    case '{':
-        radius -= 1;
-        break;
+        // Shrink light radius
+        case '{':
+            radius -= 1;
+            break;
 
-    case '}':
-        radius += 1;
-        if (radius > 40)
-            radius = 40;
-        break;
+        // Expand light radius
+        case '}':
+            radius += 1;
+            if (radius > 40) radius = 40;
+            break;
 
-    case 'y':
-        lightY -= 0.5f;
-        break;
+        // Move light down
+        case 'y':
+            lightY -= 0.5f;
+            break;
 
-    case 'Y':
-        lightY += 0.5f;
-        if (lightY > 30)
-            lightY = 30;
-        break;
+        // Move light up
+        case 'Y':
+            lightY += 0.5f;
+            if (lightY > 30) lightY = 30;
+            break;
 
-    case 'c':
-    case 'C':
-        specularEnabled = !specularEnabled;
-        break;
+        // Increase FOV (zoom out)
+        case '-':
+        case '_':
+            fov += 2.0;
+            if (fov > 80.0) fov = 80.0;
+            break;
 
-    case 'e':
-    case 'E':
-        emissionEnabled = !emissionEnabled;
-        break;
+        // Decrease FOV (zoom in)
+        case '+':
+        case '=':
+            fov -= 2.0;
+            if (fov < 25.0) fov = 25.0;
+            break;
 
-    case 'p':
-    case 'P':
-        localViewer = !localViewer;
-        break;
+        // Move camera backward (projection mode only)
+        case '(':
+            if (mode == 0)
+            {
+                dim -= 1.0;
+                if (dim < 5.0) dim = 5.0;
+            }
+            break;
 
-    case '>':
-        shininess++;
-        if (shininess > 128)
-            shininess = 128;
-        break;
+        // Move camera forward (projection mode only)
+        case ')':
+            if (mode == 0)
+            {
+                dim += 1.0;
+                if (dim > 60.0) dim = 60.0;
+            }
+            break;
 
-    case '<':
-        shininess--;
-        if (shininess < 0)
-            shininess = 0;
-        break;
+        // FPV forward
+        case 'w':
+        case 'W':
+            if (mode == 1)
+            {
+                fpvX += speed * sin(radYaw);
+                fpvZ -= speed * cos(radYaw);
+            }
+            break;
 
-    // --- FOV controls ---
-    case '-':
-    case '_':
-        fov += 2.0;
-        if (fov > 80.0)
-            fov = 80.0;
-        break;
+        // FPV backward
+        case 's':
+        case 'S':
+            if (mode == 1)
+            {
+                fpvX -= speed * sin(radYaw);
+                fpvZ += speed * cos(radYaw);
+            }
+            break;
 
-    case '+':
-    case '=':
-        fov -= 2.0;
-        if (fov < 25.0)
-            fov = 25.0;
-        break;
+        // FPV strafe left
+        case 'a':
+        case 'A':
+            if (mode == 1)
+            {
+                fpvX -= speed * cos(radYaw);
+                fpvZ -= speed * sin(radYaw);
+            }
+            break;
 
-    // --- Dim control (orbit mode only) ---
-    case '(':
-        if (mode == 0)
-        {
-            dim -= 1.0;
-            if (dim < 5.0)
-                dim = 5.0;
-        }
-        break;
+        // FPV strafe right
+        case 'd':
+        case 'D':
+            if (mode == 1)
+            {
+                fpvX += speed * cos(radYaw);
+                fpvZ += speed * sin(radYaw);
+            }
+            break;
 
-    case ')':
-        if (mode == 0)
-        {
-            dim += 1.0;
-            if (dim > 60.0)
-                dim = 60.0;
-        }
-        break;
+        // Toggle FPV / Projection mode
+        case 'm':
+        case 'M':
+            mode = (mode + 1) % 2;
+            break;
 
-    // ====================================================
-    //                 FPV MOVEMENT
-    // ====================================================
-    case 'w':
-    case 'W':
-        if (mode == 1)
-        {
-            fpvX += speed * sin(radYaw);
-            fpvZ -= speed * cos(radYaw);
-        }
-        break;
+        // Rotate selected object clockwise
+        case 'r':
+            if (selectedObject) rotateObject(selectedObject, 15.0f);
+            break;
 
-    case 's':
-    case 'S':
-        if (mode == 1)
-        {
-            fpvX -= speed * sin(radYaw);
-            fpvZ += speed * cos(radYaw);
-        }
-        break;
+        // Rotate selected object counter-clockwise
+        case 'R':
+            if (selectedObject) rotateObject(selectedObject, -15.0f);
+            break;
 
-    case 'a':
-    case 'A':
-        if (mode == 1)
-        {
-            fpvX -= speed * cos(radYaw);
-            fpvZ -= speed * sin(radYaw);
-        }
-        break;
+        // Reset scene
+        case '0':
+            th = ph = yaw = pitch = 0;
+            camZ = 24;
+            fpvX = 0;
+            fpvZ = 24;
+            fov = 55;
+            dim = 20;
+            moveLight = 1;
+            specularEnabled = 1;
+            emissionEnabled = 0;
+            localViewer = 0;
+            radius = 10.0f;
+            zh = 0;
+            mode = 0;
+            selectedObject = NULL;
+            break;
 
-    case 'd':
-    case 'D':
-        if (mode == 1)
-        {
-            fpvX += speed * cos(radYaw);
-            fpvZ += speed * sin(radYaw);
-        }
-        break;
-
-    // --- Mode toggle (orbit / FPV) ---
-    case 'm':
-    case 'M':
-        mode = (mode + 1) % 2;
-        break;
-
-    // --- Object rotation ---
-    case 'r':
-        if (selectedObject)
-            rotateObject(selectedObject, 15.0f);
-        break;
-
-    case 'R':
-        if (selectedObject)
-            rotateObject(selectedObject, -15.0f);
-        break;
-
-    // --- Reset ---
-    case '0':
-        th = ph = yaw = pitch = 0;
-        camZ = 24;
-        fpvX = 0;
-        fpvZ = 24;
-        fov = 55;
-        dim = 20;
-
-        moveLight = 1;
-        specularEnabled = 1;
-        emissionEnabled = 0;
-        localViewer = 0;
-        radius = 10.0f;
-        zh = 0;
-
-        mode = 0;
-        selectedObject = NULL;
-        break;
-
-    // --- Exit ---
-    case 27:
-        exit(0);
+        // Exit program (ESC)
+        case 27:
+            exit(0);
     }
 
     glutPostRedisplay();
 }
 
-// =======================================================
-//                 SPECIAL KEYS
-// =======================================================
+// Special Keys (Arrow Keys)
 void controls_special(int key, int x, int y)
 {
     if (mode == 1)
     {
-        // FPV look
+        // FPV look controls
         switch (key)
         {
-        case GLUT_KEY_LEFT:
-            yaw -= 5;
-            break;
-        case GLUT_KEY_RIGHT:
-            yaw += 5;
-            break;
-        case GLUT_KEY_UP:
-            pitch += 5;
-            if (pitch > 60)
-                pitch = 60;
-            break;
-        case GLUT_KEY_DOWN:
-            pitch -= 5;
-            if (pitch < -60)
-                pitch = -60;
-            break;
+            case GLUT_KEY_LEFT:  yaw -= 5; break;
+            case GLUT_KEY_RIGHT: yaw += 5; break;
+
+            case GLUT_KEY_UP:
+                pitch += 5;
+                if (pitch > 60) pitch = 60;
+                break;
+
+            case GLUT_KEY_DOWN:
+                pitch -= 5;
+                if (pitch < -60) pitch = -60;
+                break;
         }
     }
     else
     {
-        // Orbit camera
+        // Projection camera rotation
         switch (key)
         {
-        case GLUT_KEY_RIGHT:
-            th += 5;
-            break;
-        case GLUT_KEY_LEFT:
-            th -= 5;
-            break;
+            case GLUT_KEY_RIGHT: th += 5; break;
+            case GLUT_KEY_LEFT:  th -= 5; break;
 
-        case GLUT_KEY_UP:
-            ph += 5;
-            if (ph > 90)
-                ph = 90;
-            break;
+            case GLUT_KEY_UP:
+                ph += 5;
+                if (ph > 90) ph = 90;
+                break;
 
-        case GLUT_KEY_DOWN:
-            ph -= 5;
-            if (ph < -90)
-                ph = -90;
-            break;
+            case GLUT_KEY_DOWN:
+                ph -= 5;
+                if (ph < -90) ph = -90;
+                break;
         }
     }
 
