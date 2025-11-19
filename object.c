@@ -45,31 +45,219 @@
 //     glEnd();
 // }
 
+void drawCylinder(float radius, float height, int slices)
+{
+    float halfH = height;
+
+    /* ===== SIDE WALL ===== */
+    glBegin(GL_QUAD_STRIP);
+    for(int i=0; i<=slices; i++)
+    {
+        float a = 2*M_PI*i/slices;
+        float x = cos(a);
+        float z = sin(a);
+
+        glNormal3f(x,0,z);
+
+        glTexCoord2f((float)i/slices,0);
+        glVertex3f(radius*x, 0,        radius*z);
+
+        glTexCoord2f((float)i/slices,1);
+        glVertex3f(radius*x, height,   radius*z);
+    }
+    glEnd();
+
+    /* ===== TOP CAP ===== */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0,1,0);
+    glTexCoord2f(0.5,0.5);
+    glVertex3f(0,height,0);
+
+    for(int i=0;i<=slices;i++){
+        float a = 2*M_PI*i/slices;
+        float x = radius*cos(a);
+        float z = radius*sin(a);
+
+        glTexCoord2f(0.5+0.5*cos(a), 0.5+0.5*sin(a));
+        glVertex3f(x,height,z);
+    }
+    glEnd();
+
+    /* ===== BOTTOM CAP ===== */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0,-1,0);
+    glTexCoord2f(0.5,0.5);
+    glVertex3f(0,0,0);
+
+    for(int i=0;i<=slices;i++){
+        float a = 2*M_PI*i/slices;
+        float x = radius*cos(a);
+        float z = radius*sin(a);
+
+        glTexCoord2f(0.5+0.5*cos(a), 0.5+0.5*sin(a));
+        glVertex3f(x,0,z);
+    }
+    glEnd();
+}
+
+
 //
 // Draw one cylindrical leg standing vertically (Y-axis)
 //
 static void drawLeg(float x, float z, float height, float radius)
 {
-    GLUquadric* q = gluNewQuadric();
-    gluQuadricNormals(q, GLU_SMOOTH);
-    gluQuadricTexture(q, GL_TRUE);  // <-- ENABLE TEXTURE COORDS
+    int slices = 32;   // same as before
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
 
     glPushMatrix();
-    glTranslatef(x, 0, z);
-    glRotatef(-90, 1, 0, 0);
 
-    glColor3f(1,1,1);  // let texture show fully
-    gluCylinder(q, radius, radius, height, 32, 4);
+    // Position cylinder upright like your old gluCylinder rotated -90° on X
+    glTranslatef(x, 0, z);
+
+    glColor3f(1,1,1);  // let texture appear fully
+
+    /* ======================================================
+       Draw Cylinder Side (exact same shape as gluCylinder)
+       ====================================================== */
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= slices; i++)
+    {
+        float a = 2.0f * M_PI * i / slices;
+        float cx = cos(a);
+        float cz = sin(a);
+
+        glNormal3f(cx, 0, cz);
+
+        glTexCoord2f((float)i/slices, 0.0f);
+        glVertex3f(radius*cx, 0.0f, radius*cz);
+
+        glTexCoord2f((float)i/slices, 1.0f);
+        glVertex3f(radius*cx, height, radius*cz);
+    }
+    glEnd();
+
+    /* ======================================================
+       Top Cap
+       ====================================================== */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 1, 0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0, height, 0);
+
+    for(int i = 0; i <= slices; i++)
+    {
+        float a = 2.0f * M_PI * i / slices;
+        float cx = cos(a) * radius;
+        float cz = sin(a) * radius;
+
+        glTexCoord2f(0.5f + 0.5f*cos(a), 0.5f + 0.5f*sin(a));
+        glVertex3f(cx, height, cz);
+    }
+    glEnd();
+
+    /* ======================================================
+       Bottom Cap
+       ====================================================== */
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0, 0, 0);
+
+    for(int i = 0; i <= slices; i++)
+    {
+        float a = 2.0f * M_PI * i / slices;
+        float cx = cos(a) * radius;
+        float cz = sin(a) * radius;
+
+        glTexCoord2f(0.5f + 0.5f*cos(a), 0.5f + 0.5f*sin(a));
+        glVertex3f(cx, 0, cz);
+    }
+    glEnd();
 
     glPopMatrix();
-
     glDisable(GL_TEXTURE_2D);
-    gluDeleteQuadric(q);
 }
 
+
+void drawSphere(float radius, int slices, int stacks)
+{
+    for (int i = 0; i < stacks; i++)
+    {
+        float lat0 = M_PI * (-0.5 + (float)i / stacks);
+        float z0   = sin(lat0);
+        float zr0  = cos(lat0);
+
+        float lat1 = M_PI * (-0.5 + (float)(i+1) / stacks);
+        float z1   = sin(lat1);
+        float zr1  = cos(lat1);
+
+        glBegin(GL_TRIANGLE_STRIP);
+        for (int j = 0; j <= slices; j++)
+        {
+            float lng = 2 * M_PI * (float)(j) / slices;
+            float x = cos(lng);
+            float y = sin(lng);
+
+            glNormal3f(x * zr0, y * zr0, z0);
+            glVertex3f(radius * x * zr0, radius * y * zr0, radius * z0);
+
+            glNormal3f(x * zr1, y * zr1, z1);
+            glVertex3f(radius * x * zr1, radius * y * zr1, radius * z1);
+        }
+        glEnd();
+    }
+}
+
+void drawCube()
+{
+    glBegin(GL_QUADS);
+
+    // +X
+    glNormal3f(1,0,0);
+    glVertex3f(0.5, -0.5, -0.5);
+    glVertex3f(0.5,  0.5, -0.5);
+    glVertex3f(0.5,  0.5,  0.5);
+    glVertex3f(0.5, -0.5,  0.5);
+
+    // -X
+    glNormal3f(-1,0,0);
+    glVertex3f(-0.5, -0.5, -0.5);
+    glVertex3f(-0.5, -0.5,  0.5);
+    glVertex3f(-0.5,  0.5,  0.5);
+    glVertex3f(-0.5,  0.5, -0.5);
+
+    // +Y
+    glNormal3f(0,1,0);
+    glVertex3f(-0.5, 0.5, -0.5);
+    glVertex3f(-0.5, 0.5,  0.5);
+    glVertex3f(0.5, 0.5,  0.5);
+    glVertex3f(0.5, 0.5, -0.5);
+
+    // -Y
+    glNormal3f(0,-1,0);
+    glVertex3f(-0.5, -0.5, -0.5);
+    glVertex3f(0.5, -0.5, -0.5);
+    glVertex3f(0.5, -0.5,  0.5);
+    glVertex3f(-0.5, -0.5,  0.5);
+
+    // +Z
+    glNormal3f(0,0,1);
+    glVertex3f(-0.5, -0.5, 0.5);
+    glVertex3f(0.5, -0.5, 0.5);
+    glVertex3f(0.5,  0.5, 0.5);
+    glVertex3f(-0.5,  0.5, 0.5);
+
+    // -Z
+    glNormal3f(0,0,-1);
+    glVertex3f(-0.5, -0.5,-0.5);
+    glVertex3f(-0.5,  0.5,-0.5);
+    glVertex3f(0.5,  0.5,-0.5);
+    glVertex3f(0.5, -0.5,-0.5);
+
+    glEnd();
+}
 
 
 //
@@ -527,7 +715,7 @@ void drawDoor(float x, float z, float width, float height)
     glEnable(GL_TEXTURE_GEN_S);
     glEnable(GL_TEXTURE_GEN_T);
 
-    glutSolidSphere(0.12, 20, 20);
+    drawSphere(0.12, 20, 20);
 
     // disable automatic coords
     glDisable(GL_TEXTURE_GEN_S);
@@ -774,7 +962,7 @@ void drawLamp(float xPos, float zPos)
         float bulbEmission[] = {1.0,0.9,0.7,1.0};
         glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
 
-        glutSolidSphere(0.25,20,20);
+        drawSphere(0.25f, 20, 20);
 
         float noEmission[] = {0,0,0,1};
         glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
@@ -1494,7 +1682,7 @@ static void drawRope(float length)
     glTranslatef(0, -length/2.0f, 0);
 
     glScalef(0.05, length, 0.05);
-    glutSolidCube(1.0);
+    drawCube();   // replaces glutSolidCube(1.0);
 
     glPopMatrix();
 }
@@ -1566,60 +1754,58 @@ void drawStarShape()
 
 void drawCloudShape()
 {
-    glColor3f(0.6f, 0.8f, 1.0f);   // sky blue cloud
-
-    // brighter cloud
-    // glColor3f(1.0f, 1.0f, 0.8f);
+    glColor3f(0.6f, 0.8f, 1.0f);   // cloud color
 
     // center puff
     glPushMatrix();
-    glTranslatef(0.0f, 0.0f, 0.0f);
-    glScalef(1.4f, 1.2f, 1.0f);
-    glutSolidSphere(0.5, 32, 32);
+        glTranslatef(0.0f, 0.0f, 0.0f);
+        glScalef(1.4f, 1.2f, 1.0f);
+        drawSphere(0.5f, 32, 32);
     glPopMatrix();
 
     // right big puff
     glPushMatrix();
-    glTranslatef(0.65f, -0.05f, 0.0f);
-    glScalef(1.2f, 1.0f, 1.0f);
-    glutSolidSphere(0.45, 32, 32);
+        glTranslatef(0.65f, -0.05f, 0.0f);
+        glScalef(1.2f, 1.0f, 1.0f);
+        drawSphere(0.45f, 32, 32);
     glPopMatrix();
 
     // left big puff
     glPushMatrix();
-    glTranslatef(-0.65f, -0.05f, 0.0f);
-    glScalef(1.2f, 1.0f, 1.0f);
-    glutSolidSphere(0.45, 32, 32);
+        glTranslatef(-0.65f, -0.05f, 0.0f);
+        glScalef(1.2f, 1.0f, 1.0f);
+        drawSphere(0.45f, 32, 32);
     glPopMatrix();
 
-    // small lower-left puff
+    // lower-left puff
     glPushMatrix();
-    glTranslatef(-0.35f, -0.35f, 0.0f);
-    glScalef(0.9f, 0.8f, 1.0f);
-    glutSolidSphere(0.35, 32, 32);
+        glTranslatef(-0.35f, -0.35f, 0.0f);
+        glScalef(0.9f, 0.8f, 1.0f);
+        drawSphere(0.35f, 32, 32);
     glPopMatrix();
 
-    // small lower-right puff
+    // lower-right puff
     glPushMatrix();
-    glTranslatef(0.35f, -0.35f, 0.0f);
-    glScalef(0.9f, 0.8f, 1.0f);
-    glutSolidSphere(0.35, 32, 32);
+        glTranslatef(0.35f, -0.35f, 0.0f);
+        glScalef(0.9f, 0.8f, 1.0f);
+        drawSphere(0.35f, 32, 32);
     glPopMatrix();
 
     // top-right puff
     glPushMatrix();
-    glTranslatef(0.30f, 0.35f, 0.0f);
-    glScalef(0.8f, 0.8f, 1.0f);
-    glutSolidSphere(0.30, 32, 32);
+        glTranslatef(0.30f, 0.35f, 0.0f);
+        glScalef(0.8f, 0.8f, 1.0f);
+        drawSphere(0.30f, 32, 32);
     glPopMatrix();
 
     // top-left puff
     glPushMatrix();
-    glTranslatef(-0.30f, 0.35f, 0.0f);
-    glScalef(0.8f, 0.8f, 1.0f);
-    glutSolidSphere(0.30, 32, 32);
+        glTranslatef(-0.30f, 0.35f, 0.0f);
+        glScalef(0.8f, 0.8f, 1.0f);
+        drawSphere(0.30f, 32, 32);
     glPopMatrix();
 }
+
 
 
 static void drawMoonShape()
@@ -2050,7 +2236,8 @@ void drawSeatBase()
 //----------------------------------
 // Legs (start from bottom of base)
 //----------------------------------
-void drawLegN(float x, float z) {
+void drawLegN(float x, float z)
+{
     glPushMatrix();
     glColor3f(0.45f, 0.30f, 0.18f);
 
@@ -2058,7 +2245,8 @@ void drawLegN(float x, float z) {
 
     glTranslatef(x, legStartY - LEG_HEIGHT/2, z);
     glScalef(0.12f, LEG_HEIGHT, 0.12f);
-    glutSolidCube(1.0);
+
+    drawCube();  // <-- now using custom cube
 
     glPopMatrix();
 }
@@ -2066,23 +2254,31 @@ void drawLegN(float x, float z) {
 //----------------------------------
 // Horizontal bar between legs
 //----------------------------------
-void drawFootBar(float x1, float z1, float x2, float z2, float y) {
-
+void drawFootBar(float x1, float z1, float x2, float z2, float y)
+{
     glPushMatrix();
     glColor3f(0.45f, 0.30f, 0.18f);
 
-    glTranslatef((x1 + x2)/2, y, (z1 + z2)/2);
+    // midpoint of the bar
+    glTranslatef((x1 + x2) * 0.5f, y, (z1 + z2) * 0.5f);
 
-    float dx = x2-x1, dz = z2-z1;
+    float dx = x2 - x1;
+    float dz = z2 - z1;
+
     float len = sqrt(dx*dx + dz*dz);
-    float ang = atan2(dx, dz)*57.2958f;
 
-    glRotatef(ang, 0,1,0);
+    // orientation around Y
+    float ang = atan2(dx, dz) * 57.2958f;   // convert to degrees
+    glRotatef(ang, 0, 1, 0);
+
+    // scale to make it a bar
     glScalef(len, 0.08f, 0.08f);
 
-    glutSolidCube(1.0);
+    drawCube();   // ⬅ replaces glutSolidCube(1.0)
+
     glPopMatrix();
 }
+
 
 //----------------------------------
 // Backrest
@@ -2097,7 +2293,7 @@ float rodHeight = 0.75f * CHAIR_SCALE;
 float rodTop = rodBottom + rodHeight;
 
     // Move backrest in front of rods
-    float backrestZ = -0.2f;
+    float backrestZ = -0.1f;
 
     glPushMatrix();
     glColor3f(0.70f, 0.55f, 0.35f);
@@ -2190,13 +2386,17 @@ void drawBackrestRod(float x, float z)
     glPushMatrix();
     glColor3f(0.45f, 0.30f, 0.18f);
 
-    glTranslatef(x, ROD_BOTTOM + ROD_HEIGHT/2, z);
+    // Correct vertical placement
+    glTranslatef(x, ROD_BOTTOM + ROD_HEIGHT * 0.5f, z);
 
+    // Scale into long vertical rod
     glScalef(0.08f, ROD_HEIGHT, 0.08f);
-    glutSolidCube(1.0);
+
+    drawCube();   // Replaces glutSolidCube(1.0)
 
     glPopMatrix();
 }
+
 
 
 
