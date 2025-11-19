@@ -1,11 +1,13 @@
 #ifndef CSCIx229
 #define CSCIx229
 
+// Standard headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <stdbool.h>
 
 // --- GLEW _MUST_ be included first ---
 #ifdef USEGLEW
@@ -49,106 +51,88 @@
 extern "C" {
 #endif
 
-// =======================================================
-//                  Utility functions
-// =======================================================
+// Formatted printing and fatal error helpers
 #ifdef __GNUC__
 void Print(const char* format , ...) __attribute__ ((format(printf,1,2)));
 void Fatal(const char* format , ...) __attribute__ ((format(printf,1,2))) __attribute__ ((noreturn));
 #else
-void Print(const char* format , ...);
-void Fatal(const char* format , ...);
+void Print(const char* format, ...);
+void Fatal(const char* format, ...);
 #endif
 
+// Texture loading and GL error check utilities
 unsigned int LoadTexBMP(const char* file);
 void ErrCheck(const char* where);
 
-#include <stdbool.h>   // for bool, true, false
-
-// =======================================================
-//                  PROJECT INTERFACES
-// =======================================================
-
-// --- Scene & rendering ---
+// Scene and rendering
 void scene_display(void);
 void scene_init(void);
 void reshape(int width, int height);
-void Project(); 
+void Project(void);
 
-// --- Object draw functions ---
+// Object draw functions
 void drawTable(float x, float z);
 void drawCocktailTable(float x, float z);
+void drawCocktailTable2(float x, float z);
+void drawCocktailTable3(float x, float z);
+void drawMeetingTable(float x, float z);
 void drawBanquetChair(float x, float z);
 void drawLamp(float x, float z);
 void drawDoor(float x, float z, float width, float height);
 void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                       float yBase, float radiusH, float radiusV, float zOffset);
-void drawCocktailTable2(float x, float z);
-void drawCocktailTable3(float x, float z);
-void drawMeetingTable(float x, float z);
+void drawBarChairObj(float x, float z);
+void drawCeilingLights(void);
 
-// --- Controls ---
+// Controls
 void controls_key(unsigned char ch, int x, int y);
 void controls_special(int key, int x, int y);
 
-// --- Lighting ---
+// Lighting
 void lighting_init(void);
 void lighting_update(void);
 void lighting_draw_debug_marker(void);
 void drawLampBulb(void);
-extern int lightState;
-extern float lampX;
-extern float lampY;
-extern float lampZ;
 
-// =======================================================
-//                  DEBUG / CAMERA GLOBALS
-// =======================================================
+extern int lightState;
+extern float lampX, lampY, lampZ;
+
+// Debug globals
 extern int debugMode;
 extern int debugObjectIndex;
 extern int totalObjects;
 
-// =======================================================
-//                  SCENE OBJECT SYSTEM
-// =======================================================
-
+// Scene object definition
 typedef struct {
     int id;
     char name[32];
     float x, y, z;
     float scale;
     float rotation;
-    float bbox[6];                // (xmin, xmax, ymin, ymax, zmin, zmax)
+    float bbox[6];                // xmin, xmax, ymin, ymax, zmin, zmax
     void (*drawFunc)(float, float);
-    int movable;                  // 1 = draggable
+    int movable;
     bool solid;
 } SceneObject;
 
-bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ);
-
+// Scene object management
 #define MAX_OBJECTS 100
+
 extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
 
 extern SceneObject* selectedObject;
 extern int dragging;
 
-void drawCeilingLights();
-void drawBarChairObj(float x, float z);
-// =======================================================
-//                  MOUSE INTERACTION
-// =======================================================
+bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ);
 
-// --- Mouse interaction handlers ---
+// Mouse interaction
 void mouse_button(int button, int state, int x, int y);
 void mouse_motion(int x, int y);
-
-// --- Utility for mapping screen → world (to be used by mouse.c) ---
 void screenToWorld(int x, int y, float* worldX, float* worldZ);
-
-// --- Object picking helper ---
 SceneObject* pickObject(float worldX, float worldZ);
 
+// Texture handles
 extern unsigned int screenTex;
 extern unsigned int cocktailTableTex;
 extern unsigned int tableTex;
@@ -173,13 +157,9 @@ extern unsigned int barChairCushionTex;
 extern unsigned int barChairWoodTex;
 extern unsigned int barChairBackTex;
 
-// =======================================================
-//              🔄  NEW INTERACTION UTILITIES
-// =======================================================
-
-// Allow object rotation and deselection
+// Interaction utilities
 void rotateObject(SceneObject* obj, float angle);
-void deselectObject();
+void deselectObject(void);
 
 #ifdef __cplusplus
 }
