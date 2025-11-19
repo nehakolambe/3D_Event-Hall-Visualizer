@@ -1,5 +1,5 @@
 # 3D Campus Event Hall Visualizer
-EXE=event_hall
+EXE=final
 
 # Main target
 all: $(EXE)

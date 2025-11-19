@@ -87,10 +87,9 @@ void display(void)
 
     glWindowPos2f(10, 10);
 
-    const char* modeStr =
-        (mode == 0) ? "Perspective" :
-        (mode == 1) ? "FPV" :
-        "Other";
+    const char *modeStr =
+        (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
+                                                  : "Other";
 
     Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
 
@@ -112,12 +111,12 @@ void reshape(int width, int height)
 }
 
 /* Main entry */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("3D Event Hall Visualizer");
+    glutCreateWindow("final project: neha kolambe");
 
 #ifdef USEGLEW
     glewInit();

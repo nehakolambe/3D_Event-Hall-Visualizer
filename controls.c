@@ -13,7 +13,7 @@ extern double yaw, pitch;
 
 extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
-extern SceneObject* selectedObject;
+extern SceneObject *selectedObject;
 
 extern int debugMode;
 extern int debugObjectIndex;
@@ -31,7 +31,7 @@ extern int shininess;
 extern int lightState;
 extern float lightY;
 
-void rotateObject(SceneObject* obj, float angle);
+void rotateObject(SceneObject *obj, float angle);
 
 // =======================================================
 //                 KEYBOARD HANDLER
@@ -44,11 +44,13 @@ void controls_key(unsigned char key, int x, int y)
     switch (key)
     {
     // --- Lighting controls ---
-    case 'l': case 'L':
+    case 'l':
+    case 'L':
         moveLight = !moveLight;
         break;
 
-    case 'b': case 'B':
+    case 'b':
+    case 'B':
         lightState = (lightState + 1) % 3;
         break;
 
@@ -66,7 +68,8 @@ void controls_key(unsigned char key, int x, int y)
 
     case '}':
         radius += 1;
-        if (radius > 40) radius = 40;
+        if (radius > 40)
+            radius = 40;
         break;
 
     case 'y':
@@ -75,40 +78,50 @@ void controls_key(unsigned char key, int x, int y)
 
     case 'Y':
         lightY += 0.5f;
-        if (lightY > 30) lightY = 30;
+        if (lightY > 30)
+            lightY = 30;
         break;
 
-    case 'c': case 'C':
+    case 'c':
+    case 'C':
         specularEnabled = !specularEnabled;
         break;
 
-    case 'e': case 'E':
+    case 'e':
+    case 'E':
         emissionEnabled = !emissionEnabled;
         break;
 
-    case 'p': case 'P':
+    case 'p':
+    case 'P':
         localViewer = !localViewer;
         break;
 
     case '>':
         shininess++;
-        if (shininess > 128) shininess = 128;
+        if (shininess > 128)
+            shininess = 128;
         break;
 
     case '<':
         shininess--;
-        if (shininess < 0) shininess = 0;
+        if (shininess < 0)
+            shininess = 0;
         break;
 
     // --- FOV controls ---
-    case '-': case '_':
+    case '-':
+    case '_':
         fov += 2.0;
-        if (fov > 80.0) fov = 80.0;
+        if (fov > 80.0)
+            fov = 80.0;
         break;
 
-    case '+': case '=':
+    case '+':
+    case '=':
         fov -= 2.0;
-        if (fov < 25.0) fov = 25.0;
+        if (fov < 25.0)
+            fov = 25.0;
         break;
 
     // --- Dim control (orbit mode only) ---
@@ -116,7 +129,8 @@ void controls_key(unsigned char key, int x, int y)
         if (mode == 0)
         {
             dim -= 1.0;
-            if (dim < 5.0) dim = 5.0;
+            if (dim < 5.0)
+                dim = 5.0;
         }
         break;
 
@@ -124,14 +138,16 @@ void controls_key(unsigned char key, int x, int y)
         if (mode == 0)
         {
             dim += 1.0;
-            if (dim > 60.0) dim = 60.0;
+            if (dim > 60.0)
+                dim = 60.0;
         }
         break;
 
     // ====================================================
     //                 FPV MOVEMENT
     // ====================================================
-    case 'w': case 'W':
+    case 'w':
+    case 'W':
         if (mode == 1)
         {
             fpvX += speed * sin(radYaw);
@@ -139,7 +155,8 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    case 's': case 'S':
+    case 's':
+    case 'S':
         if (mode == 1)
         {
             fpvX -= speed * sin(radYaw);
@@ -147,7 +164,8 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    case 'a': case 'A':
+    case 'a':
+    case 'A':
         if (mode == 1)
         {
             fpvX -= speed * cos(radYaw);
@@ -155,7 +173,8 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    case 'd': case 'D':
+    case 'd':
+    case 'D':
         if (mode == 1)
         {
             fpvX += speed * cos(radYaw);
@@ -164,7 +183,8 @@ void controls_key(unsigned char key, int x, int y)
         break;
 
     // --- Mode toggle (orbit / FPV) ---
-    case 'm': case 'M':
+    case 'm':
+    case 'M':
         mode = (mode + 1) % 2;
         break;
 
@@ -238,15 +258,21 @@ void controls_special(int key, int x, int y)
         // FPV look
         switch (key)
         {
-        case GLUT_KEY_LEFT:  yaw -= 5; break;
-        case GLUT_KEY_RIGHT: yaw += 5; break;
+        case GLUT_KEY_LEFT:
+            yaw -= 5;
+            break;
+        case GLUT_KEY_RIGHT:
+            yaw += 5;
+            break;
         case GLUT_KEY_UP:
             pitch += 5;
-            if (pitch > 60) pitch = 60;
+            if (pitch > 60)
+                pitch = 60;
             break;
         case GLUT_KEY_DOWN:
             pitch -= 5;
-            if (pitch < -60) pitch = -60;
+            if (pitch < -60)
+                pitch = -60;
             break;
         }
     }
@@ -255,17 +281,23 @@ void controls_special(int key, int x, int y)
         // Orbit camera
         switch (key)
         {
-        case GLUT_KEY_RIGHT: th += 5; break;
-        case GLUT_KEY_LEFT:  th -= 5; break;
+        case GLUT_KEY_RIGHT:
+            th += 5;
+            break;
+        case GLUT_KEY_LEFT:
+            th -= 5;
+            break;
 
         case GLUT_KEY_UP:
             ph += 5;
-            if (ph > 90) ph = 90;
+            if (ph > 90)
+                ph = 90;
             break;
 
         case GLUT_KEY_DOWN:
             ph -= 5;
-            if (ph < -90) ph = -90;
+            if (ph < -90)
+                ph = -90;
             break;
         }
     }

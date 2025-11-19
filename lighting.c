@@ -91,10 +91,9 @@ void lighting_update(void)
         glDisable(GL_LIGHT0);
 
         // drawLamp() sets GL_LIGHT1 position
-
-        float bulbAmb[]  = {0.30f, 0.25f, 0.15f, 1.0f};
-        float bulbDif[]  = {1.00f, 0.85f, 0.40f, 1.0f};
-        float bulbSpec[] = {0.60f, 0.50f, 0.30f, 1.0f};
+        float bulbAmb[]  = {0.20f, 0.25f, 0.35f, 1.0f};
+        float bulbDif[]  = {0.80f, 0.90f, 1.00f, 1.0f};
+        float bulbSpec[] = {1.0f, 1.0f, 0.95f, 1.0f};
 
         glLightfv(GL_LIGHT1, GL_AMBIENT,  bulbAmb);
         glLightfv(GL_LIGHT1, GL_DIFFUSE,  bulbDif);
