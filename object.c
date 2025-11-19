@@ -557,51 +557,44 @@ void drawLamp(float xPos, float zPos)
         glEnd();
     }
 
-    // Shade top cap
-    glBegin(GL_TRIANGLE_FAN);
-    glNormal3f(0.0f, 1.0f, 0.0f);
-    glTexCoord2f(0.5f, 0.5f);
-    glVertex3f(0.0f, shadeTopY, 0.0f);
-
-    for (int i = 0; i <= segments; i++)
-    {
-        float t = 2.0f * M_PI * i / segments;
-        float u = (cosf(t) + 1.0f) * 0.5f;
-        float v = (sinf(t) + 1.0f) * 0.5f;
-
-        glTexCoord2f(u, v);
-        glVertex3f(shadeTopRadius * cosf(t), shadeTopY, shadeTopRadius * sinf(t));
-    }
-    glEnd();
-
+    // reset state after transparent shade
     if (lightState == 2)
     {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
-        glColor4f(1, 1, 1, 1);
     }
-    glColor4f(1, 1, 1, 1); // restore normal color
 
     glDisable(GL_TEXTURE_2D);
+    glColor4f(1, 1, 1, 1);
 
-    // Bulb + emission light
+    // light bulb
+    glPushMatrix();
+
+    float bulbLocalY = shadeBottomY + 0.4f; // inside shade
+    glTranslatef(0.0f, bulbLocalY, 0.0f);
+
+    // Default bulb color
+    glColor3f(1.0f, 1.0f, 0.8f);
+
+    // Glow only when lightState == 2
     if (lightState == 2)
     {
-        glPushMatrix();
+        float glow[] = {0.9f, 0.8f, 0.5f, 1.0f};
+        glMaterialfv(GL_FRONT, GL_EMISSION, glow);
+    }
+    else
+    {
+        float noGlow[] = {0, 0, 0, 1};
+        glMaterialfv(GL_FRONT, GL_EMISSION, noGlow);
+    }
 
-        float bulbLocalY = shadeBottomY + 0.4f;
-        glTranslatef(0.0f, bulbLocalY, 0.0f);
+    drawSphere(0.25f, 20, 20); // bulb
 
-        float bulbEmission[] = {0.8f, 0.9f, 1.0f, 1.0f};
-        glMaterialfv(GL_FRONT, GL_EMISSION, bulbEmission);
+    glPopMatrix();
 
-        drawSphere(0.25f, 20, 20);
-
-        float noEmission[] = {0.0f, 0.0f, 0.0f, 1.0f};
-        glMaterialfv(GL_FRONT, GL_EMISSION, noEmission);
-
-        glPopMatrix();
-
+    // set light position if lamp is on
+    if (lightState == 2)
+    {
         float bulbWorldX = xPos;
         float bulbWorldY = baseHeight + bulbLocalY;
         float bulbWorldZ = zPos;
