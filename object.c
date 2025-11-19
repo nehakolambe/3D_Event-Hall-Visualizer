@@ -867,7 +867,7 @@ void drawLamp(float xPos, float zPos)
         glEnd();
     }
 
-    // --- Transparent shade mode ---
+    // Transparent shade mode
     if (lightState == 2)
     {
         glEnable(GL_BLEND);
