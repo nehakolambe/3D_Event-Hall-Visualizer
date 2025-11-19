@@ -7,20 +7,18 @@ extern double th, ph;
 extern double camZ;
 extern double dim;
 
-extern int mode;           
+extern int mode;
 extern double fpvX, fpvY, fpvZ;
 extern double yaw, pitch;
 
-// Object system
 extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
 extern SceneObject* selectedObject;
 
-// Debug
 extern int debugMode;
 extern int debugObjectIndex;
 
-// --- Lighting externs (from lighting.c) ---
+// --- Lighting externs ---
 extern float zh;
 extern float lightSpeed;
 extern float radius;
@@ -40,22 +38,18 @@ void rotateObject(SceneObject* obj, float angle);
 // =======================================================
 void controls_key(unsigned char key, int x, int y)
 {
-    double speed = 0.8;
-    double radYaw = yaw * 3.14159 / 180.0;
+    const double speed = 0.8;
+    const double radYaw = yaw * (M_PI / 180.0);
 
     switch (key)
     {
-    // ====================================================
-    //              PROFESSOR LIGHTING CONTROLS
-    // ====================================================
-
+    // --- Lighting controls ---
     case 'l': case 'L':
         moveLight = !moveLight;
         break;
 
-    case 'b':
-    case 'B':
-        lightState = (lightState + 1) % 3;   // cycles 0 → 1 → 2 → 0
+    case 'b': case 'B':
+        lightState = (lightState + 1) % 3;
         break;
 
     case '[':
@@ -68,7 +62,6 @@ void controls_key(unsigned char key, int x, int y)
 
     case '{':
         radius -= 1;
-        // if (radius < 2) radius = 2;
         break;
 
     case '}':
@@ -77,12 +70,11 @@ void controls_key(unsigned char key, int x, int y)
         break;
 
     case 'y':
-        lightY -= 0.5;
-        // if (lightY < 0) lightY = 0;
+        lightY -= 0.5f;
         break;
 
     case 'Y':
-        lightY += 0.5;
+        lightY += 0.5f;
         if (lightY > 30) lightY = 30;
         break;
 
@@ -99,31 +91,27 @@ void controls_key(unsigned char key, int x, int y)
         break;
 
     case '>':
-        shininess += 1;
+        shininess++;
         if (shininess > 128) shininess = 128;
         break;
 
     case '<':
-        shininess -= 1;
+        shininess--;
         if (shininess < 0) shininess = 0;
         break;
 
-    // ====================================================
-    //                 CAMERA / FOV CONTROLS
-    // ====================================================
-    case '-':
-    case '_':
+    // --- FOV controls ---
+    case '-': case '_':
         fov += 2.0;
         if (fov > 80.0) fov = 80.0;
         break;
 
-    case '+':
-    case '=':
+    case '+': case '=':
         fov -= 2.0;
         if (fov < 25.0) fov = 25.0;
         break;
 
-    // --- Dim control
+    // --- Dim control (orbit mode only) ---
     case '(':
         if (mode == 0)
         {
@@ -175,16 +163,12 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    // ====================================================
-    //                  MODE TOGGLE
-    // ====================================================
+    // --- Mode toggle (orbit / FPV) ---
     case 'm': case 'M':
-        mode = (mode + 1) % 2; 
+        mode = (mode + 1) % 2;
         break;
 
-    // ====================================================
-    //               OBJECT ROTATION
-    // ====================================================
+    // --- Object rotation ---
     case 'r':
         if (selectedObject)
             rotateObject(selectedObject, 15.0f);
@@ -195,9 +179,7 @@ void controls_key(unsigned char key, int x, int y)
             rotateObject(selectedObject, -15.0f);
         break;
 
-    // ====================================================
-    //                      RESET
-    // ====================================================
+    // --- Reset ---
     case '0':
         th = ph = yaw = pitch = 0;
         camZ = 24;
@@ -210,7 +192,7 @@ void controls_key(unsigned char key, int x, int y)
         specularEnabled = 1;
         emissionEnabled = 0;
         localViewer = 0;
-        radius = 10.0;
+        radius = 10.0f;
         zh = 0;
 
         mode = 0;
@@ -232,9 +214,9 @@ void controls_key(unsigned char key, int x, int y)
 // =======================================================
 void controls_special(int key, int x, int y)
 {
-    switch (key)
+    // --- Cycle debug object selection ---
+    if (key == GLUT_KEY_F1)
     {
-    case GLUT_KEY_F1:
         if (debugObjectIndex == -1)
         {
             debugObjectIndex = 0;
@@ -249,29 +231,42 @@ void controls_special(int key, int x, int y)
                 debugMode = 0;
             }
         }
-        break;
     }
 
     if (mode == 1)
     {
-        // --- FPV look ---
+        // FPV look
         switch (key)
         {
         case GLUT_KEY_LEFT:  yaw -= 5; break;
         case GLUT_KEY_RIGHT: yaw += 5; break;
-        case GLUT_KEY_UP:    pitch += 5; if (pitch > 60) pitch = 60; break;
-        case GLUT_KEY_DOWN:  pitch -= 5; if (pitch < -60) pitch = -60; break;
+        case GLUT_KEY_UP:
+            pitch += 5;
+            if (pitch > 60) pitch = 60;
+            break;
+        case GLUT_KEY_DOWN:
+            pitch -= 5;
+            if (pitch < -60) pitch = -60;
+            break;
         }
     }
     else
     {
-        // --- Orbit --- 
+        // Orbit camera
         switch (key)
         {
         case GLUT_KEY_RIGHT: th += 5; break;
         case GLUT_KEY_LEFT:  th -= 5; break;
-        case GLUT_KEY_UP:    ph += 5; if (ph > 90)  ph = 90;  break;
-        case GLUT_KEY_DOWN:  ph -= 5; if (ph < -90) ph = -90; break;
+
+        case GLUT_KEY_UP:
+            ph += 5;
+            if (ph > 90) ph = 90;
+            break;
+
+        case GLUT_KEY_DOWN:
+            ph -= 5;
+            if (ph < -90) ph = -90;
+            break;
         }
     }
 
