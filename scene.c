@@ -21,6 +21,19 @@ unsigned int chairCushionTex; // Texture ID for chair cushion texture
 unsigned int chairLegTex; // Texture ID for chair leg texture
 unsigned int doorFrameTex; // Texture ID for door texture
 unsigned int doorKnobTex; // Texture ID for door knob texture
+unsigned int cloudTex; // Texture ID for cloud texture
+unsigned int moonTex; // Texture ID for moon texture
+unsigned int starTex; // Texture ID for star texture
+unsigned int threadTex; // Texture ID for thread texture
+unsigned int meetingTableTex; // Texture ID for meeting table texture
+unsigned int meetingTableLegTex; // Texture ID for meeting table leg texture
+unsigned int cocktail2Tex; // Texture ID for cocktail table texture
+unsigned int cocktail2LegTex; // Texture ID for cocktail table leg texture
+unsigned int cocktail3Tex; // Texture ID for cocktail table texture
+unsigned int cocktail3LegTex; // Texture ID for cocktail table leg texture 
+unsigned int barChairCushionTex; // Texture ID for bar chair cushion texture
+unsigned int barChairWoodTex; // Texture ID for bar chair wood texture
+unsigned int barChairBackTex; // Texture ID for bar chair back texture
 
 // void placeEventTables();
 // void placeCocktailTables();
@@ -255,6 +268,19 @@ void scene_init()
     chairLegTex = LoadTexBMP("textures/chairleg.bmp");
     doorFrameTex = LoadTexBMP("textures/door.bmp");
     doorKnobTex = LoadTexBMP("textures/doorknob.bmp");
+    cloudTex = LoadTexBMP("textures/cloud.bmp");
+    moonTex = LoadTexBMP("textures/moon.bmp");
+    starTex = LoadTexBMP("textures/star.bmp");
+    threadTex = LoadTexBMP("textures/thread.bmp");
+    meetingTableTex = LoadTexBMP("textures/meetingtable.bmp");
+    meetingTableLegTex = LoadTexBMP("textures/meetingtableleg.bmp");
+    cocktail2Tex = LoadTexBMP("textures/cocktail2.bmp");
+    cocktail2LegTex = LoadTexBMP("textures/cocktail2leg.bmp");
+    cocktail3Tex = LoadTexBMP("textures/cocktail3.bmp");
+    cocktail3LegTex = LoadTexBMP("textures/cocktail3leg.bmp");
+    barChairBackTex = LoadTexBMP("textures/barchairbackrest.bmp");
+    barChairCushionTex = LoadTexBMP("textures/barchaircushion.bmp");
+    barChairWoodTex = LoadTexBMP("textures/barchairwood.bmp");
     objectCount = 0;
 
     // =======================================================

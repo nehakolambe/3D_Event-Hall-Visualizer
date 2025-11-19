@@ -159,6 +159,19 @@ extern unsigned int chairCushionTex;
 extern unsigned int chairLegTex;
 extern unsigned int doorFrameTex;
 extern unsigned int doorKnobTex;
+extern unsigned int cloudTex;
+extern unsigned int moonTex;
+extern unsigned int starTex;
+extern unsigned int threadTex;
+extern unsigned int meetingTableTex;
+extern unsigned int meetingTableLegTex;
+extern unsigned int cocktail2Tex;
+extern unsigned int cocktail2LegTex;
+extern unsigned int cocktail3Tex;
+extern unsigned int cocktail3LegTex;
+extern unsigned int barChairCushionTex;
+extern unsigned int barChairWoodTex;
+extern unsigned int barChairBackTex;
 
 // =======================================================
 //              🔄  NEW INTERACTION UTILITIES
