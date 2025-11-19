@@ -1,48 +1,38 @@
-//
-//  lighting.c
-//  Updated for drawLamp() controlled lamp light
-//
-
 #include "CSCIx229.h"
 
-// -------------------------------------------
-// GLOBAL LIGHT STATE
-// -------------------------------------------
-int lightState = 1;   // 1 = moving light default
+/* Global light state */
+int lightState = 1;
 
-// Moving light animation
+/* Moving light animation */
 float zh = 0.0f;
-float lightSpeed = 1.0;
-float radius = 10.0;
-float lightY = 5.0;
+float lightSpeed = 1.0f;
+float radius = 10.0f;
+float lightY = 5.0f;
 
-float lx = 5.0;
-float ly = 5.0;
-float lz = 0.0;
+float lx = 5.0f;
+float ly = 5.0f;
+float lz = 0.0f;
 
-// Toggles
+/* Toggles */
 int moveLight = 1;
 int specularEnabled = 1;
 int emissionEnabled = 0;
 int localViewer = 0;
 
-// Materials
+/* Materials */
 int shininess = 32;
-float shinyVector[1] = {32.0};
+float shinyVector[1] = {32.0f};
 
-// Colors
-float ambient[]  = {0.3, 0.3, 0.3, 1.0};
-float diffuse[]  = {1.0, 1.0, 1.0, 1.0};
-float specular[] = {1.0, 1.0, 1.0, 1.0};
+/* Light colors */
+float ambient[]  = {0.3f, 0.3f, 0.3f, 1.0f};
+float diffuse[]  = {1.0f, 1.0f, 1.0f, 1.0f};
+float specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-// Emission color
-float emission[] = {0.0, 0.0, 0.0, 1.0};
+float emission[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 
-// -----------------------------------------------------
-//  lighting_init()
-// -----------------------------------------------------
-void lighting_init()
+/* Initialize lighting */
+void lighting_init(void)
 {
     glEnable(GL_LIGHTING);
     glEnable(GL_NORMALIZE);
@@ -51,20 +41,14 @@ void lighting_init()
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glShadeModel(GL_SMOOTH);
 
-    glEnable(GL_LIGHT0);     // moving light
-    glEnable(GL_LIGHT1);     // lamp light
+    glEnable(GL_LIGHT0); // moving light
+    glEnable(GL_LIGHT1); // lamp bulb light
 }
 
 
-
-// -----------------------------------------------------
-//  lighting_update()
-// -----------------------------------------------------
-void lighting_update()
+/* Update lighting each frame */
+void lighting_update(void)
 {
-    //
-    // MODE 0 → ALL LIGHTS OFF
-    //
     if (lightState == 0)
     {
         glDisable(GL_LIGHTING);
@@ -75,9 +59,7 @@ void lighting_update()
 
     glEnable(GL_LIGHTING);
 
-    //
-    // MODE 1 → MOVING LIGHT ONLY
-    //
+    /* Mode 1: moving light */
     if (lightState == 1)
     {
         glEnable(GL_LIGHT0);
@@ -90,9 +72,9 @@ void lighting_update()
         lz = radius * Sin(zh);
         ly = lightY;
 
-        float pos0[] = {lx, ly, lz, 1.0};
-        glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+        float pos0[] = {lx, ly, lz, 1.0f};
 
+        glLightfv(GL_LIGHT0, GL_POSITION, pos0);
         glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
         glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse);
         glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
@@ -102,24 +84,17 @@ void lighting_update()
         glDisable(GL_LIGHT0);
     }
 
-
-    //
-    // MODE 2 → LAMP BULB ONLY
-    //
+    /* Mode 2: lamp bulb only */
     if (lightState == 2)
     {
-        glDisable(GL_LIGHT0);
         glEnable(GL_LIGHT1);
+        glDisable(GL_LIGHT0);
 
-        // NOTE:
-        // -----------------------------------------
-        // DO NOT SET GL_LIGHT1 POSITION HERE!
-        // drawLamp() sets the correct bulb position.
-        // -----------------------------------------
+        // drawLamp() sets GL_LIGHT1 position
 
-        float bulbAmb[]  = {0.30, 0.25, 0.15, 1.0};
-        float bulbDif[]  = {1.00, 0.85, 0.40, 1.0};
-        float bulbSpec[] = {0.60, 0.50, 0.30, 1.0};
+        float bulbAmb[]  = {0.30f, 0.25f, 0.15f, 1.0f};
+        float bulbDif[]  = {1.00f, 0.85f, 0.40f, 1.0f};
+        float bulbSpec[] = {0.60f, 0.50f, 0.30f, 1.0f};
 
         glLightfv(GL_LIGHT1, GL_AMBIENT,  bulbAmb);
         glLightfv(GL_LIGHT1, GL_DIFFUSE,  bulbDif);
@@ -130,10 +105,7 @@ void lighting_update()
         glDisable(GL_LIGHT1);
     }
 
-
-    //
-    // MATERIAL SETTINGS
-    //
+    /* Material settings */
     shinyVector[0] = shininess;
     glMaterialfv(GL_FRONT, GL_SHININESS, shinyVector);
 
@@ -141,7 +113,7 @@ void lighting_update()
         glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
     else
     {
-        float off[] = {0,0,0,1};
+        float off[] = {0, 0, 0, 1};
         glMaterialfv(GL_FRONT, GL_SPECULAR, off);
     }
 
@@ -149,7 +121,7 @@ void lighting_update()
         glMaterialfv(GL_FRONT, GL_EMISSION, emission);
     else
     {
-        float off[] = {0,0,0,1};
+        float off[] = {0, 0, 0, 1};
         glMaterialfv(GL_FRONT, GL_EMISSION, off);
     }
 
@@ -157,20 +129,18 @@ void lighting_update()
 }
 
 
-
-// -----------------------------------------------------
-//  Debug Marker for Moving Light
-// -----------------------------------------------------
-void lighting_draw_debug_marker()
+/* Debug sphere for moving light */
+void lighting_draw_debug_marker(void)
 {
-    if (lightState != 1) return;   // Only for moving light
+    if (lightState != 1)
+        return;
 
     glDisable(GL_LIGHTING);
+    glColor3f(1.0f, 1.0f, 1.0f);
 
-    glColor3f(1,1,1);
     glPushMatrix();
-        glTranslatef(lx, ly, lz);
-        glutSolidSphere(0.2, 16, 16);
+    glTranslatef(lx, ly, lz);
+    glutSolidSphere(0.2, 16, 16);
     glPopMatrix();
 
     glEnable(GL_LIGHTING);
