@@ -1,29 +1,5 @@
 #include "CSCIx229.h"
 
-// External camera state
-extern double fov;
-extern double th, ph;
-extern double camZ;
-extern double dim;
-
-// FPV camera
-extern int mode;                 // 0 = projection, 1 = FPV
-extern double fpvX, fpvY, fpvZ;
-extern double yaw, pitch;
-
-// Scene
-extern SceneObject objects[MAX_OBJECTS];
-extern int objectCount;
-extern SceneObject* selectedObject;
-
-// Lighting state
-extern float zh;
-extern float lightSpeed;
-extern float radius;
-extern int moveLight;
-extern int lightState;
-extern float lightY;
-
 // Keyboard Input Handler
 void controls_key(unsigned char key, int x, int y)
 {

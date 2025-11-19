@@ -78,15 +78,45 @@ void display(void)
     glLoadIdentity();
 
     glDisable(GL_LIGHTING);
+    
     glColor3f(1, 1, 1);
-
-    glWindowPos2f(10, 10);
+    glWindowPos2f(10, 20);
 
     const char *modeStr =
         (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
                                                   : "Other";
-
+    glWindowPos2f(10, 40);
+    // --- Print Camera Info ---
     Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
+    glWindowPos2f(10, 80);
+    // --- Print Lighting Info ---
+    switch (lightState)
+    {
+        case 1:
+            Print("Light Mode: Moving ");
+            Print(" Light Radius:%.1f", radius);
+            Print(" Light Height (Y): %.1f", lightY);
+            break;
+
+        case 2:
+            Print("Light Mode: Spotlight");
+            break;
+
+        case 0:
+            // print nothing
+            break;
+    }
+    glWindowPos2f(10, 60);
+    // --- Print Selected Object Info ---
+    if (selectedObject)
+    {
+        Print("Selected: %s", selectedObject->name);
+        Print(" Angle: %.1f°", selectedObject->rotation);
+    }
+    else
+    {
+        Print("Selected: None");
+    }
 
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);

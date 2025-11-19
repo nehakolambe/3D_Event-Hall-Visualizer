@@ -97,6 +97,22 @@ void Fatal(const char *format, ...);
 
     extern int lightState;
     extern float lampX, lampY, lampZ;
+    extern float zh;
+    extern float lightSpeed;
+    extern float radius;
+    extern int moveLight;
+    extern int lightState;
+    extern float lightY;
+
+    extern int mode;                 // 0 = projection, 1 = FPV
+    extern double fpvX, fpvY, fpvZ;
+    extern double yaw, pitch;
+
+    // External camera state
+    extern double fov;
+    extern double th, ph;
+    extern double camZ;
+    extern double dim;
 
     // Scene object definition
     typedef struct
