@@ -120,6 +120,7 @@ typedef struct {
 
 extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
+extern bool collidesWithAnyObject(SceneObject* movingObj, float newX, float newZ);
 
 extern SceneObject* selectedObject;
 extern int dragging;
