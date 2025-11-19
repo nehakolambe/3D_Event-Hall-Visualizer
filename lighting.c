@@ -15,9 +15,6 @@ float lz = 0.0f;
 
 /* Toggles */
 int moveLight = 1;
-int specularEnabled = 1;
-int emissionEnabled = 0;
-int localViewer = 0;
 
 /* Materials */
 int shininess = 32;
@@ -108,23 +105,11 @@ void lighting_update(void)
     shinyVector[0] = shininess;
     glMaterialfv(GL_FRONT, GL_SHININESS, shinyVector);
 
-    if (specularEnabled)
-        glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    else
-    {
-        float off[] = {0, 0, 0, 1};
-        glMaterialfv(GL_FRONT, GL_SPECULAR, off);
-    }
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 
-    if (emissionEnabled)
-        glMaterialfv(GL_FRONT, GL_EMISSION, emission);
-    else
-    {
-        float off[] = {0, 0, 0, 1};
-        glMaterialfv(GL_FRONT, GL_EMISSION, off);
-    }
+    glMaterialfv(GL_FRONT, GL_EMISSION, emission);
 
-    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, localViewer);
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
 }
 
 

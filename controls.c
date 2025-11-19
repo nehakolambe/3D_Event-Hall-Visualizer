@@ -21,10 +21,6 @@ extern float zh;
 extern float lightSpeed;
 extern float radius;
 extern int moveLight;
-extern int specularEnabled;
-extern int emissionEnabled;
-extern int localViewer;
-extern int shininess;
 extern int lightState;
 extern float lightY;
 
@@ -177,9 +173,6 @@ void controls_key(unsigned char key, int x, int y)
             fov = 55;
             dim = 20;
             moveLight = 1;
-            specularEnabled = 1;
-            emissionEnabled = 0;
-            localViewer = 0;
             radius = 10.0f;
             zh = 0;
             mode = 0;
