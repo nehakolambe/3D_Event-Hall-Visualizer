@@ -98,11 +98,6 @@ void Fatal(const char *format, ...);
     extern int lightState;
     extern float lampX, lampY, lampZ;
 
-    // Debug globals
-    extern int debugMode;
-    extern int debugObjectIndex;
-    extern int totalObjects;
-
     // Scene object definition
     typedef struct
     {

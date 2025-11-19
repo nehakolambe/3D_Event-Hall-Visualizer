@@ -15,9 +15,6 @@ extern SceneObject objects[MAX_OBJECTS];
 extern int objectCount;
 extern SceneObject *selectedObject;
 
-extern int debugMode;
-extern int debugObjectIndex;
-
 // --- Lighting externs ---
 extern float zh;
 extern float lightSpeed;
@@ -216,8 +213,6 @@ void controls_key(unsigned char key, int x, int y)
         zh = 0;
 
         mode = 0;
-        debugMode = 0;
-        debugObjectIndex = 0;
         selectedObject = NULL;
         break;
 
@@ -234,25 +229,6 @@ void controls_key(unsigned char key, int x, int y)
 // =======================================================
 void controls_special(int key, int x, int y)
 {
-    // --- Cycle debug object selection ---
-    if (key == GLUT_KEY_F1)
-    {
-        if (debugObjectIndex == -1)
-        {
-            debugObjectIndex = 0;
-            debugMode = 1;
-        }
-        else
-        {
-            debugObjectIndex++;
-            if (debugObjectIndex >= objectCount)
-            {
-                debugObjectIndex = -1;
-                debugMode = 0;
-            }
-        }
-    }
-
     if (mode == 1)
     {
         // FPV look

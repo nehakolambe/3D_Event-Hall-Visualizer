@@ -17,11 +17,6 @@ double ph = 0;
 /* Camera mode: 0 = perspective, 1 = FPV */
 int mode = 0;
 
-/* Debug settings */
-int debugMode = 0;
-int debugObjectIndex = -1;
-int totalObjects = 6;
-
 /* Set projection */
 void Project(void)
 {
