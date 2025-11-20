@@ -1,5 +1,7 @@
 #include "CSCIx229.h"
 
+static SceneObject playerObj;
+
 // Keyboard Input Handler
 void controls_key(unsigned char key, int x, int y)
 {
@@ -89,8 +91,18 @@ void controls_key(unsigned char key, int x, int y)
         case 'W':
             if (mode == 1)
             {
-                fpvX += speed * sin(radYaw);
-                fpvZ -= speed * cos(radYaw);
+                float newX = fpvX + speed * sin(radYaw);
+                float newZ = fpvZ - speed * cos(radYaw);
+
+                playerObj.y = fpvY - 1.6f;
+                playerObj.x = fpvX;
+                playerObj.z = fpvZ;
+
+                if (!collidesWithAnyObject(&playerObj, newX, newZ))
+                {
+                    fpvX = newX;
+                    fpvZ = newZ;
+                }
             }
             break;
 
@@ -99,8 +111,18 @@ void controls_key(unsigned char key, int x, int y)
         case 'S':
             if (mode == 1)
             {
-                fpvX -= speed * sin(radYaw);
-                fpvZ += speed * cos(radYaw);
+                float newX = fpvX - speed * sin(radYaw);
+                float newZ = fpvZ + speed * cos(radYaw);
+
+                playerObj.y = fpvY - 1.6f;
+                playerObj.x = fpvX;
+                playerObj.z = fpvZ;
+
+                if (!collidesWithAnyObject(&playerObj, newX, newZ))
+                {
+                    fpvX = newX;
+                    fpvZ = newZ;
+                }
             }
             break;
 
@@ -109,8 +131,18 @@ void controls_key(unsigned char key, int x, int y)
         case 'A':
             if (mode == 1)
             {
-                fpvX -= speed * cos(radYaw);
-                fpvZ -= speed * sin(radYaw);
+                float newX = fpvX - speed * cos(radYaw);
+                float newZ = fpvZ - speed * sin(radYaw);
+
+                playerObj.y = fpvY - 1.6f;
+                playerObj.x = fpvX;
+                playerObj.z = fpvZ;
+
+                if (!collidesWithAnyObject(&playerObj, newX, newZ))
+                {
+                    fpvX = newX;
+                    fpvZ = newZ;
+                }
             }
             break;
 
@@ -119,8 +151,18 @@ void controls_key(unsigned char key, int x, int y)
         case 'D':
             if (mode == 1)
             {
-                fpvX += speed * cos(radYaw);
-                fpvZ += speed * sin(radYaw);
+                float newX = fpvX + speed * cos(radYaw);
+                float newZ = fpvZ + speed * sin(radYaw);
+
+                playerObj.y = fpvY - 1.6f;
+                playerObj.x = fpvX;
+                playerObj.z = fpvZ;
+
+                if (!collidesWithAnyObject(&playerObj, newX, newZ))
+                {
+                    fpvX = newX;
+                    fpvZ = newZ;
+                }
             }
             break;
 
@@ -207,4 +249,21 @@ void controls_special(int key, int x, int y)
 
     th = fmod(th, 360.0);
     glutPostRedisplay();
+}
+
+// Player bounding box
+void initPlayerCollision()
+{
+    playerObj.subBoxCount = 1;
+
+    playerObj.subBox[0][0] = -0.6f;
+    playerObj.subBox[0][1] =  0.6f;
+
+    playerObj.subBox[0][2] = 0.0f;
+    playerObj.subBox[0][3] = fpvY;
+
+    playerObj.subBox[0][4] = -0.6f;
+    playerObj.subBox[0][5] =  0.6f;
+
+    playerObj.solid = 1;
 }

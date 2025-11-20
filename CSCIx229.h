@@ -184,6 +184,9 @@ void Fatal(const char *format, ...);
     void rotateObject(SceneObject *obj, float angle);
     void deselectObject(void);
 
+    // Player collision
+    void initPlayerCollision();
+
 #ifdef __cplusplus
 }
 #endif

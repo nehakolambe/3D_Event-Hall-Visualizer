@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 
     // Init scene and lighting
     scene_init();
+    initPlayerCollision();
     lighting_init();
 
     // Callbacks
