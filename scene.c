@@ -635,136 +635,137 @@ void scene_init()
             o->subBox[0][5] = 0.8f;
         }
     }
+}
 
-    // Scene Rendering
-    void scene_display()
+// Scene Rendering
+void scene_display()
+{
+    glPushMatrix();
+    lighting_update();
+    glEnable(GL_LIGHTING);
+
+    // Floor
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, floorTex);
+    drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Ceiling
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Back wall
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Front wall
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Left wall
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Right wall
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
+    glDisable(GL_TEXTURE_2D);
+
+    // Stage parameters
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, stageTex);
+
+    float stageTop = 2.0f;
+    float stageBack = -30.0f;
+    float stageFront = stageBack + 10.0f;
+    float stageWidth = 10.0f;
+
+    // Stage top
+    drawQuadN(
+        -stageWidth, stageTop, stageBack,
+        stageWidth, stageTop, stageBack,
+        stageWidth, stageTop, stageFront,
+        -stageWidth, stageTop, stageFront,
+        0, 1, 0,
+        1, 1, 1);
+
+    // Stage front
+    drawQuadN(
+        -stageWidth, 0, stageFront,
+        stageWidth, 0, stageFront,
+        stageWidth, stageTop, stageFront,
+        -stageWidth, stageTop, stageFront,
+        0, 0, -1,
+        1, 1, 1);
+
+    // Stage left
+    drawQuadN(
+        -stageWidth, 0, stageBack,
+        -stageWidth, 0, stageFront,
+        -stageWidth, stageTop, stageFront,
+        -stageWidth, stageTop, stageBack,
+        -1, 0, 0,
+        1, 1, 1);
+
+    // Stage right
+    drawQuadN(
+        stageWidth, 0, stageFront,
+        stageWidth, 0, stageBack,
+        stageWidth, stageTop, stageBack,
+        stageWidth, stageTop, stageFront,
+        1, 0, 0,
+        1, 1, 1);
+
+    // Stage back
+    drawQuadN(
+        -stageWidth, 0, stageBack,
+        stageWidth, 0, stageBack,
+        stageWidth, stageTop, stageBack,
+        -stageWidth, stageTop, stageBack,
+        0, 0, 1,
+        1, 1, 1);
+
+    glDisable(GL_TEXTURE_2D);
+
+    // Scene objects
+    for (int i = 0; i < objectCount; i++)
     {
+        SceneObject *obj = &objects[i];
+
         glPushMatrix();
-        lighting_update();
-        glEnable(GL_LIGHTING);
+        glTranslatef(obj->x, obj->y, obj->z);
+        glRotatef(obj->rotation, 0, 1, 0);
+        glScalef(obj->scale, obj->scale, obj->scale);
 
-        // Floor
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, floorTex);
-        drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Ceiling
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Back wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Front wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Left wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Right wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Stage parameters
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, stageTex);
-
-        float stageTop = 2.0f;
-        float stageBack = -30.0f;
-        float stageFront = stageBack + 10.0f;
-        float stageWidth = 10.0f;
-
-        // Stage top
-        drawQuadN(
-            -stageWidth, stageTop, stageBack,
-            stageWidth, stageTop, stageBack,
-            stageWidth, stageTop, stageFront,
-            -stageWidth, stageTop, stageFront,
-            0, 1, 0,
-            1, 1, 1);
-
-        // Stage front
-        drawQuadN(
-            -stageWidth, 0, stageFront,
-            stageWidth, 0, stageFront,
-            stageWidth, stageTop, stageFront,
-            -stageWidth, stageTop, stageFront,
-            0, 0, -1,
-            1, 1, 1);
-
-        // Stage left
-        drawQuadN(
-            -stageWidth, 0, stageBack,
-            -stageWidth, 0, stageFront,
-            -stageWidth, stageTop, stageFront,
-            -stageWidth, stageTop, stageBack,
-            -1, 0, 0,
-            1, 1, 1);
-
-        // Stage right
-        drawQuadN(
-            stageWidth, 0, stageFront,
-            stageWidth, 0, stageBack,
-            stageWidth, stageTop, stageBack,
-            stageWidth, stageTop, stageFront,
-            1, 0, 0,
-            1, 1, 1);
-
-        // Stage back
-        drawQuadN(
-            -stageWidth, 0, stageBack,
-            stageWidth, 0, stageBack,
-            stageWidth, stageTop, stageBack,
-            -stageWidth, stageTop, stageBack,
-            0, 0, 1,
-            1, 1, 1);
-
-        glDisable(GL_TEXTURE_2D);
-
-        // Scene objects
-        for (int i = 0; i < objectCount; i++)
+        if (strcmp(obj->name, "CurvedScreen") == 0)
         {
-            SceneObject *obj = &objects[i];
-
-            glPushMatrix();
-            glTranslatef(obj->x, obj->y, obj->z);
-            glRotatef(obj->rotation, 0, 1, 0);
-            glScalef(obj->scale, obj->scale, obj->scale);
-
-            if (strcmp(obj->name, "CurvedScreen") == 0)
-            {
-                drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
-            }
-            else if (strcmp(obj->name, "Door") == 0)
-            {
-                drawDoor(0, 0, 3.0, 7.0);
-            }
-            else if (obj->drawFunc)
-            {
-                obj->drawFunc(0, 0);
-            }
-
-            glPopMatrix();
+            drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
         }
-        // Ceiling lights
-        glPushMatrix();
-        drawCeilingLights();
-        glPopMatrix();
+        else if (strcmp(obj->name, "Door") == 0)
+        {
+            drawDoor(0, 0, 3.0, 7.0);
+        }
+        else if (obj->drawFunc)
+        {
+            obj->drawFunc(0, 0);
+        }
 
-        lighting_draw_debug_marker();
         glPopMatrix();
     }
+    // Ceiling lights
+    glPushMatrix();
+    drawCeilingLights();
+    glPopMatrix();
+
+    lighting_draw_debug_marker();
+    glPopMatrix();
+}
