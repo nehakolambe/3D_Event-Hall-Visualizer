@@ -7,7 +7,7 @@ double dim = 20;
 
 /* Camera positions */
 double camX = 0.0, camY = 6.0, camZ = 24.0;
-double fpvX = 0.0, fpvY = 6.0, fpvZ = 24.0;
+double fpvX = 0.0, fpvY = 3.0, fpvZ = 24.0;
 double yaw = 0.0, pitch = 0.0;
 
 /* Scene rotation */
