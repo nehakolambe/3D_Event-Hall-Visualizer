@@ -115,6 +115,7 @@ void Fatal(const char *format, ...);
     extern double dim;
 
     // Scene object definition
+    #define MAX_SUBBOXES 8
     typedef struct
     {
         int id;
@@ -122,10 +123,11 @@ void Fatal(const char *format, ...);
         float x, y, z;
         float scale;
         float rotation;
-        float bbox[6]; // xmin, xmax, ymin, ymax, zmin, zmax
         void (*drawFunc)(float, float);
         int movable;
         bool solid;
+        int subBoxCount;
+        float subBox[MAX_SUBBOXES][6]; // each is {xmin, xmax, ymin, ymax, zmin, zmax}
     } SceneObject;
 
 // Scene object management

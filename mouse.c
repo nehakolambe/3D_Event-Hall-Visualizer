@@ -15,25 +15,31 @@ static const float STAGE_MAX_X = 13.0f;
 static const float STAGE_FRONT_Z = -15.0f;
 static const float STAGE_BACK_Z = -30.0f;
 
-// Ray–AABB intersection (world space)
-static int rayIntersectsBoxWorld(float ox, float oy, float oz,
-                                 float dx, float dy, float dz,
-                                 const SceneObject *obj,
-                                 float *tmin_out)
+// Ray vs AABB sub-box test
+static int rayIntersectsSubBoxWorld(
+    float ox, float oy, float oz,
+    float dx, float dy, float dz,
+    const SceneObject *obj,
+    int boxIndex,
+    float *tmin_out)
 {
     float tmin = -1e9f;
-    float tmax = 1e9f;
+    float tmax = +1e9f;
 
-    for (int i = 0; i < 3; i++)
+    for (int axis = 0; axis < 3; axis++)
     {
-        float minB = obj->bbox[i * 2] + (i == 0 ? obj->x : i == 1 ? obj->y
-                                                                  : obj->z);
-        float maxB = obj->bbox[i * 2 + 1] + (i == 0 ? obj->x : i == 1 ? obj->y
-                                                                      : obj->z);
-        float o = (i == 0 ? ox : i == 1 ? oy
-                                        : oz);
-        float d = (i == 0 ? dx : i == 1 ? dy
-                                        : dz);
+        float minB = obj->subBox[boxIndex][axis * 2] +
+                     (axis == 0 ? obj->x : axis == 1 ? obj->y
+                                                     : obj->z);
+
+        float maxB = obj->subBox[boxIndex][axis * 2 + 1] +
+                     (axis == 0 ? obj->x : axis == 1 ? obj->y
+                                                     : obj->z);
+
+        float o = (axis == 0 ? ox : axis == 1 ? oy
+                                              : oz);
+        float d = (axis == 0 ? dx : axis == 1 ? dy
+                                              : dz);
 
         if (fabsf(d) < 1e-6f)
         {
@@ -56,17 +62,17 @@ static int rayIntersectsBoxWorld(float ox, float oy, float oz,
                 tmin = t1;
             if (t2 < tmax)
                 tmax = t2;
+
             if (tmin > tmax || tmax < 0)
                 return 0;
         }
     }
 
-    if (tmin_out)
-        *tmin_out = tmin;
+    *tmin_out = tmin;
     return 1;
 }
 
-// Generate world-space ray from mouse (x,y)
+// Generate world space ray from mouse position
 static void getRayFromMouse(int x, int y,
                             float *ox, float *oy, float *oz,
                             float *dx, float *dy, float *dz)
@@ -95,7 +101,7 @@ static void getRayFromMouse(int x, int y,
     *dz = (float)(wz2 - wz1);
 }
 
-// Object picking (world space)
+// Object picking function
 SceneObject *pickObject3D(int x, int y)
 {
     float ox, oy, oz, dx, dy, dz;
@@ -110,13 +116,16 @@ SceneObject *pickObject3D(int x, int y)
         if (!obj->movable)
             continue;
 
-        float t;
-        if (rayIntersectsBoxWorld(ox, oy, oz, dx, dy, dz, obj, &t))
+        for (int b = 0; b < obj->subBoxCount; b++)
         {
-            if (t < closestT)
+            float tmin;
+            if (rayIntersectsSubBoxWorld(ox, oy, oz, dx, dy, dz, obj, b, &tmin))
             {
-                closestT = t;
-                closest = obj;
+                if (tmin < closestT)
+                {
+                    closestT = tmin;
+                    closest = obj;
+                }
             }
         }
     }
@@ -124,7 +133,7 @@ SceneObject *pickObject3D(int x, int y)
     return closest;
 }
 
-// Mouse button handler
+// Mouse button callback
 void mouse_button(int button, int state, int x, int y)
 {
     if (button == GLUT_LEFT_BUTTON)
@@ -166,7 +175,7 @@ void mouse_button(int button, int state, int x, int y)
     glutPostRedisplay();
 }
 
-// Ray–ground plane intersection
+// Ray-plane intersection helper
 static int rayPlaneIntersection(float ox, float oy, float oz,
                                 float dx, float dy, float dz,
                                 float *hitX, float *hitZ)
@@ -183,7 +192,7 @@ static int rayPlaneIntersection(float ox, float oy, float oz,
     return 1;
 }
 
-// Mouse drag handler
+// Mouse motion callback
 void mouse_motion(int x, int y)
 {
     if (dragging && selectedObject)
@@ -217,15 +226,11 @@ void mouse_motion(int x, int y)
             {
                 if (hitX > STAGE_MIN_X - 0.5f &&
                     hitX < STAGE_MIN_X + 0.5f)
-                {
                     hitX = STAGE_MIN_X - 0.5f;
-                }
 
                 if (hitX > STAGE_MAX_X - 0.5f &&
                     hitX < STAGE_MAX_X + 0.5f)
-                {
                     hitX = STAGE_MAX_X + 0.5f;
-                }
             }
 
             // object–object collision

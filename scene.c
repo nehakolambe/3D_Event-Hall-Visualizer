@@ -188,44 +188,52 @@ void drawBBox(SceneObject *o)
     glPushMatrix();
     glTranslatef(o->x, o->y, o->z);
 
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glBegin(GL_LINES);
+    glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
 
-    float xmin = o->bbox[0], xmax = o->bbox[1];
-    float ymin = o->bbox[2], ymax = o->bbox[3];
-    float zmin = o->bbox[4], zmax = o->bbox[5];
+    for (int b = 0; b < o->subBoxCount; b++)
+    {
+        float xmin = o->subBox[b][0];
+        float xmax = o->subBox[b][1];
+        float ymin = o->subBox[b][2];
+        float ymax = o->subBox[b][3];
+        float zmin = o->subBox[b][4];
+        float zmax = o->subBox[b][5];
 
-    // bottom
-    glVertex3f(xmin, ymin, zmin);
-    glVertex3f(xmax, ymin, zmin);
-    glVertex3f(xmax, ymin, zmin);
-    glVertex3f(xmax, ymin, zmax);
-    glVertex3f(xmax, ymin, zmax);
-    glVertex3f(xmin, ymin, zmax);
-    glVertex3f(xmin, ymin, zmax);
-    glVertex3f(xmin, ymin, zmin);
+        glBegin(GL_LINES);
 
-    // top
-    glVertex3f(xmin, ymax, zmin);
-    glVertex3f(xmax, ymax, zmin);
-    glVertex3f(xmax, ymax, zmin);
-    glVertex3f(xmax, ymax, zmax);
-    glVertex3f(xmax, ymax, zmax);
-    glVertex3f(xmin, ymax, zmax);
-    glVertex3f(xmin, ymax, zmax);
-    glVertex3f(xmin, ymax, zmin);
+        // bottom rectangle
+        glVertex3f(xmin, ymin, zmin);
+        glVertex3f(xmax, ymin, zmin);
+        glVertex3f(xmax, ymin, zmin);
+        glVertex3f(xmax, ymin, zmax);
+        glVertex3f(xmax, ymin, zmax);
+        glVertex3f(xmin, ymin, zmax);
+        glVertex3f(xmin, ymin, zmax);
+        glVertex3f(xmin, ymin, zmin);
 
-    // verticals
-    glVertex3f(xmin, ymin, zmin);
-    glVertex3f(xmin, ymax, zmin);
-    glVertex3f(xmax, ymin, zmin);
-    glVertex3f(xmax, ymax, zmin);
-    glVertex3f(xmax, ymin, zmax);
-    glVertex3f(xmax, ymax, zmax);
-    glVertex3f(xmin, ymin, zmax);
-    glVertex3f(xmin, ymax, zmax);
+        // top rectangle
+        glVertex3f(xmin, ymax, zmin);
+        glVertex3f(xmax, ymax, zmin);
+        glVertex3f(xmax, ymax, zmin);
+        glVertex3f(xmax, ymax, zmax);
+        glVertex3f(xmax, ymax, zmax);
+        glVertex3f(xmin, ymax, zmax);
+        glVertex3f(xmin, ymax, zmax);
+        glVertex3f(xmin, ymax, zmin);
 
-    glEnd();
+        // vertical lines
+        glVertex3f(xmin, ymin, zmin);
+        glVertex3f(xmin, ymax, zmin);
+        glVertex3f(xmax, ymin, zmin);
+        glVertex3f(xmax, ymax, zmin);
+        glVertex3f(xmax, ymin, zmax);
+        glVertex3f(xmax, ymax, zmax);
+        glVertex3f(xmin, ymin, zmax);
+        glVertex3f(xmin, ymax, zmax);
+
+        glEnd();
+    }
+
     glPopMatrix();
 }
 
@@ -257,8 +265,10 @@ void addObject(const char *name,
     obj->solid = 1;
 
     // reset bbox
-    for (int i = 0; i < 6; i++)
-        obj->bbox[i] = 0.0f;
+    obj->subBoxCount = 0;
+    for (int k = 0; k < MAX_SUBBOXES; k++)
+        for (int j = 0; j < 6; j++)
+            obj->subBox[k][j] = 0.0f;
 
     objectCount++;
 }
@@ -341,14 +351,14 @@ void scene_init()
     addObject("Cocktail_3", ctX[2], ctZ[2] + 10.0f, drawCocktailTable3, 1);
 
     // bar chairs
-    addObject("BarChair_3",
+    addObject("BarChair_1",
               ctX[2] + 1.25f,
               ctZ[2] + 11.8f,
               drawBarChairObj,
               1);
     objects[objectCount - 1].rotation = 200.0f;
 
-    addObject("BarChair_4",
+    addObject("BarChair_2",
               ctX[2] - 1.25f,
               ctZ[2] + 11.8f,
               drawBarChairObj,
@@ -356,7 +366,7 @@ void scene_init()
     objects[objectCount - 1].rotation = 160.0f;
 
     // door lamp
-    addObject("DoorLamp_1", -5.0f, 11.0f, drawLamp, 1);
+    addObject("Lamp", -5.0f, 11.0f, drawLamp, 1);
 
     // meeting table
     float meetX = 0.0f;
@@ -404,187 +414,357 @@ void scene_init()
     {
         SceneObject *o = &objects[i];
 
-        if (strcmp(o->name, "Table") == 0 ||
-            strncmp(o->name, "EventTable", 10) == 0)
+        // rectangle event table (top + legs)
+        if (strncmp(o->name, "EventTable", 10) == 0)
         {
-            memcpy(o->bbox, ((float[]){-1.2f, 1.2f, 0, 3, -0.6f, 0.6f}), sizeof(o->bbox));
+            o->subBoxCount = 2;
 
-            addObject("TableLeg_FL", o->x - 0.85f, o->z - 0.45f, NULL, 0);
-            addObject("TableLeg_FR", o->x + 0.85f, o->z - 0.45f, NULL, 0);
-            addObject("TableLeg_BL", o->x - 0.85f, o->z + 0.45f, NULL, 0);
-            addObject("TableLeg_BR", o->x + 0.85f, o->z + 0.45f, NULL, 0);
+            // table top
+            o->subBox[0][0] = -2.15f;
+            o->subBox[0][1] = 2.15f;
+            o->subBox[0][2] = 0.0f;
+            o->subBox[0][3] = 2.8f;
+            o->subBox[0][4] = -1.45f;
+            o->subBox[0][5] = 1.45f;
+
+            // legs zone
+            o->subBox[1][0] = -2.05f;
+            o->subBox[1][1] = 2.05f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 2.2f;
+            o->subBox[1][4] = -1.05f;
+            o->subBox[1][5] = 1.05f;
         }
-        else if (strncmp(o->name, "Cocktail", 8) == 0)
+
+        // cocktail table 1 (top, leg, base)
+        else if (strcmp(o->name, "Cocktail_1") == 0)
         {
-            memcpy(o->bbox, ((float[]){-0.7f, 0.7f, 0, 4, -0.7f, 0.7f}), sizeof(o->bbox));
+            o->subBoxCount = 3;
+
+            // top
+            o->subBox[0][0] = -1.6f;
+            o->subBox[0][1] = 1.6f;
+            o->subBox[0][2] = 4.0f;
+            o->subBox[0][3] = 4.2f;
+            o->subBox[0][4] = -1.6f;
+            o->subBox[0][5] = 1.6f;
+
+            // center leg
+            o->subBox[1][0] = -0.25f;
+            o->subBox[1][1] = 0.25f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 4.0f;
+            o->subBox[1][4] = -0.25f;
+            o->subBox[1][5] = 0.25f;
+
+            // base
+            o->subBox[2][0] = -0.7f;
+            o->subBox[2][1] = 0.7f;
+            o->subBox[2][2] = 0.0f;
+            o->subBox[2][3] = 0.15f;
+            o->subBox[2][4] = -0.7f;
+            o->subBox[2][5] = 0.7f;
         }
+
+        // cocktail table 2 (top + legs)
+        else if (strcmp(o->name, "Cocktail_2") == 0)
+        {
+            o->subBoxCount = 2;
+
+            // top
+            o->subBox[0][0] = -1.5f;
+            o->subBox[0][1] = 1.5f;
+            o->subBox[0][2] = 4.0f;
+            o->subBox[0][3] = 4.25f;
+            o->subBox[0][4] = -1.5f;
+            o->subBox[0][5] = 1.5f;
+
+            // legs
+            o->subBox[1][0] = -1.0f;
+            o->subBox[1][1] = 1.0f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 4.0f;
+            o->subBox[1][4] = -1.0f;
+            o->subBox[1][5] = 1.0f;
+        }
+
+        // cocktail table 3 (top frustum + bottom frustum)
+        else if (strcmp(o->name, "Cocktail_3") == 0)
+        {
+            o->subBoxCount = 2;
+
+            // top section
+            o->subBox[0][0] = -1.5f;
+            o->subBox[0][1] = 1.5f;
+            o->subBox[0][2] = 2.3f;
+            o->subBox[0][3] = 4.1f;
+            o->subBox[0][4] = -1.5f;
+            o->subBox[0][5] = 1.5f;
+
+            // bottom section
+            o->subBox[1][0] = -1.0f;
+            o->subBox[1][1] = 1.0f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 2.3f;
+            o->subBox[1][4] = -1.0f;
+            o->subBox[1][5] = 1.0f;
+        }
+
+        // banquet chair (seat, back, legs)
         else if (strncmp(o->name, "EventChair", 10) == 0 ||
-                 strncmp(o->name, "BanquetChair", 12) == 0 ||
                  strncmp(o->name, "MeetChair", 9) == 0)
         {
-            memcpy(o->bbox, ((float[]){-0.5f, 0.5f, 0, 3, -0.5f, 0.5f}), sizeof(o->bbox));
+            o->subBoxCount = 3;
+
+            // seat
+            o->subBox[0][0] = -0.6f;
+            o->subBox[0][1] = 0.6f;
+            o->subBox[0][2] = 0.7f;
+            o->subBox[0][3] = 1.3f;
+            o->subBox[0][4] = -0.6f;
+            o->subBox[0][5] = 0.6f;
+
+            // backrest
+            o->subBox[1][0] = -0.5f;
+            o->subBox[1][1] = 0.5f;
+            o->subBox[1][2] = 1.3f;
+            o->subBox[1][3] = 2.6f;
+            o->subBox[1][4] = -5.0f;
+            o->subBox[1][5] = 0.20f;
+
+            // legs
+            o->subBox[2][0] = -0.55f;
+            o->subBox[2][1] = 0.55f;
+            o->subBox[2][2] = 0.0f;
+            o->subBox[2][3] = 0.7f;
+            o->subBox[2][4] = -0.55f;
+            o->subBox[2][5] = 0.55f;
         }
-        else if (strncmp(o->name, "DoorLamp", 8) == 0 ||
-                 strcmp(o->name, "Lamp") == 0)
-        {
-            memcpy(o->bbox, ((float[]){-0.5f, 0.5f, 0, 6, -0.5f, 0.5f}), sizeof(o->bbox));
-        }
+
+        // bar chair (legs, seat, back)
         else if (strncmp(o->name, "BarChair", 8) == 0)
         {
-            memcpy(o->bbox, ((float[]){-0.4f, 0.4f, 0, 4.2f, -0.4f, 0.4f}), sizeof(o->bbox));
+            o->subBoxCount = 3;
+
+            // legs section
+            o->subBox[0][0] = -0.65f;
+            o->subBox[0][1] = 0.65f;
+            o->subBox[0][2] = 0.0f;
+            o->subBox[0][3] = 2.2f;
+            o->subBox[0][4] = -0.55f;
+            o->subBox[0][5] = 0.55f;
+
+            // seat
+            o->subBox[1][0] = -0.65f;
+            o->subBox[1][1] = 0.65f;
+            o->subBox[1][2] = 2.35f;
+            o->subBox[1][3] = 2.85f;
+            o->subBox[1][4] = -0.65f;
+            o->subBox[1][5] = 0.65f;
+
+            // backrest
+            o->subBox[2][0] = -0.65f;
+            o->subBox[2][1] = 0.65f;
+            o->subBox[2][2] = 2.45f;
+            o->subBox[2][3] = 4.25f;
+            o->subBox[2][4] = -1.05f;
+            o->subBox[2][5] = -0.05f;
         }
+
+        // meeting table (top + legs)
         else if (strcmp(o->name, "MeetingTable") == 0)
         {
-            memcpy(o->bbox, ((float[]){-4.0f, 4.0f, 0, 2.2f, -1.5f, 1.5f}), sizeof(o->bbox));
+            o->subBoxCount = 2;
+
+            // top
+            o->subBox[0][0] = -4.2f;
+            o->subBox[0][1] = 4.2f;
+            o->subBox[0][2] = 1.5f;
+            o->subBox[0][3] = 1.9f;
+            o->subBox[0][4] = -1.76f;
+            o->subBox[0][5] = 1.76f;
+
+            // legs
+            o->subBox[1][0] = -2.45f;
+            o->subBox[1][1] = 2.45f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 1.7f;
+            o->subBox[1][4] = -0.9f;
+            o->subBox[1][5] = 0.9f;
         }
+
+        // lamp (shade, rod, base)
+        else if (strcmp(o->name, "Lamp") == 0)
+        {
+            o->subBoxCount = 3;
+
+            // shade
+            o->subBox[0][0] = -0.75f;
+            o->subBox[0][1] = 0.75f;
+            o->subBox[0][2] = 4.9f;
+            o->subBox[0][3] = 5.7f;
+            o->subBox[0][4] = -0.75f;
+            o->subBox[0][5] = 0.75f;
+
+            // rod
+            o->subBox[1][0] = -0.25f;
+            o->subBox[1][1] = 0.25f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 5.15f;
+            o->subBox[1][4] = -0.25f;
+            o->subBox[1][5] = 0.25f;
+
+            // base
+            o->subBox[2][0] = -0.45f;
+            o->subBox[2][1] = 0.45f;
+            o->subBox[2][2] = 0.0f;
+            o->subBox[2][3] = 0.2f;
+            o->subBox[2][4] = -0.45f;
+            o->subBox[2][5] = 0.45f;
+        }
+
+        // fallback box
         else
         {
-            memcpy(o->bbox, ((float[]){-0.8f, 0.8f, 0, 3, -0.8f, 0.8f}), sizeof(o->bbox));
+            o->subBoxCount = 1;
+            o->subBox[0][0] = -0.8f;
+            o->subBox[0][1] = 0.8f;
+            o->subBox[0][2] = 0.0f;
+            o->subBox[0][3] = 3.0f;
+            o->subBox[0][4] = -0.8f;
+            o->subBox[0][5] = 0.8f;
         }
     }
 
-    // table leg collider bounding box
-    for (int i = 0; i < objectCount; i++)
+    // Scene Rendering
+    void scene_display()
     {
-        SceneObject *o = &objects[i];
-
-        if (strncmp(o->name, "TableLeg_", 9) == 0)
-        {
-            memcpy(o->bbox, ((float[]){-0.1f, 0.1f, 0, 3, -0.1f, 0.1f}), sizeof(o->bbox));
-            o->solid = 1;
-        }
-    }
-}
-
-// Scene Rendering
-void scene_display()
-{
-    glPushMatrix();
-    lighting_update();
-    glEnable(GL_LIGHTING);
-
-    // Floor
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, floorTex);
-    drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Ceiling
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Back wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Front wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Left wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Right wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
-
-    // Stage parameters
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, stageTex);
-
-    float stageTop = 2.0f;
-    float stageBack = -30.0f;
-    float stageFront = stageBack + 10.0f;
-    float stageWidth = 10.0f;
-
-    // Stage top
-    drawQuadN(
-        -stageWidth, stageTop, stageBack,
-        stageWidth, stageTop, stageBack,
-        stageWidth, stageTop, stageFront,
-        -stageWidth, stageTop, stageFront,
-        0, 1, 0,
-        1, 1, 1);
-
-    // Stage front
-    drawQuadN(
-        -stageWidth, 0, stageFront,
-        stageWidth, 0, stageFront,
-        stageWidth, stageTop, stageFront,
-        -stageWidth, stageTop, stageFront,
-        0, 0, -1,
-        1, 1, 1);
-
-    // Stage left
-    drawQuadN(
-        -stageWidth, 0, stageBack,
-        -stageWidth, 0, stageFront,
-        -stageWidth, stageTop, stageFront,
-        -stageWidth, stageTop, stageBack,
-        -1, 0, 0,
-        1, 1, 1);
-
-    // Stage right
-    drawQuadN(
-        stageWidth, 0, stageFront,
-        stageWidth, 0, stageBack,
-        stageWidth, stageTop, stageBack,
-        stageWidth, stageTop, stageFront,
-        1, 0, 0,
-        1, 1, 1);
-
-    // Stage back
-    drawQuadN(
-        -stageWidth, 0, stageBack,
-        stageWidth, 0, stageBack,
-        stageWidth, stageTop, stageBack,
-        -stageWidth, stageTop, stageBack,
-        0, 0, 1,
-        1, 1, 1);
-
-    glDisable(GL_TEXTURE_2D);
-
-    // Scene objects
-    for (int i = 0; i < objectCount; i++)
-    {
-        SceneObject *obj = &objects[i];
-
         glPushMatrix();
-        glTranslatef(obj->x, obj->y, obj->z);
-        glRotatef(obj->rotation, 0, 1, 0);
-        glScalef(obj->scale, obj->scale, obj->scale);
+        lighting_update();
+        glEnable(GL_LIGHTING);
 
-        if (strcmp(obj->name, "CurvedScreen") == 0)
-        {
-            drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
-        }
-        else if (strcmp(obj->name, "Door") == 0)
-        {
-            drawDoor(0, 0, 3.0, 7.0);
-        }
-        else if (obj->drawFunc)
-        {
-            obj->drawFunc(0, 0);
-        }
+        // Floor
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, floorTex);
+        drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
 
+        // Ceiling
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+
+        // Back wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
+        glDisable(GL_TEXTURE_2D);
+
+        // Front wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
+        glDisable(GL_TEXTURE_2D);
+
+        // Left wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+
+        // Right wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+
+        // Stage parameters
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, stageTex);
+
+        float stageTop = 2.0f;
+        float stageBack = -30.0f;
+        float stageFront = stageBack + 10.0f;
+        float stageWidth = 10.0f;
+
+        // Stage top
+        drawQuadN(
+            -stageWidth, stageTop, stageBack,
+            stageWidth, stageTop, stageBack,
+            stageWidth, stageTop, stageFront,
+            -stageWidth, stageTop, stageFront,
+            0, 1, 0,
+            1, 1, 1);
+
+        // Stage front
+        drawQuadN(
+            -stageWidth, 0, stageFront,
+            stageWidth, 0, stageFront,
+            stageWidth, stageTop, stageFront,
+            -stageWidth, stageTop, stageFront,
+            0, 0, -1,
+            1, 1, 1);
+
+        // Stage left
+        drawQuadN(
+            -stageWidth, 0, stageBack,
+            -stageWidth, 0, stageFront,
+            -stageWidth, stageTop, stageFront,
+            -stageWidth, stageTop, stageBack,
+            -1, 0, 0,
+            1, 1, 1);
+
+        // Stage right
+        drawQuadN(
+            stageWidth, 0, stageFront,
+            stageWidth, 0, stageBack,
+            stageWidth, stageTop, stageBack,
+            stageWidth, stageTop, stageFront,
+            1, 0, 0,
+            1, 1, 1);
+
+        // Stage back
+        drawQuadN(
+            -stageWidth, 0, stageBack,
+            stageWidth, 0, stageBack,
+            stageWidth, stageTop, stageBack,
+            -stageWidth, stageTop, stageBack,
+            0, 0, 1,
+            1, 1, 1);
+
+        glDisable(GL_TEXTURE_2D);
+
+        // Scene objects
+        for (int i = 0; i < objectCount; i++)
+        {
+            SceneObject *obj = &objects[i];
+
+            glPushMatrix();
+            glTranslatef(obj->x, obj->y, obj->z);
+            glRotatef(obj->rotation, 0, 1, 0);
+            glScalef(obj->scale, obj->scale, obj->scale);
+
+            if (strcmp(obj->name, "CurvedScreen") == 0)
+            {
+                drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
+            }
+            else if (strcmp(obj->name, "Door") == 0)
+            {
+                drawDoor(0, 0, 3.0, 7.0);
+            }
+            else if (obj->drawFunc)
+            {
+                obj->drawFunc(0, 0);
+            }
+
+            glPopMatrix();
+        }
+        // Ceiling lights
+        glPushMatrix();
+        drawCeilingLights();
+        glPopMatrix();
+
+        lighting_draw_debug_marker();
         glPopMatrix();
     }
-    // Ceiling lights
-    glPushMatrix();
-    drawCeilingLights();
-    glPopMatrix();
-
-    lighting_draw_debug_marker();
-    glPopMatrix();
-}
