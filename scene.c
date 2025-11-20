@@ -33,7 +33,7 @@ unsigned int barChairCushionTex;
 unsigned int barChairWoodTex;
 unsigned int barChairBackTex;
 
-// Draw a quad with an optional texture and fixed normal
+// Quad
 static void drawQuadN(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -457,7 +457,6 @@ void scene_init()
 }
 
 // Scene Rendering
-
 void scene_display()
 {
     glPushMatrix();

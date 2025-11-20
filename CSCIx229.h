@@ -104,7 +104,7 @@ void Fatal(const char *format, ...);
     extern int lightState;
     extern float lightY;
 
-    extern int mode;                 // 0 = projection, 1 = FPV
+    extern int mode;                 // 0 = perspective, 1 = FPV
     extern double fpvX, fpvY, fpvZ;
     extern double yaw, pitch;
 

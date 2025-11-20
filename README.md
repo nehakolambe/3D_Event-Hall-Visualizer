@@ -6,7 +6,7 @@
 
 ## Project Status Summary
 
-This project now features a fully interactive 3D event-hall environment built in OpenGL, including movable furniture, mouse-based object picking, basic AABB collision detection, dynamic lighting, and smooth first-person camera navigation. The codebase has been modularized into dedicated files for geometry, object rendering, lighting, controls, mouse picking, and collision logic, making the system easier to read and extend. The scene also includes complex-shaped furniture that goes beyond basic cubes and cylinders.
+This project now features a fully interactive 3D event-hall environment built in OpenGL, including movable furniture, mouse-based object picking using ray-object intersections, basic AABB collision detection, dynamic lighting, and smooth first-person camera navigation. The codebase has been modularized into dedicated files for geometry, object rendering, lighting, controls, mouse picking, and collision logic, making the system easier to read and extend. The scene also includes complex-shaped furniture that goes beyond basic cubes and cylinders.
 
 ## Future Work
 
@@ -69,8 +69,8 @@ Upcoming improvements include adding more furniture and decorative props, expand
 
 - **W / w** – Move forward
 - **S / s** – Move backward
-- **A / a** – Strafe left
-- **D / d** – Strafe right
+- **A / a** – Move left
+- **D / d** – Move right
 
 #### Look Around
 
