@@ -101,7 +101,7 @@ void display(void)
 
     const char *modeStr =
         (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
-                                                  : "Other";
+                                                  : "Orthogonal";
     glWindowPos2f(10, 40);
     // --- Print Camera Info ---
     Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
