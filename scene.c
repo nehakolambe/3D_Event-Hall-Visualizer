@@ -187,7 +187,7 @@ void drawBBox(SceneObject *o)
 {
     glPushMatrix();
     glTranslatef(o->x, o->y, o->z);
-
+    glRotatef(o->rotation, 0, 1, 0);
     glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
 
     for (int b = 0; b < o->subBoxCount; b++)
@@ -544,12 +544,12 @@ void scene_init()
             o->subBoxCount = 2;
 
             // top section
-            o->subBox[0][0] = -1.5f;
-            o->subBox[0][1] = 1.5f;
+            o->subBox[0][0] = -1.05f;
+            o->subBox[0][1] = 1.05f;
             o->subBox[0][2] = 2.3f;
-            o->subBox[0][3] = 4.1f;
-            o->subBox[0][4] = -1.5f;
-            o->subBox[0][5] = 1.5f;
+            o->subBox[0][3] = 4.00f;
+            o->subBox[0][4] = -1.05f;
+            o->subBox[0][5] = 1.05f;
 
             // bottom section
             o->subBox[1][0] = -1.0f;
@@ -617,8 +617,8 @@ void scene_init()
             o->subBox[2][1] = 0.70f;
             o->subBox[2][2] = 2.40f;
             o->subBox[2][3] = 4.35f;
-            o->subBox[2][4] = 0.25f;
-            o->subBox[2][5] = 1.15f;
+            o->subBox[2][4] = -0.65f;
+            o->subBox[2][5] = -0.05f;
         }
 
         // meeting table (top + legs)
@@ -627,20 +627,20 @@ void scene_init()
             o->subBoxCount = 2;
 
             // top
-            o->subBox[0][0] = -4.2f;
-            o->subBox[0][1] = 4.2f;
-            o->subBox[0][2] = 1.5f;
-            o->subBox[0][3] = 1.9f;
-            o->subBox[0][4] = -1.76f;
-            o->subBox[0][5] = 1.76f;
+            o->subBox[0][0] = -3.0f;
+            o->subBox[0][1] =  3.0f;
+            o->subBox[0][2] =  1.55f;
+            o->subBox[0][3] =  1.85f;
+            o->subBox[0][4] = -1.7f;
+            o->subBox[0][5] =  1.7;
 
             // legs
-            o->subBox[1][0] = -2.45f;
-            o->subBox[1][1] = 2.45f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 1.7f;
-            o->subBox[1][4] = -0.9f;
-            o->subBox[1][5] = 0.9f;
+            o->subBox[1][0] = -2.35f;
+            o->subBox[1][1] =  2.35f;
+            o->subBox[1][2] =  0.0f;
+            o->subBox[1][3] =  1.6f;
+            o->subBox[1][4] = -0.72f;
+            o->subBox[1][5] =  0.72f;
         }
 
         // lamp (shade, rod, base)
@@ -816,17 +816,7 @@ void scene_display()
 
         glPopMatrix();
 
-        if (selectedObject == obj)
-        {
-            glDisable(GL_LIGHTING);
-            glDisable(GL_TEXTURE_2D);
-
-            drawBBox(obj);
-
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_LIGHTING);
-        }
-
+        // Highlight selected object
         if (selectedObject == obj)
         {
             glPushMatrix();
