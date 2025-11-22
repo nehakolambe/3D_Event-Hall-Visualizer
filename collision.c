@@ -56,6 +56,11 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
 // Check AABB overlap
 bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 {
+    float bestPlatformTop = 0.0f;       // highest platform below player
+    float playerFeetOld = movingObj->subBox[0][2] + movingObj->y;
+    float playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
+
+    float playerFeetNew = playerFeetOld;
     // Loop through all objects
     for (int i = 0; i < objectCount; i++)
     {
@@ -85,15 +90,63 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
                                      &b_ymin, &b_ymax,
                                      &b_zmin, &b_zmax);
 
-                // 3D AABB overlap test
-                if (a_xmax > b_xmin && a_xmin < b_xmax &&
-                    a_ymax > b_ymin && a_ymin < b_ymax &&
-                    a_zmax > b_zmin && a_zmin < b_zmax)
+                // AABB horizontal overlap check
+                bool overlapXZ =
+                    (a_xmax > b_xmin && a_xmin < b_xmax &&
+                     a_zmax > b_zmin && a_zmin < b_zmax);
+
+                if (!overlapXZ)
+                    continue;
+
+                // stage climbing logic
+                bool isPlatform =
+                    strstr(other->name, "Stage") != NULL;
+
+                if (isPlatform)
                 {
-                    return true; // collision detected!
+                    float stageTop = b_ymax;   // actual stage height
+
+                    // Check if player is above platform
+                    if (a_ymin >= stageTop - 2.0f)
+                    {
+                        if (stageTop > bestPlatformTop)
+                            bestPlatformTop = stageTop;
+
+                        // Allow movement onto top
+                        continue;
+                    }
+
+                    // Otherwise hit the side of the stage
+                }
+
+                // normal vertical overlap check
+                bool overlapY =
+                    (a_ymax > b_ymin && a_ymin < b_ymax);
+
+                if (overlapY)
+                {
+                    // Side collision -- block movement
+                    return true;
                 }
             }
         }
+    }
+
+    if (bestPlatformTop > 0.0f)
+    {
+        float desiredFeetY = bestPlatformTop;
+        float desiredFpvY = desiredFeetY + playerHeight;
+
+        // Smooth snap to platform
+        fpvY = desiredFpvY;
+
+        movingObj->y = fpvY - playerHeight;
+    }
+    else
+    {
+        // Reset to floor level
+        movingObj->y = 0.0f;
+        fpvY = playerHeight;   // camera height above floor
     }
 
     return false; // no collision
