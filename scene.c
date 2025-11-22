@@ -579,8 +579,8 @@ void scene_init()
             o->subBox[1][1] = 0.5f;
             o->subBox[1][2] = 1.3f;
             o->subBox[1][3] = 2.6f;
-            o->subBox[1][4] = -5.0f;
-            o->subBox[1][5] = 0.20f;
+            o->subBox[1][4] = -0.80f;
+            o->subBox[1][5] = 0.05f;
 
             // legs
             o->subBox[2][0] = -0.55f;
@@ -607,18 +607,18 @@ void scene_init()
             // seat
             o->subBox[1][0] = -0.65f;
             o->subBox[1][1] = 0.65f;
-            o->subBox[1][2] = 2.35f;
-            o->subBox[1][3] = 2.85f;
+            o->subBox[1][2] = 2.30f;
+            o->subBox[1][3] = 2.95f;
             o->subBox[1][4] = -0.65f;
             o->subBox[1][5] = 0.65f;
 
             // backrest
-            o->subBox[2][0] = -0.65f;
-            o->subBox[2][1] = 0.65f;
-            o->subBox[2][2] = 2.45f;
-            o->subBox[2][3] = 4.25f;
-            o->subBox[2][4] = -1.05f;
-            o->subBox[2][5] = -0.05f;
+            o->subBox[2][0] = -0.70f;
+            o->subBox[2][1] = 0.70f;
+            o->subBox[2][2] = 2.40f;
+            o->subBox[2][3] = 4.35f;
+            o->subBox[2][4] = 0.25f;
+            o->subBox[2][5] = 1.15f;
         }
 
         // meeting table (top + legs)
@@ -815,6 +815,17 @@ void scene_display()
         }
 
         glPopMatrix();
+
+        if (selectedObject == obj)
+        {
+            glDisable(GL_LIGHTING);
+            glDisable(GL_TEXTURE_2D);
+
+            drawBBox(obj);
+
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_LIGHTING);
+        }
 
         if (selectedObject == obj)
         {
