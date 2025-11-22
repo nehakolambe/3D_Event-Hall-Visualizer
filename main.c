@@ -22,7 +22,18 @@ void Project(void)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fov, asp, 0.1, dim * 10.0);
+
+    if (mode == 2)
+    {
+        // orthogonal projection
+        glOrtho(-asp * dim, +asp * dim, -dim, +dim, -50, +50);
+    }
+    else
+    {
+        // perspective projection
+        gluPerspective(fov, asp, 0.1, dim * 10.0);
+    }
+
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -60,6 +71,12 @@ void display(void)
                   fpvZ + dirZ,
                   0.0, 1.0, 0.0);
     }
+    else if (mode == 2)
+    {
+        // orthogonal mode
+        glRotatef(ph, 1, 0, 0);
+        glRotatef(th, 0, 1, 0);
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -78,7 +95,7 @@ void display(void)
     glLoadIdentity();
 
     glDisable(GL_LIGHTING);
-    
+
     glColor3f(1, 1, 1);
     glWindowPos2f(10, 20);
 
@@ -92,19 +109,19 @@ void display(void)
     // --- Print Lighting Info ---
     switch (lightState)
     {
-        case 1:
-            Print("Light Mode: Moving ");
-            Print(" Light Radius:%.1f", radius);
-            Print(" Light Height (Y): %.1f", lightY);
-            break;
+    case 1:
+        Print("Light Mode: Moving ");
+        Print(" Light Radius:%.1f", radius);
+        Print(" Light Height (Y): %.1f", lightY);
+        break;
 
-        case 2:
-            Print("Light Mode: Spotlight");
-            break;
+    case 2:
+        Print("Light Mode: Spotlight");
+        break;
 
-        case 0:
-            // print nothing
-            break;
+    case 0:
+        // print nothing
+        break;
     }
     glWindowPos2f(10, 60);
     // --- Print Selected Object Info ---

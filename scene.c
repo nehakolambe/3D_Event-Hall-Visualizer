@@ -628,19 +628,19 @@ void scene_init()
 
             // top
             o->subBox[0][0] = -3.0f;
-            o->subBox[0][1] =  3.0f;
-            o->subBox[0][2] =  1.55f;
-            o->subBox[0][3] =  1.85f;
+            o->subBox[0][1] = 3.0f;
+            o->subBox[0][2] = 1.55f;
+            o->subBox[0][3] = 1.85f;
             o->subBox[0][4] = -1.7f;
-            o->subBox[0][5] =  1.7;
+            o->subBox[0][5] = 1.7;
 
             // legs
             o->subBox[1][0] = -2.35f;
-            o->subBox[1][1] =  2.35f;
-            o->subBox[1][2] =  0.0f;
-            o->subBox[1][3] =  1.6f;
+            o->subBox[1][1] = 2.35f;
+            o->subBox[1][2] = 0.0f;
+            o->subBox[1][3] = 1.6f;
             o->subBox[1][4] = -0.72f;
-            o->subBox[1][5] =  0.72f;
+            o->subBox[1][5] = 0.72f;
         }
 
         // lamp (shade, rod, base)
@@ -705,35 +705,50 @@ void scene_display()
     drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
     glDisable(GL_TEXTURE_2D);
 
-    // Ceiling
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
+    if (mode != 2)
+    {
+        // Ceiling
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+    }
 
-    // Back wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
-    glDisable(GL_TEXTURE_2D);
+    if (mode != 2)
+    {
+        // Back wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
+        glDisable(GL_TEXTURE_2D);
+    }
 
-    // Front wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
-    glDisable(GL_TEXTURE_2D);
+    if (mode != 2)
+    {
+        // Front wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
+        glDisable(GL_TEXTURE_2D);
+    }
 
-    // Left wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
+    if (mode != 2)
+    {
+        // Left wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+    }
 
-    // Right wall
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, wallTex);
-    drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
-    glDisable(GL_TEXTURE_2D);
+    if (mode != 2)
+    {
+        // Right wall
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, wallTex);
+        drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
+        glDisable(GL_TEXTURE_2D);
+    }
 
     // Stage parameters
     glEnable(GL_TEXTURE_2D);
@@ -846,10 +861,13 @@ void scene_display()
             glPopMatrix();
         }
     }
-    // Ceiling lights
-    glPushMatrix();
-    drawCeilingLights();
-    glPopMatrix();
+    if (mode != 2)
+    {
+        // Ceiling lights
+        glPushMatrix();
+        drawCeilingLights();
+        glPopMatrix();
+    }
 
     lighting_draw_debug_marker();
     glPopMatrix();

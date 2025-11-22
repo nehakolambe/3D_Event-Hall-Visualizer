@@ -166,10 +166,10 @@ void controls_key(unsigned char key, int x, int y)
             }
             break;
 
-        // Toggle FPV / Projection mode
+        // Toggle FPV / Projection / Orthogonal mode
         case 'm':
         case 'M':
-            mode = (mode + 1) % 2;
+            mode = (mode + 1) % 3;
             break;
 
         // Rotate selected object clockwise
