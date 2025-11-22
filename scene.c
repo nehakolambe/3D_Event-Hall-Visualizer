@@ -411,53 +411,53 @@ void scene_init()
 
     // Back wall collision box
     addObject("Wall_Back", 0.0f, -30.0f, NULL, 0);
-    objects[objectCount-1].subBoxCount = 1;
-    objects[objectCount-1].subBox[0][0] = -20.0f;
-    objects[objectCount-1].subBox[0][1] =  20.0f;
-    objects[objectCount-1].subBox[0][2] = 0.0f;
-    objects[objectCount-1].subBox[0][3] = 15.0f;
-    objects[objectCount-1].subBox[0][4] = -1.0f;
-    objects[objectCount-1].subBox[0][5] =  1.0f;
+    objects[objectCount - 1].subBoxCount = 1;
+    objects[objectCount - 1].subBox[0][0] = -20.0f;
+    objects[objectCount - 1].subBox[0][1] = 20.0f;
+    objects[objectCount - 1].subBox[0][2] = 0.0f;
+    objects[objectCount - 1].subBox[0][3] = 15.0f;
+    objects[objectCount - 1].subBox[0][4] = -1.0f;
+    objects[objectCount - 1].subBox[0][5] = 1.0f;
 
     // Front wall collision box
     addObject("Wall_Front", 0.0f, 30.0f, NULL, 0);
-    objects[objectCount-1].subBoxCount = 1;
-    objects[objectCount-1].subBox[0][0] = -20.0f;
-    objects[objectCount-1].subBox[0][1] =  20.0f;
-    objects[objectCount-1].subBox[0][2] = 0.0f;
-    objects[objectCount-1].subBox[0][3] = 15.0f;
-    objects[objectCount-1].subBox[0][4] = -1.0f;
-    objects[objectCount-1].subBox[0][5] =  1.0f;
+    objects[objectCount - 1].subBoxCount = 1;
+    objects[objectCount - 1].subBox[0][0] = -20.0f;
+    objects[objectCount - 1].subBox[0][1] = 20.0f;
+    objects[objectCount - 1].subBox[0][2] = 0.0f;
+    objects[objectCount - 1].subBox[0][3] = 15.0f;
+    objects[objectCount - 1].subBox[0][4] = -1.0f;
+    objects[objectCount - 1].subBox[0][5] = 1.0f;
 
     // Left wall collision box
     addObject("Wall_Left", -20.0f, 0.0f, NULL, 0);
-    objects[objectCount-1].subBoxCount = 1;
-    objects[objectCount-1].subBox[0][0] = -1.0f;
-    objects[objectCount-1].subBox[0][1] =  1.0f;
-    objects[objectCount-1].subBox[0][2] = 0.0f;
-    objects[objectCount-1].subBox[0][3] = 15.0f;
-    objects[objectCount-1].subBox[0][4] = -30.0f;
-    objects[objectCount-1].subBox[0][5] =  30.0f;
+    objects[objectCount - 1].subBoxCount = 1;
+    objects[objectCount - 1].subBox[0][0] = -1.0f;
+    objects[objectCount - 1].subBox[0][1] = 1.0f;
+    objects[objectCount - 1].subBox[0][2] = 0.0f;
+    objects[objectCount - 1].subBox[0][3] = 15.0f;
+    objects[objectCount - 1].subBox[0][4] = -30.0f;
+    objects[objectCount - 1].subBox[0][5] = 30.0f;
 
     // Right wall collision box
     addObject("Wall_Right", 20.0f, 0.0f, NULL, 0);
-    objects[objectCount-1].subBoxCount = 1;
-    objects[objectCount-1].subBox[0][0] = -1.0f;
-    objects[objectCount-1].subBox[0][1] =  1.0f;
-    objects[objectCount-1].subBox[0][2] = 0.0f;
-    objects[objectCount-1].subBox[0][3] = 15.0f;
-    objects[objectCount-1].subBox[0][4] = -30.0f;
-    objects[objectCount-1].subBox[0][5] =  30.0f;
+    objects[objectCount - 1].subBoxCount = 1;
+    objects[objectCount - 1].subBox[0][0] = -1.0f;
+    objects[objectCount - 1].subBox[0][1] = 1.0f;
+    objects[objectCount - 1].subBox[0][2] = 0.0f;
+    objects[objectCount - 1].subBox[0][3] = 15.0f;
+    objects[objectCount - 1].subBox[0][4] = -30.0f;
+    objects[objectCount - 1].subBox[0][5] = 30.0f;
 
     // Stage collision box
     addObject("Stage", 0.0f, -25.0f, NULL, 0);
-    objects[objectCount-1].subBoxCount = 1;
-    objects[objectCount-1].subBox[0][0] = -10.0f;
-    objects[objectCount-1].subBox[0][1] =  10.0f;
-    objects[objectCount-1].subBox[0][2] = 0.0f;
-    objects[objectCount-1].subBox[0][3] = 2.0f;
-    objects[objectCount-1].subBox[0][4] = -5.0f;
-    objects[objectCount-1].subBox[0][5] =  5.0f;
+    objects[objectCount - 1].subBoxCount = 1;
+    objects[objectCount - 1].subBox[0][0] = -10.0f;
+    objects[objectCount - 1].subBox[0][1] = 10.0f;
+    objects[objectCount - 1].subBox[0][2] = 0.0f;
+    objects[objectCount - 1].subBox[0][3] = 2.0f;
+    objects[objectCount - 1].subBox[0][4] = -5.0f;
+    objects[objectCount - 1].subBox[0][5] = 5.0f;
 
     // assign bounding boxes
     for (int i = 0; i < objectCount; i++)
@@ -675,11 +675,11 @@ void scene_init()
 
         // fallback box
         else if (
-            strcmp(o->name, "Wall_Back")  != 0 &&
+            strcmp(o->name, "Wall_Back") != 0 &&
             strcmp(o->name, "Wall_Front") != 0 &&
-            strcmp(o->name, "Wall_Left")  != 0 &&
+            strcmp(o->name, "Wall_Left") != 0 &&
             strcmp(o->name, "Wall_Right") != 0 &&
-            strcmp(o->name, "Stage")      != 0)
+            strcmp(o->name, "Stage") != 0)
         {
             o->subBoxCount = 1;
             o->subBox[0][0] = -0.8f;
@@ -815,6 +815,35 @@ void scene_display()
         }
 
         glPopMatrix();
+
+        if (selectedObject == obj)
+        {
+            glPushMatrix();
+            glTranslatef(obj->x, obj->y, obj->z);
+            glRotatef(obj->rotation, 0, 1, 0);
+            glScalef(obj->scale, obj->scale, obj->scale);
+
+            glDisable(GL_LIGHTING);
+            glDisable(GL_TEXTURE_2D);
+
+            glEnable(GL_POLYGON_OFFSET_LINE);
+            glPolygonOffset(-1, -1);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+            glLineWidth(3.0f);
+            glColor3f(1.0f, 0.0f, 0.0f);
+
+            if (obj->drawFunc)
+                obj->drawFunc(0, 0);
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDisable(GL_POLYGON_OFFSET_LINE);
+
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_LIGHTING);
+
+            glPopMatrix();
+        }
     }
     // Ceiling lights
     glPushMatrix();
