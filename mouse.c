@@ -2,6 +2,11 @@
 
 static int lastMouseX = 0;
 static int lastMouseY = 0;
+static int strokeActive = 0;
+static int strokeErase = 0;
+static float strokePrevU = 0.0f;
+static float strokePrevV = 0.0f;
+static double lastRightClickTime = 0.0;
 
 // room boundaries
 static const float ROOM_MIN_X = -18.0f;
@@ -113,7 +118,7 @@ SceneObject *pickObject3D(int x, int y)
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject *obj = &objects[i];
-        if (!obj->movable)
+        if (!obj->movable && strcmp(obj->name, "Whiteboard") != 0)
             continue;
 
         for (int b = 0; b < obj->subBoxCount; b++)
@@ -136,14 +141,65 @@ SceneObject *pickObject3D(int x, int y)
 // Mouse button callback
 void mouse_button(int button, int state, int x, int y)
 {
+    lastMouseX = x;
+    lastMouseY = y;
+
+    if (whiteboardMode)
+    {
+        if (button == GLUT_LEFT_BUTTON || button == GLUT_RIGHT_BUTTON)
+        {
+            if (state == GLUT_DOWN)
+            {
+                if (button == GLUT_RIGHT_BUTTON)
+                {
+                    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+                    if (currentTime - lastRightClickTime < 0.3)
+                    {
+                        whiteboard_clear();
+                        whiteboard_background_invalidate();
+                        strokeActive = 0;
+                        glutPostRedisplay();
+                        lastRightClickTime = 0.0;
+                        return;
+                    }
+                    lastRightClickTime = currentTime;
+                }
+
+                float screenX = (float)x;
+                float screenY = (float)(screenHeight - y);
+                if (whiteboard_point_in_canvas(screenX, screenY))
+                {
+                    strokeActive = 1;
+                    strokeErase = (button == GLUT_RIGHT_BUTTON);
+                    whiteboard_screen_to_canvas(screenX, screenY, &strokePrevU, &strokePrevV);
+                }
+                else
+                {
+                    strokeActive = 0;
+                }
+            }
+            else if (state == GLUT_UP)
+            {
+                strokeActive = 0;
+            }
+        }
+        glutPostRedisplay();
+        return;
+    }
+
     if (button == GLUT_LEFT_BUTTON)
     {
         if (state == GLUT_DOWN)
         {
-            lastMouseX = x;
-            lastMouseY = y;
-
             SceneObject *picked = pickObject3D(x, y);
+
+            if (picked && strcmp(picked->name, "Whiteboard") == 0)
+            {
+                whiteboard_activate();
+                strokeActive = 0;
+                glutPostRedisplay();
+                return;
+            }
 
             if (picked)
             {
@@ -195,6 +251,38 @@ static int rayPlaneIntersection(float ox, float oy, float oz,
 // Mouse motion callback
 void mouse_motion(int x, int y)
 {
+    if (!whiteboardMode)
+    {
+        strokeActive = 0;
+    }
+
+    if (whiteboardMode)
+    {
+        if (strokeActive)
+        {
+            float screenX = (float)x;
+            float screenY = (float)(screenHeight - y);
+
+            if (!whiteboard_point_in_canvas(screenX, screenY))
+            {
+                strokeActive = 0;
+            }
+            else
+            {
+                float u, v;
+                whiteboard_screen_to_canvas(screenX, screenY, &u, &v);
+                whiteboard_add_stroke(strokePrevU, strokePrevV, u, v, strokeErase);
+                strokePrevU = u;
+                strokePrevV = v;
+            }
+        }
+
+        lastMouseX = x;
+        lastMouseY = y;
+        glutPostRedisplay();
+        return;
+    }
+
     if (dragging && selectedObject)
     {
         float ox, oy, oz, dx, dy, dz;

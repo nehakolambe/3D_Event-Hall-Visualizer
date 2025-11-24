@@ -8,6 +8,16 @@ void controls_key(unsigned char key, int x, int y)
     const double speed = 0.8;
     const double radYaw = yaw * (M_PI / 180.0);
 
+    if (whiteboardMode)
+    {
+        if (key == 27)
+        {
+            whiteboard_deactivate();
+            glutPostRedisplay();
+        }
+        return;
+    }
+
     switch (key)
     {
         // Toggle dynamic light motion
@@ -208,6 +218,9 @@ void controls_key(unsigned char key, int x, int y)
 // Special Keys (Arrow Keys)
 void controls_special(int key, int x, int y)
 {
+    if (whiteboardMode)
+        return;
+
     if (mode == 1)
     {
         // FPV look controls

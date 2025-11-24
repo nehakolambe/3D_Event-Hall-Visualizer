@@ -31,6 +31,7 @@ geometry.o: geometry.c CSCIx229.h
 collision.o: collision.c CSCIx229.h
 controls.o: controls.c CSCIx229.h
 mouse.o: mouse.c CSCIx229.h
+whiteboard.o: whiteboard.c CSCIx229.h
 errcheck.o: errcheck.c CSCIx229.h
 lighting.o: lighting.c CSCIx229.h
 loadtexbmp.o: loadtexbmp.c CSCIx229.h
@@ -48,7 +49,7 @@ CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o
 	g++ -c $(CFLG) $<
 
 #  Link final executable
-$(EXE): main.o scene.o object.o controls.o mouse.o lighting.o geometry.o collision.o CSCIx229.a
+$(EXE): main.o scene.o object.o controls.o mouse.o whiteboard.o lighting.o geometry.o collision.o CSCIx229.a
 	gcc $(CFLG) -o $@ $^ $(LIBS)
 
 #  Clean

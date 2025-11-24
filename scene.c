@@ -182,6 +182,38 @@ void drawTiledSurface(
     }
 }
 
+// Simple flat whiteboard on the left wall
+static void drawWhiteboardTrigger(float x, float z)
+{
+    (void)x;
+    (void)z;
+
+    const float halfWidth = 3.0f;
+    const float boardBottom = 2.0f;
+    const float boardTop = 6.0f;
+
+    glColor3f(0.95f, 0.95f, 0.95f);
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glVertex3f(0.0f, boardBottom, -halfWidth);
+    glVertex3f(0.0f, boardBottom, halfWidth);
+    glVertex3f(0.0f, boardTop, halfWidth);
+    glVertex3f(0.0f, boardTop, -halfWidth);
+    glEnd();
+
+    glColor3f(0.2f, 0.2f, 0.2f);
+    glLineWidth(4.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0f, boardBottom, -halfWidth);
+    glVertex3f(0.0f, boardBottom, halfWidth);
+    glVertex3f(0.0f, boardTop, halfWidth);
+    glVertex3f(0.0f, boardTop, -halfWidth);
+    glEnd();
+    glLineWidth(1.0f);
+
+    whiteboard_render_on_board(boardBottom, boardTop, -halfWidth, halfWidth);
+}
+
 // draws a simple bounding box
 void drawBBox(SceneObject *o)
 {
@@ -367,6 +399,9 @@ void scene_init()
 
     // door lamp
     addObject("Lamp", -5.0f, 11.0f, drawLamp, 1);
+
+    // whiteboard trigger on left wall
+    addObject("Whiteboard", -19.5f, -5.0f, drawWhiteboardTrigger, 0);
 
     // meeting table
     float meetX = 0.0f;
@@ -671,6 +706,16 @@ void scene_init()
             o->subBox[2][3] = 0.2f;
             o->subBox[2][4] = -0.45f;
             o->subBox[2][5] = 0.45f;
+        }
+        else if (strcmp(o->name, "Whiteboard") == 0)
+        {
+            o->subBoxCount = 1;
+            o->subBox[0][0] = -0.2f;
+            o->subBox[0][1] = 0.2f;
+            o->subBox[0][2] = 2.0f;
+            o->subBox[0][3] = 6.2f;
+            o->subBox[0][4] = -3.2f;
+            o->subBox[0][5] = 3.2f;
         }
 
         // fallback box
