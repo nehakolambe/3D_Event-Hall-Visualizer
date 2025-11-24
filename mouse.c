@@ -301,26 +301,6 @@ void mouse_motion(int x, int y)
             if (hitZ > ROOM_MAX_Z)
                 hitZ = ROOM_MAX_Z;
 
-            // block stage entry from front
-            if (hitZ < STAGE_FRONT_Z &&
-                hitX > STAGE_MIN_X && hitX < STAGE_MAX_X)
-            {
-                hitZ = STAGE_FRONT_Z;
-            }
-
-            // block stage sides
-            if (hitZ < STAGE_FRONT_Z + 1.0f &&
-                hitZ > STAGE_BACK_Z - 1.0f)
-            {
-                if (hitX > STAGE_MIN_X - 0.5f &&
-                    hitX < STAGE_MIN_X + 0.5f)
-                    hitX = STAGE_MIN_X - 0.5f;
-
-                if (hitX > STAGE_MAX_X - 0.5f &&
-                    hitX < STAGE_MAX_X + 0.5f)
-                    hitX = STAGE_MAX_X + 0.5f;
-            }
-
             // object–object collision
             if (!collidesWithAnyObject(selectedObject, hitX, hitZ))
             {
