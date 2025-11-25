@@ -99,15 +99,12 @@ void Fatal(const char *format, ...);
     void lighting_init(void);
     void lighting_update(void);
     void lighting_draw_debug_marker(void);
-    void drawLampBulb(void);
 
     extern int lightState;
-    extern float lampX, lampY, lampZ;
     extern float zh;
     extern float lightSpeed;
     extern float radius;
     extern int moveLight;
-    extern int lightState;
     extern float lightY;
 
     extern int mode;                 // 0 = perspective, 1 = FPV, 2 = orthogonal
@@ -161,13 +158,9 @@ void Fatal(const char *format, ...);
     extern SceneObject *selectedObject;
     extern int dragging;
 
-    bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ);
-
     // Mouse interaction
     void mouse_button(int button, int state, int x, int y);
     void mouse_motion(int x, int y);
-    void screenToWorld(int x, int y, float *worldX, float *worldZ);
-    SceneObject *pickObject(float worldX, float worldZ);
 
     // Texture handles
     extern unsigned int screenTex;
@@ -203,7 +196,6 @@ void Fatal(const char *format, ...);
 
     // Interaction utilities
     void rotateObject(SceneObject *obj, float angle);
-    void deselectObject(void);
     SceneObject *scene_spawn_object(SceneSpawnType type);
     void scene_remove_selected_object(void);
 

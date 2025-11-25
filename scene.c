@@ -421,9 +421,6 @@ void scene_init()
     addObject("Door", 0.0f, 29.9f, (void (*)(float, float))drawDoor, 0);
     addObject("CurvedScreen", 0.0f, -30.0f, (void (*)(float, float))drawCurvedScreen, 0);
 
-    objects[0].y = 0.0f;
-    objects[1].y = 0.0f;
-
     // event tables
     float tableX[4] = {-10, -10, 10, 10};
     float tableZ[4] = {-10, 0, -10, 0};

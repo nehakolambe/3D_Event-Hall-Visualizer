@@ -266,7 +266,6 @@ void whiteboard_render(float x, float y, float width, float height)
     glEnd();
 
     glLineWidth(4.0f);
-    glLineWidth(4.0f);
     for (int i = 0; i < strokeCount; i++)
     {
         Stroke *s = &strokes[i];

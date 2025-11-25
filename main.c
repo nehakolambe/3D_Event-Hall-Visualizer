@@ -164,7 +164,6 @@ void display(void)
         glDisable(GL_LIGHTING);
 
         glColor3f(1, 1, 1);
-        glWindowPos2f(10, 20);
 
         const char *modeStr =
             (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"

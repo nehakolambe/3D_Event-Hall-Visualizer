@@ -1,7 +1,5 @@
 #include "CSCIx229.h"
 
-static int lastMouseX = 0;
-static int lastMouseY = 0;
 static int strokeActive = 0;
 static int strokeErase = 0;
 static float strokePrevU = 0.0f;
@@ -130,9 +128,6 @@ SceneObject *pickObject3D(int x, int y)
 // Mouse button callback
 void mouse_button(int button, int state, int x, int y)
 {
-    lastMouseX = x;
-    lastMouseY = y;
-
     if (whiteboardMode)
     {
         if (button == GLUT_LEFT_BUTTON || button == GLUT_RIGHT_BUTTON)
@@ -266,8 +261,6 @@ void mouse_motion(int x, int y)
             }
         }
 
-        lastMouseX = x;
-        lastMouseY = y;
         glutPostRedisplay();
         return;
     }
@@ -299,7 +292,5 @@ void mouse_motion(int x, int y)
         }
     }
 
-    lastMouseX = x;
-    lastMouseY = y;
     glutPostRedisplay();
 }

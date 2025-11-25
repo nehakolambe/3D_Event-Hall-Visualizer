@@ -4,13 +4,10 @@
 
 ---
 
-## Project Status Summary
+## Project Summary
 
-This project now features a fully interactive 3D event-hall environment built in OpenGL, including movable furniture, mouse-based object picking using ray-object intersections, basic AABB collision detection, dynamic lighting, and smooth first-person camera navigation. The codebase has been modularized into dedicated files for geometry, object rendering, lighting, controls, mouse picking, and collision logic, making the system easier to read and extend. The scene also includes complex-shaped furniture that goes beyond basic cubes and cylinders.
+This project is a fully interactive 3D event-hall environment built in OpenGL, featuring complex furniture models, dynamic lighting, object spawning, mouse-based picking through ray-object intersection tests, basic AABB/OBB collision detection, and smooth first-person navigation with collision-aware movement. The codebase is modularized across geometry, rendering, scene management, lighting, controls, mouse interaction, collision logic, and a full whiteboard drawing system that supports drawing, erasing, and background capture. Users can place, rotate, move, and remove objects, walk through the scene in FPV, toggle lighting modes, and interact with a UI-driven whiteboard for sketching or planning. This framework forms a flexible foundation for an event-layout planner or virtual staging tool, with future improvements planned for more detailed assets, enhanced lighting, a top-down planning mode, and more robust collision constraints to prevent clipping against furniture and stage structures.
 
-## Future Work
-
-Upcoming improvements include adding more furniture and decorative props, expanding lighting options, introducing an accurate top-down planning mode, and refining collision systems. The current AABB collision model is functional but limited, allowing slight overlaps; future work will focus on more robust object–object constraints and FPV collision detection so the user cannot clip through chairs, tables, or stage boundaries.
 
 ---
 
@@ -43,73 +40,90 @@ Upcoming improvements include adding more furniture and decorative props, expand
 
 ### General
 
-- **Esc** – Quit program
-- **m / M** – Toggle view mode (Projection / First-person)
-- **0** – Reset entire scene (camera, light, FPV, selection)
+- **Esc** - Quit program
+- **m / M** - Toggle view mode (Projection / First-person)
+- **0** - Reset entire scene (camera, light, FPV, selection)
+
+### Whiteboard Mode
+- **Esc** - Exit whiteboard mode  
+- **Left Mouse Drag** - Draw on whiteboard  
+- **Right Mouse Drag** - Erase  
+- **Double Right Click** - Clear entire whiteboard
 
 ### Projection Mode (mode = 0)
 
 #### Camera Movement
 
-- **(** – Move camera backward
-- **)** – Move camera forward
-- **+ / =** – Zoom in (decrease FOV)
-- **- / _** – Zoom out (increase FOV)
+- **(** - Move camera backward
+- **)** - Move camera forward
+- **+ / =** - Zoom in (decrease FOV)
+- **- / _** - Zoom out (increase FOV)
 
 #### Camera Rotation
 
-- **Arrow Left** – Rotate view left
-- **Arrow Right** – Rotate view right
-- **Arrow Up** – Rotate view upward (clamped to +90°)
-- **Arrow Down** – Rotate view downward (clamped to –90°)
+- **Arrow Left** - Rotate view left
+- **Arrow Right** - Rotate view right
+- **Arrow Up** - Rotate view upward (clamped to +90°)
+- **Arrow Down** - Rotate view downward (clamped to -90°)
 
 ### First-Person Mode (mode = 1)
 
 #### Movement
 
-- **W / w** – Move forward
-- **S / s** – Move backward
-- **A / a** – Move left
-- **D / d** – Move right
+- **W / w** - Move forward
+- **S / s** - Move backward
+- **A / a** - Move left
+- **D / d** - Move right
 
 #### Look Around
 
-- **Arrow Left** – Look left
-- **Arrow Right** – Look right
-- **Arrow Up** – Look up (max +60°)
-- **Arrow Down** – Look down (min –60°)
+- **Arrow Left** - Look left
+- **Arrow Right** - Look right
+- **Arrow Up** - Look up (max +60°)
+- **Arrow Down** - Look down (min -60°)
 
 ### Lighting Controls
 
 #### Light Motion & Modes
 
-- **l / L** – Toggle automatic light motion
-- **b / B** – Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
+- **l / L** - Toggle automatic light motion
+- **b / B** - Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
 
 #### Light Orbit Rotation
 
-- **[** – Rotate light left
-- **]** – Rotate light right
+- **[** - Rotate light left
+- **]** - Rotate light right
 
 #### Light Radius
 
-- **{** – Decrease light radius
-- **}** – Increase light radius (max = 40)
+- **{** - Decrease light radius
+- **}** - Increase light radius (max = 40)
 
 #### Light Height
 
-- **y** – Lower light
-- **Y** – Raise light (max = 30)
+- **y** - Lower light
+- **Y** - Raise light (max = 30)
 
 ### Object Interaction
 
+#### Object Selection & Movement
+- **Left Mouse Button** - Select object  
+- **Drag** - Move object  
+- **Release** - Place object  
+
 #### Object Rotation
+- **r** - Rotate selected object clockwise (+15°)
+- **R** - Rotate selected object counter-clockwise (-15°)
 
-- **r** – Rotate selected object clockwise (+15°)
-- **R** – Rotate selected object counter-clockwise (–15°)
+#### Deletion
+- **q / Q** - Remove selected object
 
-#### Mouse-Based Actions
-
-- **Left Mouse Button Down** – Select object
-- **Drag** – Move selected object on ground plane
-- **Release** – Place object
+#### Object Spawning
+- **1** - Spawn Lamp  
+- **2** - Spawn Event Table  
+- **3** - Spawn Meeting Table  
+- **4** - Spawn Bar Chair  
+- **5** - Spawn Banquet Chair  
+- **6** - Spawn Cocktail Table Type 1  
+- **7** - Spawn Cocktail Table Type 2  
+- **8** - Spawn Cocktail Table Type 3
