@@ -14,12 +14,6 @@ static const float ROOM_MAX_X = 18.0f;
 static const float ROOM_MIN_Z = -28.0f;
 static const float ROOM_MAX_Z = 28.0f;
 
-// stage boundaries
-static const float STAGE_MIN_X = -13.0f;
-static const float STAGE_MAX_X = 13.0f;
-static const float STAGE_FRONT_Z = -15.0f;
-static const float STAGE_BACK_Z = -30.0f;
-
 // Ray vs AABB sub-box test
 static int rayIntersectsSubBoxWorld(
     float ox, float oy, float oz,

@@ -20,7 +20,6 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
 
     // all 8 corners
     float cx[8] = {xmin, xmax, xmin, xmax, xmin, xmax, xmin, xmax};
-    float cy[8] = {ymin, ymin, ymin, ymin, ymax, ymax, ymax, ymax};
     float cz[8] = {zmin, zmin, zmax, zmax, zmin, zmin, zmax, zmax};
 
     *minX = *minZ = +1e9f;
@@ -57,10 +56,8 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
 bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 {
     float bestPlatformTop = 0.0f;       // highest platform below player
-    float playerFeetOld = movingObj->subBox[0][2] + movingObj->y;
     float playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
 
-    float playerFeetNew = playerFeetOld;
     // Loop through all objects
     for (int i = 0; i < objectCount; i++)
     {
