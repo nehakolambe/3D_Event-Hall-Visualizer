@@ -192,6 +192,16 @@ void controls_key(unsigned char key, int x, int y)
             if (selectedObject) rotateObject(selectedObject, -15.0f);
             break;
 
+        // Spawn objects on ground
+        case '1': scene_spawn_object(SPAWN_LAMP); break;
+        case '2': scene_spawn_object(SPAWN_EVENT_TABLE); break;
+        case '3': scene_spawn_object(SPAWN_MEETING_TABLE); break;
+        case '4': scene_spawn_object(SPAWN_BAR_CHAIR); break;
+        case '5': scene_spawn_object(SPAWN_BANQUET_CHAIR); break;
+        case '6': scene_spawn_object(SPAWN_COCKTAIL_1); break;
+        case '7': scene_spawn_object(SPAWN_COCKTAIL_2); break;
+        case '8': scene_spawn_object(SPAWN_COCKTAIL_3); break;
+
         // Reset scene
         case '0':
             th = ph = yaw = pitch = 0;

@@ -8,11 +8,6 @@ static float strokePrevU = 0.0f;
 static float strokePrevV = 0.0f;
 static double lastRightClickTime = 0.0;
 
-// room boundaries
-static const float ROOM_MIN_X = -18.0f;
-static const float ROOM_MAX_X = 18.0f;
-static const float ROOM_MIN_Z = -28.0f;
-static const float ROOM_MAX_Z = 28.0f;
 
 // Ray vs AABB sub-box test
 static int rayIntersectsSubBoxWorld(

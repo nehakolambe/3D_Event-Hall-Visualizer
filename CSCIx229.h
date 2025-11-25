@@ -47,6 +47,12 @@
 #define Sin(th) sin(3.14159265 / 180 * (th))
 #define PI 3.14159265
 
+// Room bounds for placement/dragging logic
+#define ROOM_MIN_X -18.0f
+#define ROOM_MAX_X  18.0f
+#define ROOM_MIN_Z -28.0f
+#define ROOM_MAX_Z  28.0f
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -132,6 +138,19 @@ void Fatal(const char *format, ...);
         float subBox[MAX_SUBBOXES][6]; // each is {xmin, xmax, ymin, ymax, zmin, zmax}
     } SceneObject;
 
+    typedef enum
+    {
+        SPAWN_LAMP = 0,
+        SPAWN_EVENT_TABLE,
+        SPAWN_MEETING_TABLE,
+        SPAWN_BAR_CHAIR,
+        SPAWN_BANQUET_CHAIR,
+        SPAWN_COCKTAIL_1,
+        SPAWN_COCKTAIL_2,
+        SPAWN_COCKTAIL_3,
+        SPAWN_TYPE_COUNT
+    } SceneSpawnType;
+
 // Scene object management
 #define MAX_OBJECTS 100
 
@@ -185,6 +204,7 @@ void Fatal(const char *format, ...);
     // Interaction utilities
     void rotateObject(SceneObject *obj, float angle);
     void deselectObject(void);
+    SceneObject *scene_spawn_object(SceneSpawnType type);
 
     // Player collision
     void initPlayerCollision();

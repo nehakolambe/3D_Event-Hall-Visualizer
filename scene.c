@@ -33,6 +33,32 @@ unsigned int barChairCushionTex;
 unsigned int barChairWoodTex;
 unsigned int barChairBackTex;
 
+typedef struct
+{
+    const char *baseName;
+    void (*drawFunc)(float, float);
+    int movable;
+    float defaultRotation;
+    float defaultScale;
+} ObjectTemplate;
+
+static const ObjectTemplate spawnTemplates[SPAWN_TYPE_COUNT] = {
+    [SPAWN_LAMP] = {"Lamp", drawLamp, 1, 0.0f, 1.0f},
+    [SPAWN_EVENT_TABLE] = {"EventTable", drawTable, 1, 0.0f, 1.0f},
+    [SPAWN_MEETING_TABLE] = {"MeetingTable", drawMeetingTable, 1, 0.0f, 1.0f},
+    [SPAWN_BAR_CHAIR] = {"BarChair", drawBarChairObj, 1, 0.0f, 1.0f},
+    [SPAWN_BANQUET_CHAIR] = {"BanquetChair", drawBanquetChair, 1, 0.0f, 1.0f},
+    [SPAWN_COCKTAIL_1] = {"Cocktail_1", drawCocktailTable, 1, 0.0f, 1.0f},
+    [SPAWN_COCKTAIL_2] = {"Cocktail_2", drawCocktailTable2, 1, 0.0f, 1.0f},
+    [SPAWN_COCKTAIL_3] = {"Cocktail_3", drawCocktailTable3, 1, 0.0f, 1.0f}
+};
+
+static int spawnCounters[SPAWN_TYPE_COUNT] = {0};
+
+static void configureObjectBounds(SceneObject *obj);
+static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ);
+static int nameHasPrefix(const char *name, const char *prefix);
+
 // Quad
 static void drawQuadN(
     float x1, float y1, float z1,
@@ -323,13 +349,13 @@ void drawBBox(SceneObject *o)
 }
 
 // creates a new scene object
-void addObject(const char *name,
-               float x, float z,
-               void (*drawFunc)(float, float),
-               int movable)
+SceneObject *addObject(const char *name,
+                       float x, float z,
+                       void (*drawFunc)(float, float),
+                       int movable)
 {
     if (objectCount >= MAX_OBJECTS)
-        return;
+        return NULL;
 
     SceneObject *obj = &objects[objectCount];
 
@@ -356,6 +382,7 @@ void addObject(const char *name,
             obj->subBox[k][j] = 0.0f;
 
     objectCount++;
+    return obj;
 }
 
 void scene_init()
@@ -388,6 +415,7 @@ void scene_init()
     barChairWoodTex = LoadTexBMP("textures/barchairwood.bmp");
 
     objectCount = 0;
+    memset(spawnCounters, 0, sizeof(spawnCounters));
 
     // fixed objects
     addObject("Door", 0.0f, 29.9f, (void (*)(float, float))drawDoor, 0);
@@ -547,247 +575,329 @@ void scene_init()
     objects[objectCount - 1].subBox[0][4] = -5.0f;
     objects[objectCount - 1].subBox[0][5] = 5.0f;
 
-    // assign bounding boxes
     for (int i = 0; i < objectCount; i++)
+        configureObjectBounds(&objects[i]);
+}
+
+static int nameHasPrefix(const char *name, const char *prefix)
+{
+    if (!name || !prefix)
+        return 0;
+
+    size_t len = strlen(prefix);
+    return strncmp(name, prefix, len) == 0;
+}
+
+static void configureObjectBounds(SceneObject *obj)
+{
+    if (!obj)
+        return;
+
+    if (nameHasPrefix(obj->name, "EventTable"))
     {
-        SceneObject *o = &objects[i];
+        obj->subBoxCount = 2;
 
-        // rectangle event table (top + legs)
-        if (strncmp(o->name, "EventTable", 10) == 0)
+        obj->subBox[0][0] = -2.15f;
+        obj->subBox[0][1] = 2.15f;
+        obj->subBox[0][2] = 0.0f;
+        obj->subBox[0][3] = 2.8f;
+        obj->subBox[0][4] = -1.45f;
+        obj->subBox[0][5] = 1.45f;
+
+        obj->subBox[1][0] = -2.05f;
+        obj->subBox[1][1] = 2.05f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 2.2f;
+        obj->subBox[1][4] = -1.05f;
+        obj->subBox[1][5] = 1.05f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "Cocktail_1"))
+    {
+        obj->subBoxCount = 3;
+
+        obj->subBox[0][0] = -1.6f;
+        obj->subBox[0][1] = 1.6f;
+        obj->subBox[0][2] = 4.0f;
+        obj->subBox[0][3] = 4.2f;
+        obj->subBox[0][4] = -1.6f;
+        obj->subBox[0][5] = 1.6f;
+
+        obj->subBox[1][0] = -0.25f;
+        obj->subBox[1][1] = 0.25f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 4.0f;
+        obj->subBox[1][4] = -0.25f;
+        obj->subBox[1][5] = 0.25f;
+
+        obj->subBox[2][0] = -0.7f;
+        obj->subBox[2][1] = 0.7f;
+        obj->subBox[2][2] = 0.0f;
+        obj->subBox[2][3] = 0.15f;
+        obj->subBox[2][4] = -0.7f;
+        obj->subBox[2][5] = 0.7f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "Cocktail_2"))
+    {
+        obj->subBoxCount = 2;
+
+        obj->subBox[0][0] = -1.5f;
+        obj->subBox[0][1] = 1.5f;
+        obj->subBox[0][2] = 4.0f;
+        obj->subBox[0][3] = 4.25f;
+        obj->subBox[0][4] = -1.5f;
+        obj->subBox[0][5] = 1.5f;
+
+        obj->subBox[1][0] = -1.0f;
+        obj->subBox[1][1] = 1.0f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 4.0f;
+        obj->subBox[1][4] = -1.0f;
+        obj->subBox[1][5] = 1.0f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "Cocktail_3"))
+    {
+        obj->subBoxCount = 2;
+
+        obj->subBox[0][0] = -1.05f;
+        obj->subBox[0][1] = 1.05f;
+        obj->subBox[0][2] = 2.3f;
+        obj->subBox[0][3] = 4.00f;
+        obj->subBox[0][4] = -1.05f;
+        obj->subBox[0][5] = 1.05f;
+
+        obj->subBox[1][0] = -1.0f;
+        obj->subBox[1][1] = 1.0f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 2.3f;
+        obj->subBox[1][4] = -1.0f;
+        obj->subBox[1][5] = 1.0f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "EventChair") ||
+        nameHasPrefix(obj->name, "MeetChair") ||
+        nameHasPrefix(obj->name, "BanquetChair"))
+    {
+        obj->subBoxCount = 3;
+
+        obj->subBox[0][0] = -0.6f;
+        obj->subBox[0][1] = 0.6f;
+        obj->subBox[0][2] = 0.7f;
+        obj->subBox[0][3] = 1.3f;
+        obj->subBox[0][4] = -0.6f;
+        obj->subBox[0][5] = 0.6f;
+
+        obj->subBox[1][0] = -0.5f;
+        obj->subBox[1][1] = 0.5f;
+        obj->subBox[1][2] = 1.3f;
+        obj->subBox[1][3] = 2.6f;
+        obj->subBox[1][4] = -0.80f;
+        obj->subBox[1][5] = 0.05f;
+
+        obj->subBox[2][0] = -0.55f;
+        obj->subBox[2][1] = 0.55f;
+        obj->subBox[2][2] = 0.0f;
+        obj->subBox[2][3] = 0.7f;
+        obj->subBox[2][4] = -0.55f;
+        obj->subBox[2][5] = 0.55f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "BarChair"))
+    {
+        obj->subBoxCount = 3;
+
+        obj->subBox[0][0] = -0.65f;
+        obj->subBox[0][1] = 0.65f;
+        obj->subBox[0][2] = 0.0f;
+        obj->subBox[0][3] = 2.2f;
+        obj->subBox[0][4] = -0.55f;
+        obj->subBox[0][5] = 0.55f;
+
+        obj->subBox[1][0] = -0.65f;
+        obj->subBox[1][1] = 0.65f;
+        obj->subBox[1][2] = 2.30f;
+        obj->subBox[1][3] = 2.95f;
+        obj->subBox[1][4] = -0.65f;
+        obj->subBox[1][5] = 0.65f;
+
+        obj->subBox[2][0] = -0.70f;
+        obj->subBox[2][1] = 0.70f;
+        obj->subBox[2][2] = 2.40f;
+        obj->subBox[2][3] = 4.35f;
+        obj->subBox[2][4] = -0.65f;
+        obj->subBox[2][5] = -0.05f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "MeetingTable"))
+    {
+        obj->subBoxCount = 2;
+
+        obj->subBox[0][0] = -3.0f;
+        obj->subBox[0][1] = 3.0f;
+        obj->subBox[0][2] = 1.55f;
+        obj->subBox[0][3] = 1.85f;
+        obj->subBox[0][4] = -1.7f;
+        obj->subBox[0][5] = 1.7f;
+
+        obj->subBox[1][0] = -2.35f;
+        obj->subBox[1][1] = 2.35f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 1.6f;
+        obj->subBox[1][4] = -0.72f;
+        obj->subBox[1][5] = 0.72f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "Lamp"))
+    {
+        obj->subBoxCount = 3;
+
+        obj->subBox[0][0] = -0.75f;
+        obj->subBox[0][1] = 0.75f;
+        obj->subBox[0][2] = 4.9f;
+        obj->subBox[0][3] = 5.7f;
+        obj->subBox[0][4] = -0.75f;
+        obj->subBox[0][5] = 0.75f;
+
+        obj->subBox[1][0] = -0.25f;
+        obj->subBox[1][1] = 0.25f;
+        obj->subBox[1][2] = 0.0f;
+        obj->subBox[1][3] = 5.15f;
+        obj->subBox[1][4] = -0.25f;
+        obj->subBox[1][5] = 0.25f;
+
+        obj->subBox[2][0] = -0.45f;
+        obj->subBox[2][1] = 0.45f;
+        obj->subBox[2][2] = 0.0f;
+        obj->subBox[2][3] = 0.2f;
+        obj->subBox[2][4] = -0.45f;
+        obj->subBox[2][5] = 0.45f;
+        return;
+    }
+
+    if (nameHasPrefix(obj->name, "Whiteboard"))
+    {
+        obj->subBoxCount = 1;
+        obj->subBox[0][0] = -0.2f;
+        obj->subBox[0][1] = 0.2f;
+        obj->subBox[0][2] = 2.0f;
+        obj->subBox[0][3] = 6.2f;
+        obj->subBox[0][4] = -3.2f;
+        obj->subBox[0][5] = 3.2f;
+        return;
+    }
+
+    if (strcmp(obj->name, "Wall_Back") == 0 ||
+        strcmp(obj->name, "Wall_Front") == 0 ||
+        strcmp(obj->name, "Wall_Left") == 0 ||
+        strcmp(obj->name, "Wall_Right") == 0 ||
+        strcmp(obj->name, "Stage") == 0)
+    {
+        return;
+    }
+
+    obj->subBoxCount = 1;
+    obj->subBox[0][0] = -0.8f;
+    obj->subBox[0][1] = 0.8f;
+    obj->subBox[0][2] = 0.0f;
+    obj->subBox[0][3] = 3.0f;
+    obj->subBox[0][4] = -0.8f;
+    obj->subBox[0][5] = 0.8f;
+}
+
+static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
+{
+    if (!prototype || prototype->subBoxCount == 0)
+        return 0;
+
+    const float margin = 0.5f;
+    const float step = 1.0f;
+    float minX = ROOM_MIN_X + margin;
+    float maxX = ROOM_MAX_X - margin;
+    float minZ = ROOM_MIN_Z + margin;
+    float maxZ = ROOM_MAX_Z - margin;
+    float bestDist = 1e9f;
+    int found = 0;
+
+    for (float z = minZ; z <= maxZ; z += step)
+    {
+        for (float x = minX; x <= maxX; x += step)
         {
-            o->subBoxCount = 2;
-
-            // table top
-            o->subBox[0][0] = -2.15f;
-            o->subBox[0][1] = 2.15f;
-            o->subBox[0][2] = 0.0f;
-            o->subBox[0][3] = 2.8f;
-            o->subBox[0][4] = -1.45f;
-            o->subBox[0][5] = 1.45f;
-
-            // legs zone
-            o->subBox[1][0] = -2.05f;
-            o->subBox[1][1] = 2.05f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 2.2f;
-            o->subBox[1][4] = -1.05f;
-            o->subBox[1][5] = 1.05f;
-        }
-
-        // cocktail table 1 (top, leg, base)
-        else if (strcmp(o->name, "Cocktail_1") == 0)
-        {
-            o->subBoxCount = 3;
-
-            // top
-            o->subBox[0][0] = -1.6f;
-            o->subBox[0][1] = 1.6f;
-            o->subBox[0][2] = 4.0f;
-            o->subBox[0][3] = 4.2f;
-            o->subBox[0][4] = -1.6f;
-            o->subBox[0][5] = 1.6f;
-
-            // center leg
-            o->subBox[1][0] = -0.25f;
-            o->subBox[1][1] = 0.25f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 4.0f;
-            o->subBox[1][4] = -0.25f;
-            o->subBox[1][5] = 0.25f;
-
-            // base
-            o->subBox[2][0] = -0.7f;
-            o->subBox[2][1] = 0.7f;
-            o->subBox[2][2] = 0.0f;
-            o->subBox[2][3] = 0.15f;
-            o->subBox[2][4] = -0.7f;
-            o->subBox[2][5] = 0.7f;
-        }
-
-        // cocktail table 2 (top + legs)
-        else if (strcmp(o->name, "Cocktail_2") == 0)
-        {
-            o->subBoxCount = 2;
-
-            // top
-            o->subBox[0][0] = -1.5f;
-            o->subBox[0][1] = 1.5f;
-            o->subBox[0][2] = 4.0f;
-            o->subBox[0][3] = 4.25f;
-            o->subBox[0][4] = -1.5f;
-            o->subBox[0][5] = 1.5f;
-
-            // legs
-            o->subBox[1][0] = -1.0f;
-            o->subBox[1][1] = 1.0f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 4.0f;
-            o->subBox[1][4] = -1.0f;
-            o->subBox[1][5] = 1.0f;
-        }
-
-        // cocktail table 3 (top frustum + bottom frustum)
-        else if (strcmp(o->name, "Cocktail_3") == 0)
-        {
-            o->subBoxCount = 2;
-
-            // top section
-            o->subBox[0][0] = -1.05f;
-            o->subBox[0][1] = 1.05f;
-            o->subBox[0][2] = 2.3f;
-            o->subBox[0][3] = 4.00f;
-            o->subBox[0][4] = -1.05f;
-            o->subBox[0][5] = 1.05f;
-
-            // bottom section
-            o->subBox[1][0] = -1.0f;
-            o->subBox[1][1] = 1.0f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 2.3f;
-            o->subBox[1][4] = -1.0f;
-            o->subBox[1][5] = 1.0f;
-        }
-
-        // banquet chair (seat, back, legs)
-        else if (strncmp(o->name, "EventChair", 10) == 0 ||
-                 strncmp(o->name, "MeetChair", 9) == 0)
-        {
-            o->subBoxCount = 3;
-
-            // seat
-            o->subBox[0][0] = -0.6f;
-            o->subBox[0][1] = 0.6f;
-            o->subBox[0][2] = 0.7f;
-            o->subBox[0][3] = 1.3f;
-            o->subBox[0][4] = -0.6f;
-            o->subBox[0][5] = 0.6f;
-
-            // backrest
-            o->subBox[1][0] = -0.5f;
-            o->subBox[1][1] = 0.5f;
-            o->subBox[1][2] = 1.3f;
-            o->subBox[1][3] = 2.6f;
-            o->subBox[1][4] = -0.80f;
-            o->subBox[1][5] = 0.05f;
-
-            // legs
-            o->subBox[2][0] = -0.55f;
-            o->subBox[2][1] = 0.55f;
-            o->subBox[2][2] = 0.0f;
-            o->subBox[2][3] = 0.7f;
-            o->subBox[2][4] = -0.55f;
-            o->subBox[2][5] = 0.55f;
-        }
-
-        // bar chair (legs, seat, back)
-        else if (strncmp(o->name, "BarChair", 8) == 0)
-        {
-            o->subBoxCount = 3;
-
-            // legs section
-            o->subBox[0][0] = -0.65f;
-            o->subBox[0][1] = 0.65f;
-            o->subBox[0][2] = 0.0f;
-            o->subBox[0][3] = 2.2f;
-            o->subBox[0][4] = -0.55f;
-            o->subBox[0][5] = 0.55f;
-
-            // seat
-            o->subBox[1][0] = -0.65f;
-            o->subBox[1][1] = 0.65f;
-            o->subBox[1][2] = 2.30f;
-            o->subBox[1][3] = 2.95f;
-            o->subBox[1][4] = -0.65f;
-            o->subBox[1][5] = 0.65f;
-
-            // backrest
-            o->subBox[2][0] = -0.70f;
-            o->subBox[2][1] = 0.70f;
-            o->subBox[2][2] = 2.40f;
-            o->subBox[2][3] = 4.35f;
-            o->subBox[2][4] = -0.65f;
-            o->subBox[2][5] = -0.05f;
-        }
-
-        // meeting table (top + legs)
-        else if (strcmp(o->name, "MeetingTable") == 0)
-        {
-            o->subBoxCount = 2;
-
-            // top
-            o->subBox[0][0] = -3.0f;
-            o->subBox[0][1] = 3.0f;
-            o->subBox[0][2] = 1.55f;
-            o->subBox[0][3] = 1.85f;
-            o->subBox[0][4] = -1.7f;
-            o->subBox[0][5] = 1.7;
-
-            // legs
-            o->subBox[1][0] = -2.35f;
-            o->subBox[1][1] = 2.35f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 1.6f;
-            o->subBox[1][4] = -0.72f;
-            o->subBox[1][5] = 0.72f;
-        }
-
-        // lamp (shade, rod, base)
-        else if (strcmp(o->name, "Lamp") == 0)
-        {
-            o->subBoxCount = 3;
-
-            // shade
-            o->subBox[0][0] = -0.75f;
-            o->subBox[0][1] = 0.75f;
-            o->subBox[0][2] = 4.9f;
-            o->subBox[0][3] = 5.7f;
-            o->subBox[0][4] = -0.75f;
-            o->subBox[0][5] = 0.75f;
-
-            // rod
-            o->subBox[1][0] = -0.25f;
-            o->subBox[1][1] = 0.25f;
-            o->subBox[1][2] = 0.0f;
-            o->subBox[1][3] = 5.15f;
-            o->subBox[1][4] = -0.25f;
-            o->subBox[1][5] = 0.25f;
-
-            // base
-            o->subBox[2][0] = -0.45f;
-            o->subBox[2][1] = 0.45f;
-            o->subBox[2][2] = 0.0f;
-            o->subBox[2][3] = 0.2f;
-            o->subBox[2][4] = -0.45f;
-            o->subBox[2][5] = 0.45f;
-        }
-        else if (strcmp(o->name, "Whiteboard") == 0)
-        {
-            o->subBoxCount = 1;
-            o->subBox[0][0] = -0.2f;
-            o->subBox[0][1] = 0.2f;
-            o->subBox[0][2] = 2.0f;
-            o->subBox[0][3] = 6.2f;
-            o->subBox[0][4] = -3.2f;
-            o->subBox[0][5] = 3.2f;
-        }
-
-        // fallback box
-        else if (
-            strcmp(o->name, "Wall_Back") != 0 &&
-            strcmp(o->name, "Wall_Front") != 0 &&
-            strcmp(o->name, "Wall_Left") != 0 &&
-            strcmp(o->name, "Wall_Right") != 0 &&
-            strcmp(o->name, "Stage") != 0)
-        {
-            o->subBoxCount = 1;
-            o->subBox[0][0] = -0.8f;
-            o->subBox[0][1] = 0.8f;
-            o->subBox[0][2] = 0.0f;
-            o->subBox[0][3] = 3.0f;
-            o->subBox[0][4] = -0.8f;
-            o->subBox[0][5] = 0.8f;
+            if (!collidesWithAnyObject(prototype, x, z))
+            {
+                float dist = x * x + z * z;
+                if (!found || dist < bestDist)
+                {
+                    bestDist = dist;
+                    *outX = x;
+                    *outZ = z;
+                    found = 1;
+                }
+            }
         }
     }
+
+    return found;
+}
+
+SceneObject *scene_spawn_object(SceneSpawnType type)
+{
+    if (type < 0 || type >= SPAWN_TYPE_COUNT)
+        return NULL;
+
+    const ObjectTemplate *tmpl = &spawnTemplates[type];
+
+    SceneObject prototype;
+    memset(&prototype, 0, sizeof(SceneObject));
+    strncpy(prototype.name, tmpl->baseName, sizeof(prototype.name) - 1);
+    prototype.name[sizeof(prototype.name) - 1] = '\0';
+    prototype.x = 0.0f;
+    prototype.y = 0.0f;
+    prototype.z = 0.0f;
+    prototype.drawFunc = tmpl->drawFunc;
+    prototype.movable = tmpl->movable;
+    prototype.scale = tmpl->defaultScale;
+    prototype.rotation = tmpl->defaultRotation;
+    prototype.solid = 1;
+
+    configureObjectBounds(&prototype);
+
+    float spawnX = 0.0f;
+    float spawnZ = 0.0f;
+    if (!findFreeGroundSpot(&prototype, &spawnX, &spawnZ))
+    {
+        printf("No available space for %s.\n", tmpl->baseName);
+        return NULL;
+    }
+
+    char uniqueName[32];
+    int count = ++spawnCounters[type];
+    snprintf(uniqueName, sizeof(uniqueName), "%s_New%d", tmpl->baseName, count);
+
+    SceneObject *obj = addObject(uniqueName, spawnX, spawnZ, tmpl->drawFunc, tmpl->movable);
+    if (!obj)
+    {
+        printf("Maximum object count reached.\n");
+        return NULL;
+    }
+
+    obj->rotation = tmpl->defaultRotation;
+    obj->scale = tmpl->defaultScale;
+    configureObjectBounds(obj);
+
+    selectedObject = obj;
+    dragging = 0;
+
+    printf("Spawned %s at (%.1f, %.1f).\n", obj->name, spawnX, spawnZ);
+    return obj;
 }
 
 // Scene Rendering
