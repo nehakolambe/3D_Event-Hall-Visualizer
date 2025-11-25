@@ -3,17 +3,21 @@
 // Draw one cylindrical leg standing vertically
 static void drawLeg(float x, float z, float height, float radius)
 {
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
 
     glPushMatrix();
     glTranslatef(x, 0.0f, z);
-    glColor3f(1.0f, 1.0f, 1.0f);
 
     drawCylinder(radius, height, 32);
 
     glPopMatrix();
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
 }
 
 // Draw a textured rectangular table with rounded corners
@@ -36,9 +40,11 @@ void drawTable(float x, float z)
     float innerX = length * 0.5f - radius;
     float innerZ = width * 0.5f - radius;
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, tableTex);
-    glColor3f(1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, tableTex); // Or whatever texture it uses
+        glColor3f(1, 1, 1);
+    }
 
     // top surface
     glNormal3f(0, 1, 0);
@@ -224,7 +230,9 @@ void drawTable(float x, float z)
         glPopMatrix();
     }
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -239,14 +247,18 @@ void drawCocktailTable(float x, float z)
     glPushMatrix();
     glTranslatef(x, 0.0f, z);
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+    }
 
     drawLeg(0.0f, 0.0f, height, legRadius);    // table leg
     drawDisk(topRadius, height, topThickness); // tabletop
     drawDisk(0.6f, 0.0f, 0.05f);               // base disk
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -443,8 +455,11 @@ void drawLamp(float xPos, float zPos)
     glTranslatef(xPos, baseHeight, zPos);
 
     // Base disk
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, lampRodTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, lampRodTex);
+        glColor3f(1, 1, 1);
+    }
 
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, -1.0f, 0.0f);
@@ -498,22 +513,26 @@ void drawLamp(float xPos, float zPos)
     }
 
     // Transparent shade mode
-    if (lightState == 2)
+    if (glIsEnabled(GL_LIGHTING)) 
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glDepthMask(GL_FALSE);     // allow bulb to show through
-        glColor4f(1, 1, 1, 0.35f); // 35% opaque
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-        glColor4f(1, 1, 1, 1);
+        if (lightState == 2)
+        {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(GL_FALSE);     
+            glColor4f(1, 1, 1, 0.35f); 
+        }
+        else
+        {
+            glDisable(GL_BLEND);
+            glColor4f(1, 1, 1, 1);
+        }
     }
 
     // Shade sides (truncated cone)
-    glBindTexture(GL_TEXTURE_2D, lampShadeTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glBindTexture(GL_TEXTURE_2D, lampShadeTex);
+    }
 
     float shadeBottomY = poleHeight;
     float shadeTopY = poleHeight + shadeHeight;
@@ -558,14 +577,16 @@ void drawLamp(float xPos, float zPos)
     }
 
     // reset state after transparent shade
-    if (lightState == 2)
+    if (lightState == 2 && glIsEnabled(GL_LIGHTING))
     {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
     }
 
-    glDisable(GL_TEXTURE_2D);
-    glColor4f(1, 1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+        glColor4f(1, 1, 1, 1);
+    }
 
     // light bulb
     glPushMatrix();
@@ -577,15 +598,15 @@ void drawLamp(float xPos, float zPos)
     glColor3f(1.0f, 1.0f, 0.8f);
 
     // Glow only when lightState == 2
-    if (lightState == 2)
-    {
-        float glow[] = {0.9f, 0.8f, 0.5f, 1.0f};
-        glMaterialfv(GL_FRONT, GL_EMISSION, glow);
-    }
-    else
-    {
-        float noGlow[] = {0, 0, 0, 1};
-        glMaterialfv(GL_FRONT, GL_EMISSION, noGlow);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(1.0f, 1.0f, 0.8f);
+        if (lightState == 2) {
+            float glow[] = {0.9f, 0.8f, 0.5f, 1.0f};
+            glMaterialfv(GL_FRONT, GL_EMISSION, glow);
+        } else {
+            float noGlow[] = {0, 0, 0, 1};
+            glMaterialfv(GL_FRONT, GL_EMISSION, noGlow);
+        }
     }
 
     drawSphere(0.25f, 20, 20); // bulb
@@ -631,12 +652,17 @@ void drawBanquetChair(float x, float z)
     const float backBaseY = seatY - halfT;
     const float baseZ = -seatD * 0.5f;
 
-    glEnable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+    }
 
     // ---------------------------------------
     // seat block (6 faces)
     // ---------------------------------------
-    glBindTexture(GL_TEXTURE_2D, chairCushionTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glBindTexture(GL_TEXTURE_2D, chairCushionTex);
+        glColor3f(1, 1, 1);
+    }
 
     glBegin(GL_QUADS);
     float yTop = seatY + halfT;
@@ -689,7 +715,9 @@ void drawBanquetChair(float x, float z)
     // ---------------------------------------
     // chair legs (4 repeats)
     // ---------------------------------------
-    glBindTexture(GL_TEXTURE_2D, chairLegTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glBindTexture(GL_TEXTURE_2D, chairLegTex);
+    }
 
     float legX = seatW/2 - 0.1f;
     float legZ = seatD/2 - 0.1f;
@@ -737,7 +765,9 @@ void drawBanquetChair(float x, float z)
     // ---------------------------------------
     // curved backrest
     // ---------------------------------------
-    glBindTexture(GL_TEXTURE_2D, chairCushionTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glBindTexture(GL_TEXTURE_2D, chairCushionTex);
+    }
 
     for (int i = 0; i < segs; i++)
     {
@@ -806,7 +836,9 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0,1); glVertex3f(-seatW/2, yCap, zCap + halfT);
     glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -1048,9 +1080,11 @@ void drawMeetingTable(float x, float z)
     glPushMatrix();
     glTranslatef(x, legHeight * 0.5f, z);
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, meetingTableLegTex);
-    glColor3f(1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, meetingTableLegTex); // Or whatever texture it uses
+        glColor3f(1, 1, 1);
+    }
 
     float lx = halfL * 0.55f;
     float lz = halfW * 0.45f;
@@ -1079,9 +1113,11 @@ void drawMeetingTable(float x, float z)
     glPushMatrix();
     glTranslatef(x, tabletopY, z);
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, meetingTableTex);
-    glColor3f(1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, meetingTableTex);
+        glColor3f(1, 1, 1);
+    }
 
     // Precompute tabletop shape
     static float px[200], pz[200];
@@ -1158,7 +1194,9 @@ void drawMeetingTable(float x, float z)
     }
     glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -1540,9 +1578,11 @@ void drawSeat()
     float h = CUSHION_THICK;
 
     glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairCushionTex);
-    glColor3f(1.0f, 1.0f, 1.0f);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairCushionTex);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
 
     // Position the seat
     float bottomY = SEAT_HEIGHT - h;
@@ -1638,7 +1678,9 @@ void drawSeat()
     glVertex3f(+halfW, +h / 2, rectDepth);
     glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -1646,7 +1688,9 @@ void drawSeat()
 void drawSeatBase()
 {
     glPushMatrix();
-    glColor3f(0.55f, 0.38f, 0.22f); // darker wood
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(0.55f, 0.38f, 0.22f); 
+    }
 
     // dimensions
     const float width = 1.12f;
@@ -1732,7 +1776,9 @@ void drawSeatBase()
 void drawLegN(float x, float z)
 {
     glPushMatrix();
-    glColor3f(0.45f, 0.30f, 0.18f);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(0.45f, 0.30f, 0.18f);
+    }
 
     float legStartY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK;
     glTranslatef(x, legStartY - LEG_HEIGHT * 0.5f, z);
@@ -1746,7 +1792,9 @@ void drawLegN(float x, float z)
 void drawFootBar(float x1, float z1, float x2, float z2, float y)
 {
     glPushMatrix();
-    glColor3f(0.45f, 0.30f, 0.18f);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(0.45f, 0.30f, 0.18f);
+    }
 
     glTranslatef((x1 + x2) * 0.5f, y, (z1 + z2) * 0.5f);
 
@@ -1770,9 +1818,11 @@ void drawCurvedBackrest()
     float rodTop = rodBottom + (0.75f * CHAIR_SCALE);
 
     glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairBackTex);
-    glColor3f(1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairBackTex);
+        glColor3f(1, 1, 1);
+    }
 
     glTranslatef(0.0f, rodTop, -0.1f);
     glRotatef(-10, 1, 0, 0);
@@ -1867,7 +1917,9 @@ void drawCurvedBackrest()
         glEnd();
     }
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
     glPopMatrix();
 }
 
@@ -1875,7 +1927,9 @@ void drawCurvedBackrest()
 void drawBackrestRod(float x, float z)
 {
     glPushMatrix();
-    glColor3f(0.45f, 0.30f, 0.18f);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(0.45f, 0.30f, 0.18f);
+    }
 
     glTranslatef(x, ROD_BOTTOM + ROD_HEIGHT * 0.5f, z);
     glScalef(0.08f, ROD_HEIGHT, 0.08f);
@@ -1900,39 +1954,39 @@ void drawBarChair()
     glPushMatrix();
 
     // seat base
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    }
     drawSeatBase();
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) glDisable(GL_TEXTURE_2D);
 
     // cushion
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairCushionTex);
     drawSeat();
-    glDisable(GL_TEXTURE_2D);
 
     // legs
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    }
     drawLegN(+LEG_OFFSET_X, +LEG_OFFSET_Z);
     drawLegN(-LEG_OFFSET_X, +LEG_OFFSET_Z);
     drawLegN(+LEG_OFFSET_X, -LEG_OFFSET_Z);
     drawLegN(-LEG_OFFSET_X, -LEG_OFFSET_Z);
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) glDisable(GL_TEXTURE_2D);
 
     // backrest rods
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+    }
     drawBackrestRod(0.0f, -0.50f);
     drawBackrestRod(0.20f, -0.50f);
     drawBackrestRod(-0.20f, -0.50f);
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) glDisable(GL_TEXTURE_2D);
 
     // curved backrest
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, barChairBackTex);
     drawCurvedBackrest();
-    glDisable(GL_TEXTURE_2D);
 
     glPopMatrix();
 }

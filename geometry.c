@@ -100,9 +100,12 @@ void drawDisk(float radius, float y, float thickness)
     const int segs = 48;
     float topY = y + thickness;
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
-    glColor3f(1, 1, 1);
+    if (glIsEnabled(GL_LIGHTING)) 
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
+        glColor3f(1, 1, 1);
+    }
 
     // top face
     glBegin(GL_TRIANGLE_FAN);
@@ -163,7 +166,9 @@ void drawDisk(float radius, float y, float thickness)
     }
     glEnd();
 
-    glDisable(GL_TEXTURE_2D);
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
 }
 
 // Draw a textured cuboid
