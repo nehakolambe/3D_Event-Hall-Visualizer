@@ -205,6 +205,7 @@ void Fatal(const char *format, ...);
     void rotateObject(SceneObject *obj, float angle);
     void deselectObject(void);
     SceneObject *scene_spawn_object(SceneSpawnType type);
+    void scene_remove_selected_object(void);
 
     // Player collision
     void initPlayerCollision();

@@ -900,6 +900,46 @@ SceneObject *scene_spawn_object(SceneSpawnType type)
     return obj;
 }
 
+void scene_remove_selected_object(void)
+{
+    if (!selectedObject)
+    {
+        printf("No object selected to remove.\n");
+        return;
+    }
+
+    int index = -1;
+    for (int i = 0; i < objectCount; i++)
+    {
+        if (&objects[i] == selectedObject)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index < 0)
+        return;
+
+    if (!objects[index].movable)
+    {
+        printf("Object %s cannot be removed.\n", objects[index].name);
+        return;
+    }
+
+    printf("Removed %s.\n", objects[index].name);
+
+    for (int i = index; i < objectCount - 1; i++)
+    {
+        objects[i] = objects[i + 1];
+        objects[i].id = i;
+    }
+
+    objectCount--;
+    selectedObject = NULL;
+    dragging = 0;
+}
+
 // Scene Rendering
 void scene_display()
 {
@@ -1023,6 +1063,7 @@ void scene_display()
         glTranslatef(obj->x, obj->y, obj->z);
         glRotatef(obj->rotation, 0, 1, 0);
         glScalef(obj->scale, obj->scale, obj->scale);
+        glColor3f(1.0f, 1.0f, 1.0f);
 
         if (strcmp(obj->name, "CurvedScreen") == 0)
         {

@@ -192,6 +192,12 @@ void controls_key(unsigned char key, int x, int y)
             if (selectedObject) rotateObject(selectedObject, -15.0f);
             break;
 
+        // Remove selected object
+        case 'q':
+        case 'Q':
+            scene_remove_selected_object();
+            break;
+
         // Spawn objects on ground
         case '1': scene_spawn_object(SPAWN_LAMP); break;
         case '2': scene_spawn_object(SPAWN_EVENT_TABLE); break;

@@ -1109,23 +1109,29 @@ void drawMeetingTable(float x, float z)
         pz[i] = finalWidth * ny;
     }
 
-    // Top surface
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < N; i++)
+    // Top surface (triangle fan keeps highlight pass in hardware)
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 1, 0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i <= N; i++)
     {
-        glNormal3f(0, 1, 0);
-        glTexCoord2f((px[i] / length) + 0.5f, (pz[i] / width) + 0.5f);
-        glVertex3f(px[i], 0, pz[i]);
+        int k = i % N;
+        glTexCoord2f((px[k] / length) + 0.5f, (pz[k] / width) + 0.5f);
+        glVertex3f(px[k], 0, pz[k]);
     }
     glEnd();
 
     // Bottom surface
-    glBegin(GL_POLYGON);
-    for (int i = 0; i < N; i++)
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0.0f, -thickness, 0.0f);
+    for (int i = 0; i <= N; i++)
     {
-        glNormal3f(0, -1, 0);
-        glTexCoord2f((px[i] / length) + 0.5f, (pz[i] / width) + 0.5f);
-        glVertex3f(px[i], -thickness, pz[i]);
+        int k = i % N;
+        glTexCoord2f((px[k] / length) + 0.5f, (pz[k] / width) + 0.5f);
+        glVertex3f(px[k], -thickness, pz[k]);
     }
     glEnd();
 
