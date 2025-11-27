@@ -22,7 +22,6 @@ void controls_key(unsigned char key, int x, int y)
     {
         // Toggle dynamic light motion
         case 'l':
-        case 'L':
             moveLight = !moveLight;
             break;
 
@@ -71,6 +70,14 @@ void controls_key(unsigned char key, int x, int y)
         case 'Y':
             lightY += 0.5f;
             if (lightY > 30) lightY = 30;
+            break;
+
+        case 'S':
+            save_scene("layout.csv");
+            break;
+
+        case 'L':
+            load_scene("layout.csv");
             break;
 
         // Increase FOV (zoom out)
@@ -127,7 +134,6 @@ void controls_key(unsigned char key, int x, int y)
 
         // FPV backward
         case 's':
-        case 'S':
             if (mode == 1)
             {
                 float newX = fpvX - speed * sin(radYaw);

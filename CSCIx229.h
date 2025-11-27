@@ -228,6 +228,22 @@ void Fatal(const char *format, ...);
     void whiteboard_draw_background(int width, int height);
     void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLeft, float boardRight);
 
+    // Whiteboard stroke data structure
+    typedef struct
+    {
+        float u1, v1;
+        float u2, v2;
+        int erase;
+    } Stroke;
+
+    // Save/Load functions
+    void save_scene(const char* filename);
+    void load_scene(const char* filename);
+
+    // Accessors to read private whiteboard data
+    int whiteboard_get_stroke_count(void);
+    Stroke whiteboard_get_stroke(int index);
+
 #ifdef __cplusplus
 }
 #endif

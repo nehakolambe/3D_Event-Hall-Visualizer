@@ -2,13 +2,6 @@
 
 #define MAX_STROKES 8192
 
-typedef struct
-{
-    float u1, v1;
-    float u2, v2;
-    int erase;
-} Stroke;
-
 int whiteboardMode = 0;
 
 static int previousMode = 0;
@@ -326,4 +319,20 @@ void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLe
         glEnable(GL_TEXTURE_2D);
     if (lighting)
         glEnable(GL_LIGHTING);
+}
+
+int whiteboard_get_stroke_count(void)
+{
+    return strokeCount;
+}
+
+Stroke whiteboard_get_stroke(int index)
+{
+    if (index < 0 || index >= strokeCount)
+    {
+        // Return an empty stroke if index is invalid
+        Stroke empty = {0};
+        return empty;
+    }
+    return strokes[index];
 }

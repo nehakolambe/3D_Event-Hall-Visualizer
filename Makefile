@@ -37,6 +37,7 @@ lighting.o: lighting.c CSCIx229.h
 loadtexbmp.o: loadtexbmp.c CSCIx229.h
 fatal.o: fatal.c CSCIx229.h
 print.o: print.c CSCIx229.h
+persistence.o: persistence.c CSCIx229.h
 shader.o: shader.c CSCIx229.h
 
 #  Create archive (professor’s helper lib)
@@ -50,7 +51,7 @@ CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o shader.o
 	g++ -c $(CFLG) $<
 
 #  Link final executable
-$(EXE): main.o scene.o object.o controls.o mouse.o whiteboard.o lighting.o geometry.o collision.o CSCIx229.a
+$(EXE): main.o scene.o object.o controls.o mouse.o whiteboard.o lighting.o geometry.o collision.o persistence.o CSCIx229.a
 	gcc $(CFLG) -o $@ $^ $(LIBS)
 
 #  Clean
