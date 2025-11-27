@@ -273,21 +273,27 @@ void mouse_motion(int x, int y)
         float hitX, hitZ;
         if (rayPlaneIntersection(ox, oy, oz, dx, dy, dz, &hitX, &hitZ))
         {
+            float newX = hitX;
+            float newZ = hitZ;
+
+            if (snapToGridEnabled && scene_object_supports_snap(selectedObject))
+                scene_snap_position(&newX, &newZ);
+
             // room boundaries
-            if (hitX < ROOM_MIN_X)
-                hitX = ROOM_MIN_X;
-            if (hitX > ROOM_MAX_X)
-                hitX = ROOM_MAX_X;
-            if (hitZ < ROOM_MIN_Z)
-                hitZ = ROOM_MIN_Z;
-            if (hitZ > ROOM_MAX_Z)
-                hitZ = ROOM_MAX_Z;
+            if (newX < ROOM_MIN_X)
+                newX = ROOM_MIN_X;
+            if (newX > ROOM_MAX_X)
+                newX = ROOM_MAX_X;
+            if (newZ < ROOM_MIN_Z)
+                newZ = ROOM_MIN_Z;
+            if (newZ > ROOM_MAX_Z)
+                newZ = ROOM_MAX_Z;
 
             // object–object collision
-            if (!collidesWithAnyObject(selectedObject, hitX, hitZ))
+            if (!collidesWithAnyObject(selectedObject, newX, newZ))
             {
-                selectedObject->x = hitX;
-                selectedObject->z = hitZ;
+                selectedObject->x = newX;
+                selectedObject->z = newZ;
             }
         }
     }

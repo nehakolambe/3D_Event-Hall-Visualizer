@@ -26,6 +26,15 @@ void controls_key(unsigned char key, int x, int y)
             moveLight = !moveLight;
             break;
 
+        // Toggle snap-to-grid for select furniture
+        case 'g':
+        case 'G':
+            snapToGridEnabled = !snapToGridEnabled;
+            printf("Snap-to-grid %s.\n", snapToGridEnabled ? "enabled" : "disabled");
+            if (snapToGridEnabled)
+                scene_snap_all_objects();
+            break;
+
         // Cycle through light modes
         case 'b':
         case 'B':

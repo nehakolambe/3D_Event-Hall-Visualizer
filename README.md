@@ -110,6 +110,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Left Mouse Button** - Select object  
 - **Drag** - Move object  
 - **Release** - Place object  
+- **g / G** - Toggle snap-to-grid
 
 #### Object Rotation
 - **r** - Rotate selected object clockwise (+15°)

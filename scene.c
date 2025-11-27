@@ -1,5 +1,9 @@
 #include "CSCIx229.h"
 
+#define GRID_SNAP_SIZE 5.0f
+
+bool snapToGridEnabled = false;
+
 // Object system globals
 SceneObject objects[MAX_OBJECTS];
 int objectCount = 0;
@@ -58,6 +62,7 @@ static int spawnCounters[SPAWN_TYPE_COUNT] = {0};
 static void configureObjectBounds(SceneObject *obj);
 static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ);
 static int nameHasPrefix(const char *name, const char *prefix);
+static int nameSupportsSnap(const char *name);
 
 // Quad
 static void drawQuadN(
@@ -574,6 +579,9 @@ void scene_init()
 
     for (int i = 0; i < objectCount; i++)
         configureObjectBounds(&objects[i]);
+
+    if (snapToGridEnabled)
+        scene_snap_all_objects();
 }
 
 static int nameHasPrefix(const char *name, const char *prefix)
@@ -583,6 +591,71 @@ static int nameHasPrefix(const char *name, const char *prefix)
 
     size_t len = strlen(prefix);
     return strncmp(name, prefix, len) == 0;
+}
+
+static int nameSupportsSnap(const char *name)
+{
+    if (!name)
+        return 0;
+
+    if (nameHasPrefix(name, "EventTable") ||
+        nameHasPrefix(name, "MeetingTable") ||
+        nameHasPrefix(name, "BanquetChair") ||
+        nameHasPrefix(name, "EventChair") ||
+        nameHasPrefix(name, "MeetChair"))
+        return 1;
+
+    if (nameHasPrefix(name, "Cocktail_") ||
+        nameHasPrefix(name, "BarChair"))
+        return 1;
+
+    return 0;
+}
+
+int scene_object_supports_snap(const SceneObject *obj)
+{
+    if (!obj)
+        return 0;
+
+    return nameSupportsSnap(obj->name);
+}
+
+void scene_snap_position(float *x, float *z)
+{
+    if (!x || !z || GRID_SNAP_SIZE <= 0.0f)
+        return;
+
+    *x = roundf(*x / GRID_SNAP_SIZE) * GRID_SNAP_SIZE;
+    *z = roundf(*z / GRID_SNAP_SIZE) * GRID_SNAP_SIZE;
+}
+
+void scene_snap_all_objects(void)
+{
+    for (int i = 0; i < objectCount; i++)
+    {
+        SceneObject *obj = &objects[i];
+        if (!scene_object_supports_snap(obj))
+            continue;
+
+        float snappedX = obj->x;
+        float snappedZ = obj->z;
+        scene_snap_position(&snappedX, &snappedZ);
+
+        if (snappedX < ROOM_MIN_X)
+            snappedX = ROOM_MIN_X;
+        if (snappedX > ROOM_MAX_X)
+            snappedX = ROOM_MAX_X;
+        if (snappedZ < ROOM_MIN_Z)
+            snappedZ = ROOM_MIN_Z;
+        if (snappedZ > ROOM_MAX_Z)
+            snappedZ = ROOM_MAX_Z;
+
+        if (!collidesWithAnyObject(obj, snappedX, snappedZ))
+        {
+            obj->x = snappedX;
+            obj->z = snappedZ;
+        }
+    }
 }
 
 static void configureObjectBounds(SceneObject *obj)
@@ -816,7 +889,8 @@ static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
         return 0;
 
     const float margin = 0.5f;
-    const float step = 1.0f;
+    const int snapCandidate = snapToGridEnabled && nameSupportsSnap(prototype->name);
+    const float step = snapCandidate ? GRID_SNAP_SIZE : 1.0f;
     float minX = ROOM_MIN_X + margin;
     float maxX = ROOM_MAX_X - margin;
     float minZ = ROOM_MIN_Z + margin;
@@ -828,14 +902,25 @@ static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
     {
         for (float x = minX; x <= maxX; x += step)
         {
-            if (!collidesWithAnyObject(prototype, x, z))
+            float testX = x;
+            float testZ = z;
+
+            if (snapCandidate)
+                scene_snap_position(&testX, &testZ);
+
+            if (testX < minX) testX = minX;
+            if (testX > maxX) testX = maxX;
+            if (testZ < minZ) testZ = minZ;
+            if (testZ > maxZ) testZ = maxZ;
+
+            if (!collidesWithAnyObject(prototype, testX, testZ))
             {
-                float dist = x * x + z * z;
+                float dist = testX * testX + testZ * testZ;
                 if (!found || dist < bestDist)
                 {
                     bestDist = dist;
-                    *outX = x;
-                    *outZ = z;
+                    *outX = testX;
+                    *outZ = testZ;
                     found = 1;
                 }
             }
@@ -949,6 +1034,45 @@ void scene_display()
     glBindTexture(GL_TEXTURE_2D, floorTex);
     drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
     glDisable(GL_TEXTURE_2D);
+
+    if (snapToGridEnabled)
+    {
+        const float minX = ROOM_MIN_X;
+        const float maxX = ROOM_MAX_X;
+        const float minZ = ROOM_MIN_Z;
+        const float maxZ = ROOM_MAX_Z;
+
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glColor4f(0.1f, 0.8f, 0.1f, 0.08f);
+        glBegin(GL_QUADS);
+        glVertex3f(minX, 0.01f, minZ);
+        glVertex3f(maxX, 0.01f, minZ);
+        glVertex3f(maxX, 0.01f, maxZ);
+        glVertex3f(minX, 0.01f, maxZ);
+        glEnd();
+
+        glColor4f(0.2f, 0.9f, 0.2f, 0.35f);
+        glBegin(GL_LINES);
+        for (float x = minX; x <= maxX; x += GRID_SNAP_SIZE)
+        {
+            glVertex3f(x, 0.02f, minZ);
+            glVertex3f(x, 0.02f, maxZ);
+        }
+        for (float z = minZ; z <= maxZ; z += GRID_SNAP_SIZE)
+        {
+            glVertex3f(minX, 0.02f, z);
+            glVertex3f(maxX, 0.02f, z);
+        }
+        glEnd();
+
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
 
     if (mode != 2)
     {

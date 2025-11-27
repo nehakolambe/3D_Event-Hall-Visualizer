@@ -157,6 +157,10 @@ void Fatal(const char *format, ...);
 
     extern SceneObject *selectedObject;
     extern int dragging;
+    extern bool snapToGridEnabled;
+    int scene_object_supports_snap(const SceneObject *obj);
+    void scene_snap_position(float *x, float *z);
+    void scene_snap_all_objects(void);
 
     // Mouse interaction
     void mouse_button(int button, int state, int x, int y);
