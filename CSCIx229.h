@@ -90,6 +90,8 @@ void Fatal(const char *format, ...);
                           float yBase, float radiusH, float radiusV, float zOffset);
     void drawBarChairObj(float x, float z);
     void drawCeilingLights(void);
+    void drawFireplace(float x, float z);
+    void drawFirePlane(void);
 
     // Controls
     void controls_key(unsigned char ch, int x, int y);
@@ -99,6 +101,8 @@ void Fatal(const char *format, ...);
     void lighting_init(void);
     void lighting_update(void);
     void lighting_draw_debug_marker(void);
+
+    int CreateShaderProg(char* VertFile, char* FragFile);
 
     extern int lightState;
     extern float zh;
@@ -190,6 +194,8 @@ void Fatal(const char *format, ...);
     extern unsigned int barChairCushionTex;
     extern unsigned int barChairWoodTex;
     extern unsigned int barChairBackTex;
+    extern unsigned int fireplaceTex;
+    extern unsigned int fireNoiseTex;
 
     // geometry utilities
     void drawCuboid(float width, float height, float depth);

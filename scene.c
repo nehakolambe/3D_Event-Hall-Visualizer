@@ -36,6 +36,10 @@ unsigned int cocktail3LegTex;
 unsigned int barChairCushionTex;
 unsigned int barChairWoodTex;
 unsigned int barChairBackTex;
+unsigned int fireplaceTex;
+unsigned int fireNoiseTex;
+
+int fireShader = 0;
 
 typedef struct
 {
@@ -418,6 +422,10 @@ void scene_init()
     barChairBackTex = LoadTexBMP("textures/barchairbackrest.bmp");
     barChairCushionTex = LoadTexBMP("textures/barchaircushion.bmp");
     barChairWoodTex = LoadTexBMP("textures/barchairwood.bmp");
+    fireplaceTex = LoadTexBMP("textures/brick.bmp");
+    fireNoiseTex = LoadTexBMP("textures/cloud.bmp");
+
+    fireShader = CreateShaderProg("fire.vert", "fire.frag");
 
     objectCount = 0;
     memset(spawnCounters, 0, sizeof(spawnCounters));
@@ -425,6 +433,10 @@ void scene_init()
     // fixed objects
     addObject("Door", 0.0f, 29.9f, (void (*)(float, float))drawDoor, 0);
     addObject("CurvedScreen", 0.0f, -30.0f, (void (*)(float, float))drawCurvedScreen, 0);
+    SceneObject *fp = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
+    if (fp) {
+        fp->scale = 1.2f;
+    }
 
     // event tables
     float tableX[4] = {-10, -10, 10, 10};
@@ -1231,6 +1243,45 @@ void scene_display()
             glPopMatrix();
         }
     }
+
+    if (fireShader > 0)
+    {
+        glUseProgram(fireShader);
+
+        // shader uniforms
+        float time = glutGet(GLUT_ELAPSED_TIME) * 0.001f;
+        int timeLoc = glGetUniformLocation(fireShader, "time");
+        if (timeLoc >= 0) glUniform1f(timeLoc, time);
+
+        int noiseLoc = glGetUniformLocation(fireShader, "noiseTex");
+        if (noiseLoc >= 0) glUniform1i(noiseLoc, 0);
+
+        // bind noise texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, fireNoiseTex);
+
+        // render state changes
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glDisable(GL_LIGHTING);
+        glDepthMask(GL_FALSE);
+
+        // position the fire plane in the fireplace
+        glPushMatrix();
+        glTranslatef(19.5f, 0.0f, -18.0f);
+        glRotatef(-90, 0, 1, 0);
+        glScalef(1.2f, 1.2f, 1.2f);
+        glTranslatef(0.0f, 0.0f, 0.4f);
+
+        drawFirePlane();
+        glPopMatrix();
+
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+        glUseProgram(0);
+    }
+
     if (mode != 2)
     {
         // Ceiling lights

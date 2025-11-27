@@ -2004,3 +2004,116 @@ void drawBarChairObj(float x, float z)
     drawBarChair();
     glPopMatrix();
 }
+
+// log for fireplace
+static void drawLog(float x, float y, float z, float rotY)
+{
+    float radius = 0.12f;
+    float length = 1.4f;
+
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    
+    glRotatef(rotY, 0, 1, 0);
+    glRotatef(90, 0, 0, 1);
+
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, barChairWoodTex);
+        glColor3f(0.7f, 0.5f, 0.4f); 
+    }
+
+    glTranslatef(0, -length * 0.5f, 0);
+    drawCylinder(radius, length, 16);
+
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+        glColor3f(1, 1, 1);
+    }
+    glPopMatrix();
+}
+
+// fireplace object
+void drawFireplace(float x, float z)
+{
+    glPushMatrix();
+    glTranslatef(x, 0, z);
+    
+    glRotatef(-90, 0, 1, 0);
+
+    if (glIsEnabled(GL_LIGHTING)) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, fireplaceTex);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
+    
+    glPushMatrix();
+    glTranslatef(0.0f, 0.15f, 0.0f); 
+    drawCuboid(2.4f, 0.3f, 1.2f);
+    glPopMatrix();
+
+    float pillarH = 2.0f;
+    float pillarW = 0.5f;
+    float pillarD = 0.8f;
+    float pillarX = 0.8f;
+    
+    // Left Pillar
+    glPushMatrix();
+    glTranslatef(-pillarX, 0.3f + pillarH*0.5f, 0.0f);
+    drawCuboid(pillarW, pillarH, pillarD);
+    glPopMatrix();
+
+    // Right Pillar
+    glPushMatrix();
+    glTranslatef(pillarX, 0.3f + pillarH*0.5f, 0.0f);
+    drawCuboid(pillarW, pillarH, pillarD);
+    glPopMatrix();
+
+    // top
+    glPushMatrix();
+    glTranslatef(0.0f, 0.3f + pillarH + 0.2f, 0.1f);
+    drawCuboid(2.6f, 0.4f, 1.4f);
+    glPopMatrix();
+
+    if (glIsEnabled(GL_LIGHTING)) {
+        glDisable(GL_TEXTURE_2D);
+    }
+    glColor3f(0.2f, 0.2f, 0.2f);
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.3f + pillarH*0.5f, -0.2f); 
+    drawCuboid(1.2f, pillarH, 0.1f); 
+    glPopMatrix();
+
+    // Log 1 (Left bottom)
+    drawLog(-0.25f, 0.42f, 0.1f, 10.0f);
+    // Log 2 (Right bottom)
+    drawLog( 0.25f, 0.42f, 0.0f, -5.0f);
+    // Log 3 (Top stacked on the other two)
+    drawLog( 0.0f,  0.60f, 0.05f, 2.0f);
+
+    if (glIsEnabled(GL_LIGHTING)) {
+        glColor3f(1, 1, 1);
+    }
+    glPopMatrix();
+}
+
+// fire effect plane
+void drawFirePlane(void)
+{
+    // Dimensions
+    float w = 0.6f;
+    float h = 1.0f;
+    float yBase = 0.5f;
+
+    glNormal3f(0, 0, 1);
+
+    glBegin(GL_QUADS);
+    
+    glTexCoord2f(0, 0); glVertex3f(-w, yBase, 0);
+    glTexCoord2f(1, 0); glVertex3f( w, yBase, 0);
+    glTexCoord2f(1, 1); glVertex3f( w, yBase + h*2.0f, 0);
+    glTexCoord2f(0, 1); glVertex3f(-w, yBase + h*2.0f, 0);
+
+    glEnd();
+}

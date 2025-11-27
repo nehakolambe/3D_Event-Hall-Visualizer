@@ -37,9 +37,10 @@ lighting.o: lighting.c CSCIx229.h
 loadtexbmp.o: loadtexbmp.c CSCIx229.h
 fatal.o: fatal.c CSCIx229.h
 print.o: print.c CSCIx229.h
+shader.o: shader.c CSCIx229.h
 
 #  Create archive (professor’s helper lib)
-CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o
+CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o shader.o
 	ar -rcs $@ $^
 
 # Compile rules
