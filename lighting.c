@@ -1,9 +1,9 @@
 #include "CSCIx229.h"
 
-/* Global light state */
+// global light state
 int lightState = 1;
 
-/* Moving light animation */
+// moving light parameters
 float zh = 0.0f;
 float lightSpeed = 1.0f;
 float radius = 10.0f;
@@ -13,22 +13,21 @@ float lx = 5.0f;
 float ly = 5.0f;
 float lz = 0.0f;
 
-/* Toggles */
+// toggle
 int moveLight = 1;
 
-/* Materials */
+// material shininess
 int shininess = 32;
 float shinyVector[1] = {32.0f};
 
-/* Light colors */
+// light properties
 float ambient[]  = {0.3f, 0.3f, 0.3f, 1.0f};
 float diffuse[]  = {1.0f, 1.0f, 1.0f, 1.0f};
 float specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 float emission[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
-
-/* Initialize lighting */
+// initialize lighting
 void lighting_init(void)
 {
     glEnable(GL_LIGHTING);
@@ -43,7 +42,7 @@ void lighting_init(void)
 }
 
 
-/* Update lighting each frame */
+// update lighting each frame
 void lighting_update(void)
 {
     if (lightState == 0)
@@ -56,7 +55,7 @@ void lighting_update(void)
 
     glEnable(GL_LIGHTING);
 
-    /* Mode 1: moving light */
+    // mode 1: moving light
     if (lightState == 1)
     {
         glEnable(GL_LIGHT0);
@@ -81,7 +80,7 @@ void lighting_update(void)
         glDisable(GL_LIGHT0);
     }
 
-    /* Mode 2: lamp bulb only */
+    // mode 2: lamp light
     if (lightState == 2)
     {
         glEnable(GL_LIGHT1);
@@ -101,7 +100,7 @@ void lighting_update(void)
         glDisable(GL_LIGHT1);
     }
 
-    /* Material settings */
+    // material properties
     shinyVector[0] = shininess;
     glMaterialfv(GL_FRONT, GL_SHININESS, shinyVector);
 
@@ -112,8 +111,7 @@ void lighting_update(void)
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
 }
 
-
-/* Debug sphere for moving light */
+// debug sphere
 void lighting_draw_debug_marker(void)
 {
     if (lightState != 1)

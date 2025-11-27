@@ -1,22 +1,22 @@
 #include "CSCIx229.h"
 
-/* Projection parameters */
+// projecion parameters
 double asp = 1;
 double fov = 55;
 double dim = 20;
 int screenWidth = 800;
 int screenHeight = 600;
 
-/* Camera positions */
+// camera parameters
 double camX = 0.0, camY = 6.0, camZ = 24.0;
 double fpvX = 0.0, fpvY = 3.0, fpvZ = 24.0;
 double yaw = 0.0, pitch = 0.0;
 
-/* Scene rotation */
+// scene parameters
 double th = 0;
 double ph = 0;
 
-/* Camera mode: 0 = perspective, 1 = FPV */
+// camera mode
 int mode = 0;
 
 static void drawWhiteboardOverlay(void)
@@ -63,7 +63,8 @@ static void drawWhiteboardOverlay(void)
 
     glEnable(GL_DEPTH_TEST);
 }
-/* Set projection */
+
+// set projection
 void Project(void)
 {
     glMatrixMode(GL_PROJECTION);
@@ -83,7 +84,7 @@ void Project(void)
     glMatrixMode(GL_MODELVIEW);
 }
 
-/* Display callback */
+// display callback
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -169,10 +170,8 @@ void display(void)
             (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
                                                       : "Orthogonal";
         glWindowPos2f(10, 40);
-        // --- Print Camera Info ---
         Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
         glWindowPos2f(10, 80);
-        // --- Print Lighting Info ---
         switch (lightState)
         {
         case 1:
@@ -186,11 +185,9 @@ void display(void)
             break;
 
         case 0:
-            // print nothing
             break;
         }
         glWindowPos2f(10, 60);
-        // --- Print Selected Object Info ---
         if (selectedObject)
         {
             Print("Selected: %s", selectedObject->name);
@@ -211,7 +208,7 @@ void display(void)
     glutSwapBuffers();
 }
 
-/* Window reshape */
+// window reshape callback
 void reshape(int width, int height)
 {
     asp = (height > 0) ? (double)width / height : 1;
@@ -222,7 +219,7 @@ void reshape(int width, int height)
     Project();
 }
 
-/* Main entry */
+// main program
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);

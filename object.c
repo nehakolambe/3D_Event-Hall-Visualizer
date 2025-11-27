@@ -656,9 +656,7 @@ void drawBanquetChair(float x, float z)
         glEnable(GL_TEXTURE_2D);
     }
 
-    // ---------------------------------------
     // seat block (6 faces)
-    // ---------------------------------------
     if (glIsEnabled(GL_LIGHTING)) {
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
         glColor3f(1, 1, 1);
@@ -712,9 +710,7 @@ void drawBanquetChair(float x, float z)
 
     glEnd();
 
-    // ---------------------------------------
     // chair legs (4 repeats)
-    // ---------------------------------------
     if (glIsEnabled(GL_LIGHTING)) {
         glBindTexture(GL_TEXTURE_2D, chairLegTex);
     }
@@ -762,9 +758,7 @@ void drawBanquetChair(float x, float z)
         glEnd();
     }
 
-    // ---------------------------------------
     // curved backrest
-    // ---------------------------------------
     if (glIsEnabled(GL_LIGHTING)) {
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
     }
@@ -1589,7 +1583,7 @@ void drawSeat()
     glTranslatef(0.0f, bottomY + h * 0.5f, 0.0f);
 
     // Top face
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     glTexCoord2f(0, 1);
     glVertex3f(-halfW, h / 2, rectDepth);
     glTexCoord2f(1, 1);
@@ -1608,7 +1602,7 @@ void drawSeat()
     glEnd();
 
     // Bottom face
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     glTexCoord2f(0, 1);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glTexCoord2f(1, 1);
@@ -1705,7 +1699,7 @@ void drawSeatBase()
     glTranslatef(0.0f, bottomY + h * 0.5f, 0.0f);
 
     // top face
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     glVertex3f(-halfW, h / 2, rectDepth);
     glVertex3f(+halfW, h / 2, rectDepth);
 
@@ -1719,7 +1713,7 @@ void drawSeatBase()
     glEnd();
 
     // bottom face
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_FAN);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glVertex3f(+halfW, -h / 2, rectDepth);
 
