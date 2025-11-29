@@ -89,7 +89,7 @@ void Fatal(const char *format, ...);
     void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                           float yBase, float radiusH, float radiusV, float zOffset);
     void drawBarChairObj(float x, float z);
-    void drawCeilingLights(void);
+    void drawCeilingShapes(void);
     void drawFireplace(float x, float z);
     void drawFirePlane(void);
 

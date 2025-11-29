@@ -269,7 +269,7 @@ void drawDoor(float x, float z, float width, float height)
     float yTop = height;
     float halfW = width * 0.5f;
 
-    float nx = 0.0f, ny = 0.0f, nz = -1.0f; // normal for front wall
+    float nx = 0.0f, ny = 0.0f, nz = -1.0f;
 
     // Door frame
     glEnable(GL_TEXTURE_2D);
@@ -354,12 +354,12 @@ void drawDoor(float x, float z, float width, float height)
 void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                       float yBase, float radiusH, float radiusV, float zOffset)
 {
-    int segH = 64; // horizontal segments
-    int segV = 32; // vertical segments
+    int segH = 64;
+    int segV = 32;
 
     float halfH = height * 0.5f;
-    float angleH = width / radiusH;  // horizontal angle span
-    float angleV = height / radiusV; // vertical angle span
+    float angleH = width / radiusH;
+    float angleV = height / radiusV;
 
     glPushMatrix();
     glTranslatef(wallX, yBase + halfH, wallZ);
@@ -439,6 +439,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
     glPopMatrix();
 }
 
+// lamp with bulb and light mode
 void drawLamp(float xPos, float zPos)
 {
     int segments = 32;
@@ -627,7 +628,7 @@ void drawLamp(float xPos, float zPos)
     glPopMatrix();
 }
 
-// draws one banquet chair at world position (x,z)
+// banquet chair
 void drawBanquetChair(float x, float z)
 {
     glPushMatrix();
@@ -1002,7 +1003,7 @@ void drawCocktailTable2(float x, float z)
     glPopMatrix();
 }
 
-// Draw the cocktail table model
+// Frustum cocktail table
 void drawCocktailTable3(float x, float z)
 {
     int slices = 40;
@@ -1055,6 +1056,7 @@ void drawCocktailTable3(float x, float z)
     glPopMatrix();
 }
 
+// Big wavy table
 void drawMeetingTable(float x, float z)
 {
     float length = 8.0f;
@@ -1076,7 +1078,7 @@ void drawMeetingTable(float x, float z)
 
     if (glIsEnabled(GL_LIGHTING)) {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, meetingTableLegTex); // Or whatever texture it uses
+        glBindTexture(GL_TEXTURE_2D, meetingTableLegTex);
         glColor3f(1, 1, 1);
     }
 
@@ -1113,11 +1115,11 @@ void drawMeetingTable(float x, float z)
         glColor3f(1, 1, 1);
     }
 
-    // Precompute tabletop shape
+    // tabletop shape
     static float px[200], pz[200];
     int N = segments;
     if (N > 200)
-        N = 200; // safety check
+        N = 200;
 
     for (int i = 0; i < N; i++)
     {
@@ -1139,7 +1141,7 @@ void drawMeetingTable(float x, float z)
         pz[i] = finalWidth * ny;
     }
 
-    // Top surface (triangle fan keeps highlight pass in hardware)
+    // Top surface
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 1, 0);
     glTexCoord2f(0.5f, 0.5f);
@@ -1194,10 +1196,10 @@ void drawMeetingTable(float x, float z)
     glPopMatrix();
 }
 
-// Rope for ceiling light
+// Rope for ceiling shapes
 static void drawRope(float length)
 {
-    glColor3f(1, 1, 1); // keep rope texture untinted
+    glColor3f(1, 1, 1);
 
     glPushMatrix();
 
@@ -1223,9 +1225,9 @@ void drawStarShape()
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, starTex);
-    glColor3f(1, 1, 1); // show texture fully
+    glColor3f(1, 1, 1);
 
-    // Front face (+Z)
+    // Front face
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 0, 1);
 
@@ -1248,7 +1250,7 @@ void drawStarShape()
     }
     glEnd();
 
-    // Back face (–Z)
+    // Back face
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 0, -1);
 
@@ -1300,7 +1302,7 @@ void drawCloudShape()
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cloudTex);
-    glColor3f(1, 1, 1); // show texture fully
+    glColor3f(1, 1, 1);
 
     // Center puff
     glPushMatrix();
@@ -1382,7 +1384,6 @@ static void drawMoonShape()
         float ix = innerR * cos(a) + offset;
         float iy = innerR * sin(a);
 
-        // Outer point must lie outside inner arc
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
             float u = (cos(a) + 1) * 0.5f;
@@ -1445,7 +1446,7 @@ static void drawMoonShape()
             float len = sqrtf(ox * ox + oy * oy);
             glNormal3f(ox / len, oy / len, 0);
 
-            float u = (float)i / steps; // wrap texture around edge
+            float u = (float)i / steps;
             float v1 = 0.0f;
             float v2 = 1.0f;
 
@@ -1495,7 +1496,7 @@ static void drawMoonShape()
     glDisable(GL_TEXTURE_2D);
 }
 
-void drawCeilingLight(float x, float y, float z, int shapeType)
+void drawCeilingShape(float x, float y, float z, int shapeType)
 {
     float ropeLength = 2.0f;
     float shapeOffset = ropeLength + 0.45f;
@@ -1530,25 +1531,25 @@ void drawCeilingLight(float x, float y, float z, int shapeType)
     glPopMatrix();
 }
 
-void drawCeilingLights()
+void drawCeilingShapes()
 {
     // Row 1
-    drawCeilingLight(-10, 14.5f, -10, 0);
-    drawCeilingLight(0, 14.5f, -10, 1);
-    drawCeilingLight(10, 14.5f, -10, 2);
+    drawCeilingShape(-10, 14.5f, -10, 0);
+    drawCeilingShape(0, 14.5f, -10, 1);
+    drawCeilingShape(10, 14.5f, -10, 2);
 
     // Row 2
-    drawCeilingLight(-10, 14.5f, 0, 1);
-    drawCeilingLight(0, 14.5f, 0, 2);
-    drawCeilingLight(10, 14.5f, 0, 0);
+    drawCeilingShape(-10, 14.5f, 0, 1);
+    drawCeilingShape(0, 14.5f, 0, 2);
+    drawCeilingShape(10, 14.5f, 0, 0);
 
     // Row 3
-    drawCeilingLight(-10, 14.5f, 10, 2);
-    drawCeilingLight(0, 14.5f, 10, 0);
-    drawCeilingLight(10, 14.5f, 10, 1);
+    drawCeilingShape(-10, 14.5f, 10, 2);
+    drawCeilingShape(0, 14.5f, 10, 0);
+    drawCeilingShape(10, 14.5f, 10, 1);
 }
 
-// Dimensions
+// Dimensions for bar chair
 float CHAIR_SCALE = 1.8f;
 
 float BASE_THICK;
@@ -1766,7 +1767,7 @@ void drawSeatBase()
     glPopMatrix();
 }
 
-// Single leg at position (x, z)
+// Bar chair legs
 void drawLegN(float x, float z)
 {
     glPushMatrix();
@@ -1796,7 +1797,7 @@ void drawFootBar(float x1, float z1, float x2, float z2, float y)
     float dz = z2 - z1;
     float len = sqrtf(dx * dx + dz * dz);
 
-    float ang = atan2f(dx, dz) * (180.0f / M_PI); // orientation around Y
+    float ang = atan2f(dx, dz) * (180.0f / M_PI);
     glRotatef(ang, 0, 1, 0);
 
     glScalef(len, 0.08f, 0.08f);
@@ -1932,7 +1933,7 @@ void drawBackrestRod(float x, float z)
     glPopMatrix();
 }
 
-// Full bar chair assembly
+// Bar chair
 void drawBarChair()
 {
     BASE_THICK = 0.15f * CHAIR_SCALE;
@@ -1985,7 +1986,7 @@ void drawBarChair()
     glPopMatrix();
 }
 
-// Place chair in the world
+// bar chair object
 void drawBarChairObj(float x, float z)
 {
     glPushMatrix();

@@ -1286,7 +1286,7 @@ void scene_display()
     {
         // Ceiling lights
         glPushMatrix();
-        drawCeilingLights();
+        drawCeilingShapes();
         glPopMatrix();
     }
 
