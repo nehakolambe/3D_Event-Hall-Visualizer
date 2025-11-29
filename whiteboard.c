@@ -321,6 +321,51 @@ void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLe
         glEnable(GL_LIGHTING);
 }
 
+void drawWhiteboardOverlay(void)
+{
+    float boardX, boardY, boardW, boardH;
+    whiteboard_get_canvas_rect(&boardX, &boardY, &boardW, &boardH);
+
+    glDisable(GL_DEPTH_TEST);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, screenWidth, 0, screenHeight);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(0.0f, 0.0f, 0.0f, 0.45f);
+    glBegin(GL_QUADS);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f((float)screenWidth, 0.0f);
+    glVertex2f((float)screenWidth, (float)screenHeight);
+    glVertex2f(0.0f, (float)screenHeight);
+    glEnd();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 0.05f);
+    glBegin(GL_QUADS);
+    glVertex2f(-4.0f, -4.0f);
+    glVertex2f((float)screenWidth + 4.0f, -4.0f);
+    glVertex2f((float)screenWidth + 4.0f, (float)screenHeight + 4.0f);
+    glVertex2f(-4.0f, (float)screenHeight + 4.0f);
+    glEnd();
+
+    whiteboard_render(boardX, boardY, boardW, boardH);
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+
+    glEnable(GL_DEPTH_TEST);
+}
+
 int whiteboard_get_stroke_count(void)
 {
     return strokeCount;

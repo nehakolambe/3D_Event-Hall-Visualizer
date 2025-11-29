@@ -19,51 +19,6 @@ double ph = 0;
 // camera mode
 int mode = 0;
 
-static void drawWhiteboardOverlay(void)
-{
-    float boardX, boardY, boardW, boardH;
-    whiteboard_get_canvas_rect(&boardX, &boardY, &boardW, &boardH);
-
-    glDisable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, screenWidth, 0, screenHeight);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glColor4f(0.0f, 0.0f, 0.0f, 0.45f);
-    glBegin(GL_QUADS);
-    glVertex2f(0.0f, 0.0f);
-    glVertex2f((float)screenWidth, 0.0f);
-    glVertex2f((float)screenWidth, (float)screenHeight);
-    glVertex2f(0.0f, (float)screenHeight);
-    glEnd();
-
-    glColor4f(1.0f, 1.0f, 1.0f, 0.05f);
-    glBegin(GL_QUADS);
-    glVertex2f(-4.0f, -4.0f);
-    glVertex2f((float)screenWidth + 4.0f, -4.0f);
-    glVertex2f((float)screenWidth + 4.0f, (float)screenHeight + 4.0f);
-    glVertex2f(-4.0f, (float)screenHeight + 4.0f);
-    glEnd();
-
-    whiteboard_render(boardX, boardY, boardW, boardH);
-
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-
-    glEnable(GL_DEPTH_TEST);
-}
-
 // set projection
 void Project(void)
 {
@@ -90,12 +45,13 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
+    // whiteboard scene rendering
     int backgroundReady = whiteboard_background_ready();
-
     if (whiteboardMode && backgroundReady)
     {
         whiteboard_draw_background(screenWidth, screenHeight);
     }
+    // entire scene rendering
     else
     {
         Project();
@@ -103,7 +59,7 @@ void display(void)
 
         if (mode == 0)
         {
-            // Perspective mode
+            // perspective mode
             double camDist = 24.0 + (dim - 20.0);
             gluLookAt(camX, camY, camDist,
                       0.0, 6.0, -20.0,
@@ -136,7 +92,7 @@ void display(void)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Draw scene
+        // draw scene
         scene_display();
 
         if (whiteboardMode && !backgroundReady)
@@ -238,13 +194,13 @@ int main(int argc, char *argv[])
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
     glDisable(GL_CULL_FACE);
 
-    // Init scene and lighting
+    // init scene and lighting
     scene_init();
     initPlayerCollision();
     lighting_init();
     whiteboard_clear();
 
-    // Callbacks
+    // callbacks
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(controls_key);

@@ -130,3 +130,8 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **6** - Spawn Cocktail Table Type 1  
 - **7** - Spawn Cocktail Table Type 2  
 - **8** - Spawn Cocktail Table Type 3
+
+---
+
+## References
+- Ex25.c - shaders.c

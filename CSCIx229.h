@@ -9,15 +9,15 @@
 #include <math.h>
 #include <stdbool.h>
 
-// --- GLEW _MUST_ be included first ---
+// GLEW header
 #ifdef USEGLEW
 #include <GL/glew.h>
 #endif
 
-// --- Get all GL prototypes ---
+// OpenGL extension prototypes
 #define GL_GLEXT_PROTOTYPES
 
-// --- Select SDL, SDL2, GLFW or GLUT ---
+// Select SDL, SDL2, GLFW or GLUT
 #if defined(SDL2)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -32,7 +32,7 @@
 #include <GL/glut.h>
 #endif
 
-// --- Make sure GLU and GL are included ---
+// GLU and OpenGL headers
 #ifdef __APPLE__
 #include <OpenGL/glu.h>
 #include <OpenGL/gl.h>
@@ -42,7 +42,7 @@
 #include <GL/gl.h>
 #endif
 
-// --- Utility macros ---
+// Utility macros
 #define Cos(th) cos(3.14159265 / 180 * (th))
 #define Sin(th) sin(3.14159265 / 180 * (th))
 #define PI 3.14159265
@@ -227,6 +227,7 @@ void Fatal(const char *format, ...);
     void whiteboard_capture_background(int width, int height);
     void whiteboard_draw_background(int width, int height);
     void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLeft, float boardRight);
+    void drawWhiteboardOverlay(void);
 
     // Whiteboard stroke data structure
     typedef struct

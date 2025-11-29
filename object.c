@@ -1,6 +1,6 @@
 #include "CSCIx229.h"
 
-// Draw one cylindrical leg standing vertically
+// cylinder leg
 static void drawLeg(float x, float z, float height, float radius)
 {
     if (glIsEnabled(GL_LIGHTING)) {
@@ -20,7 +20,7 @@ static void drawLeg(float x, float z, float height, float radius)
     }
 }
 
-// Draw a textured rectangular table with rounded corners
+// rectangular event table
 void drawTable(float x, float z)
 {
     glPushMatrix();
@@ -42,7 +42,7 @@ void drawTable(float x, float z)
 
     if (glIsEnabled(GL_LIGHTING)) {
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, tableTex); // Or whatever texture it uses
+        glBindTexture(GL_TEXTURE_2D, tableTex);
         glColor3f(1, 1, 1);
     }
 
@@ -236,7 +236,7 @@ void drawTable(float x, float z)
     glPopMatrix();
 }
 
-// Cocktail table (circular top, single leg)
+// cocktail table
 void drawCocktailTable(float x, float z)
 {
     float height = 4.0f;
@@ -262,7 +262,7 @@ void drawCocktailTable(float x, float z)
     glPopMatrix();
 }
 
-// Draw door with frame and knob
+// door with frame and knob
 void drawDoor(float x, float z, float width, float height)
 {
     float yBottom = 0.0f;
