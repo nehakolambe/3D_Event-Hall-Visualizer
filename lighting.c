@@ -21,8 +21,8 @@ int shininess = 32;
 float shinyVector[1] = {32.0f};
 
 // light properties
-float ambient[]  = {0.3f, 0.3f, 0.3f, 1.0f};
-float diffuse[]  = {1.0f, 1.0f, 1.0f, 1.0f};
+float ambient[] = {0.3f, 0.3f, 0.3f, 1.0f};
+float diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 float specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 float emission[] = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -40,7 +40,6 @@ void lighting_init(void)
     glEnable(GL_LIGHT0); // moving light
     glEnable(GL_LIGHT1); // lamp bulb light
 }
-
 
 // update lighting each frame
 void lighting_update(void)
@@ -71,8 +70,8 @@ void lighting_update(void)
         float pos0[] = {lx, ly, lz, 1.0f};
 
         glLightfv(GL_LIGHT0, GL_POSITION, pos0);
-        glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffuse);
+        glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
         glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
     }
     else
@@ -87,12 +86,12 @@ void lighting_update(void)
         glDisable(GL_LIGHT0);
 
         // drawLamp() sets GL_LIGHT1 position
-        float bulbAmb[]  = {0.20f, 0.25f, 0.35f, 1.0f};
-        float bulbDif[]  = {0.80f, 0.90f, 1.00f, 1.0f};
+        float bulbAmb[] = {0.20f, 0.25f, 0.35f, 1.0f};
+        float bulbDif[] = {0.80f, 0.90f, 1.00f, 1.0f};
         float bulbSpec[] = {1.0f, 1.0f, 0.95f, 1.0f};
 
-        glLightfv(GL_LIGHT1, GL_AMBIENT,  bulbAmb);
-        glLightfv(GL_LIGHT1, GL_DIFFUSE,  bulbDif);
+        glLightfv(GL_LIGHT1, GL_AMBIENT, bulbAmb);
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, bulbDif);
         glLightfv(GL_LIGHT1, GL_SPECULAR, bulbSpec);
     }
     else

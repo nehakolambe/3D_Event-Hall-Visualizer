@@ -55,7 +55,7 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
 // Check AABB overlap
 bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 {
-    float bestPlatformTop = 0.0f;       // highest platform below player
+    float bestPlatformTop = 0.0f; // highest platform below player
     float playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
 
     // Loop through all objects
@@ -63,7 +63,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
     {
         SceneObject *other = &objects[i];
 
-        // Skip self & non-solid objects
+        // Skip self and non-solid objects
         if (other == movingObj || !other->solid)
             continue;
 
@@ -101,7 +101,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 
                 if (isPlatform)
                 {
-                    float stageTop = b_ymax;   // actual stage height
+                    float stageTop = b_ymax; // actual stage height
 
                     // Check if player is above platform
                     if (a_ymin >= stageTop - 2.0f)
@@ -122,7 +122,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 
                 if (overlapY)
                 {
-                    // Side collision -- block movement
+                    // Side collision, then block movement
                     return true;
                 }
             }
@@ -143,7 +143,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
     {
         // Reset to floor level
         movingObj->y = 0.0f;
-        fpvY = playerHeight;   // camera height above floor
+        fpvY = playerHeight; // camera height above floor
     }
 
     return false; // no collision
@@ -162,4 +162,21 @@ void rotateObject(SceneObject *obj, float angle)
         obj->rotation -= 360.0f;
     if (obj->rotation < 0.0f)
         obj->rotation += 360.0f;
+}
+
+// Player bounding box
+void initPlayerCollision()
+{
+    playerObj.subBoxCount = 1;
+
+    playerObj.subBox[0][0] = -0.6f;
+    playerObj.subBox[0][1] = 0.6f;
+
+    playerObj.subBox[0][2] = 0.0f;
+    playerObj.subBox[0][3] = fpvY;
+
+    playerObj.subBox[0][4] = -0.6f;
+    playerObj.subBox[0][5] = 0.6f;
+
+    playerObj.solid = 1;
 }

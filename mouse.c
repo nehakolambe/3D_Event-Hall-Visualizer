@@ -6,7 +6,6 @@ static float strokePrevU = 0.0f;
 static float strokePrevV = 0.0f;
 static double lastRightClickTime = 0.0;
 
-
 // Ray vs AABB sub-box test
 static int rayIntersectsSubBoxWorld(
     float ox, float oy, float oz,

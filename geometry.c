@@ -1,6 +1,6 @@
 #include "CSCIx229.h"
 
-// Draw a cylinder aligned along the Y-axis
+// Cylinder
 void drawCylinder(float radius, float height, int slices)
 {
     const float h = height;
@@ -58,7 +58,7 @@ void drawCylinder(float radius, float height, int slices)
     glEnd();
 }
 
-// Draw a textured sphere
+// Sphere
 void drawSphere(float radius, int slices, int stacks)
 {
     for (int i = 0; i < stacks; i++)
@@ -94,13 +94,13 @@ void drawSphere(float radius, int slices, int stacks)
     }
 }
 
-// Draw a circular disk
+// Disk
 void drawDisk(float radius, float y, float thickness)
 {
     const int segs = 48;
     float topY = y + thickness;
 
-    if (glIsEnabled(GL_LIGHTING)) 
+    if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
@@ -166,12 +166,13 @@ void drawDisk(float radius, float y, float thickness)
     }
     glEnd();
 
-    if (glIsEnabled(GL_LIGHTING)) {
+    if (glIsEnabled(GL_LIGHTING))
+    {
         glDisable(GL_TEXTURE_2D);
     }
 }
 
-// Draw a textured cuboid
+// Cuboid
 void drawCuboid(float width, float height, float depth)
 {
     float w = width * 0.5f;
@@ -249,7 +250,7 @@ void drawCuboid(float width, float height, float depth)
     glEnd();
 }
 
-// Draw a frustum using triangle strips
+// Frustum
 void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
 {
     float angleStep = (2.0f * M_PI) / slices;
@@ -274,7 +275,6 @@ void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
         float u0 = (float)i / slices;
         float u1 = (float)(i + 1) / slices;
 
-        // Normals for smooth shading
         float nx0 = x0b + x0t;
         float nz0 = z0b + z0t;
         float len0 = sqrtf(nx0 * nx0 + nz0 * nz0);

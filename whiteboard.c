@@ -171,14 +171,22 @@ void whiteboard_add_stroke(float u1, float v1, float u2, float v2, int erase)
         strokeCount = MAX_STROKES - 1;
     }
 
-    if (u1 < 0.0f) u1 = 0.0f;
-    if (u1 > 1.0f) u1 = 1.0f;
-    if (u2 < 0.0f) u2 = 0.0f;
-    if (u2 > 1.0f) u2 = 1.0f;
-    if (v1 < 0.0f) v1 = 0.0f;
-    if (v1 > 1.0f) v1 = 1.0f;
-    if (v2 < 0.0f) v2 = 0.0f;
-    if (v2 > 1.0f) v2 = 1.0f;
+    if (u1 < 0.0f)
+        u1 = 0.0f;
+    if (u1 > 1.0f)
+        u1 = 1.0f;
+    if (u2 < 0.0f)
+        u2 = 0.0f;
+    if (u2 > 1.0f)
+        u2 = 1.0f;
+    if (v1 < 0.0f)
+        v1 = 0.0f;
+    if (v1 > 1.0f)
+        v1 = 1.0f;
+    if (v2 < 0.0f)
+        v2 = 0.0f;
+    if (v2 > 1.0f)
+        v2 = 1.0f;
 
     strokes[strokeCount].u1 = u1;
     strokes[strokeCount].v1 = v1;
@@ -364,6 +372,91 @@ void drawWhiteboardOverlay(void)
     glMatrixMode(GL_MODELVIEW);
 
     glEnable(GL_DEPTH_TEST);
+}
+
+// Simple flat whiteboard on the left wall
+void drawWhiteboardTrigger(float x, float z)
+{
+    (void)x;
+    (void)z;
+
+    const float halfWidth = 3.0f;
+    const float boardBottom = 2.0f;
+    const float boardTop = 6.0f;
+
+    const float boardLeft = -halfWidth;
+    const float boardRight = halfWidth;
+    const int boardRows = 24;
+    const int boardCols = 48;
+
+    GLboolean wasLighting = glIsEnabled(GL_LIGHTING);
+    GLboolean wasTexturing = glIsEnabled(GL_TEXTURE_2D);
+    GLint previousShadeModel;
+    glGetIntegerv(GL_SHADE_MODEL, &previousShadeModel);
+
+    if (!wasLighting)
+        glEnable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glShadeModel(GL_SMOOTH);
+
+    const GLfloat boardAmbient[] = {0.12f, 0.12f, 0.12f, 1.0f};
+    const GLfloat boardDiffuse[] = {0.92f, 0.92f, 0.92f, 1.0f};
+    const GLfloat boardSpecular[] = {0.9f, 0.9f, 0.9f, 1.0f};
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boardAmbient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boardDiffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boardSpecular);
+    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 64);
+
+    float yStep = (boardTop - boardBottom) / (float)boardRows;
+    float zStep = (boardRight - boardLeft) / (float)boardCols;
+
+    for (int r = 0; r < boardRows; r++)
+    {
+        float y0 = boardBottom + r * yStep;
+        float y1 = y0 + yStep;
+        for (int c = 0; c < boardCols; c++)
+        {
+            float z0 = boardLeft + c * zStep;
+            float z1 = z0 + zStep;
+
+            glBegin(GL_QUADS);
+            glNormal3f(1.0f, 0.0f, 0.0f);
+            glVertex3f(0.0f, y0, z0);
+            glVertex3f(0.0f, y0, z1);
+            glVertex3f(0.0f, y1, z1);
+            glVertex3f(0.0f, y1, z0);
+            glEnd();
+        }
+    }
+
+    if (previousShadeModel != GL_SMOOTH)
+        glShadeModel(previousShadeModel);
+    if (wasTexturing)
+        glEnable(GL_TEXTURE_2D);
+    else
+        glDisable(GL_TEXTURE_2D);
+    if (!wasLighting)
+        glDisable(GL_LIGHTING);
+
+    GLboolean borderLighting = glIsEnabled(GL_LIGHTING);
+    if (borderLighting)
+        glDisable(GL_LIGHTING);
+
+    glColor3f(0.2f, 0.2f, 0.2f);
+    glLineWidth(4.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0f, boardBottom, boardLeft);
+    glVertex3f(0.0f, boardBottom, boardRight);
+    glVertex3f(0.0f, boardTop, boardRight);
+    glVertex3f(0.0f, boardTop, boardLeft);
+    glEnd();
+    glLineWidth(1.0f);
+
+    if (borderLighting)
+        glEnable(GL_LIGHTING);
+
+    whiteboard_render_on_board(boardBottom, boardTop, boardLeft, boardRight);
 }
 
 int whiteboard_get_stroke_count(void)

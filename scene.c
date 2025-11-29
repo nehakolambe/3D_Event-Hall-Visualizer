@@ -58,8 +58,7 @@ static const ObjectTemplate spawnTemplates[SPAWN_TYPE_COUNT] = {
     [SPAWN_BANQUET_CHAIR] = {"BanquetChair", drawBanquetChair, 1, 0.0f, 1.0f},
     [SPAWN_COCKTAIL_1] = {"Cocktail_1", drawCocktailTable, 1, 0.0f, 1.0f},
     [SPAWN_COCKTAIL_2] = {"Cocktail_2", drawCocktailTable2, 1, 0.0f, 1.0f},
-    [SPAWN_COCKTAIL_3] = {"Cocktail_3", drawCocktailTable3, 1, 0.0f, 1.0f}
-};
+    [SPAWN_COCKTAIL_3] = {"Cocktail_3", drawCocktailTable3, 1, 0.0f, 1.0f}};
 
 static int spawnCounters[SPAWN_TYPE_COUNT] = {0};
 
@@ -108,7 +107,7 @@ static void drawQuadN(
     glEnd();
 }
 
-// Draw a tiled surface for floors/walls with texture repeat
+// tiled surface
 void drawTiledSurface(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -215,91 +214,6 @@ void drawTiledSurface(
             }
         }
     }
-}
-
-// Simple flat whiteboard on the left wall
-static void drawWhiteboardTrigger(float x, float z)
-{
-    (void)x;
-    (void)z;
-
-    const float halfWidth = 3.0f;
-    const float boardBottom = 2.0f;
-    const float boardTop = 6.0f;
-
-    const float boardLeft = -halfWidth;
-    const float boardRight = halfWidth;
-    const int boardRows = 24;
-    const int boardCols = 48;
-
-    GLboolean wasLighting = glIsEnabled(GL_LIGHTING);
-    GLboolean wasTexturing = glIsEnabled(GL_TEXTURE_2D);
-    GLint previousShadeModel;
-    glGetIntegerv(GL_SHADE_MODEL, &previousShadeModel);
-
-    if (!wasLighting)
-        glEnable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-    glShadeModel(GL_SMOOTH);
-
-    const GLfloat boardAmbient[] = {0.12f, 0.12f, 0.12f, 1.0f};
-    const GLfloat boardDiffuse[] = {0.92f, 0.92f, 0.92f, 1.0f};
-    const GLfloat boardSpecular[] = {0.9f, 0.9f, 0.9f, 1.0f};
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boardAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boardDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boardSpecular);
-    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 64);
-
-    float yStep = (boardTop - boardBottom) / (float)boardRows;
-    float zStep = (boardRight - boardLeft) / (float)boardCols;
-
-    for (int r = 0; r < boardRows; r++)
-    {
-        float y0 = boardBottom + r * yStep;
-        float y1 = y0 + yStep;
-        for (int c = 0; c < boardCols; c++)
-        {
-            float z0 = boardLeft + c * zStep;
-            float z1 = z0 + zStep;
-
-            glBegin(GL_QUADS);
-            glNormal3f(1.0f, 0.0f, 0.0f);
-            glVertex3f(0.0f, y0, z0);
-            glVertex3f(0.0f, y0, z1);
-            glVertex3f(0.0f, y1, z1);
-            glVertex3f(0.0f, y1, z0);
-            glEnd();
-        }
-    }
-
-    if (previousShadeModel != GL_SMOOTH)
-        glShadeModel(previousShadeModel);
-    if (wasTexturing)
-        glEnable(GL_TEXTURE_2D);
-    else
-        glDisable(GL_TEXTURE_2D);
-    if (!wasLighting)
-        glDisable(GL_LIGHTING);
-
-    GLboolean borderLighting = glIsEnabled(GL_LIGHTING);
-    if (borderLighting)
-        glDisable(GL_LIGHTING);
-
-    glColor3f(0.2f, 0.2f, 0.2f);
-    glLineWidth(4.0f);
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(0.0f, boardBottom, boardLeft);
-    glVertex3f(0.0f, boardBottom, boardRight);
-    glVertex3f(0.0f, boardTop, boardRight);
-    glVertex3f(0.0f, boardTop, boardLeft);
-    glEnd();
-    glLineWidth(1.0f);
-
-    if (borderLighting)
-        glEnable(GL_LIGHTING);
-
-    whiteboard_render_on_board(boardBottom, boardTop, boardLeft, boardRight);
 }
 
 // draws a simple bounding box
@@ -434,7 +348,8 @@ void scene_init()
     addObject("Door", 0.0f, 29.9f, (void (*)(float, float))drawDoor, 0);
     addObject("CurvedScreen", 0.0f, -30.0f, (void (*)(float, float))drawCurvedScreen, 0);
     SceneObject *fp = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
-    if (fp) {
+    if (fp)
+    {
         fp->scale = 1.2f;
     }
 
@@ -920,10 +835,14 @@ static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
             if (snapCandidate)
                 scene_snap_position(&testX, &testZ);
 
-            if (testX < minX) testX = minX;
-            if (testX > maxX) testX = maxX;
-            if (testZ < minZ) testZ = minZ;
-            if (testZ > maxZ) testZ = maxZ;
+            if (testX < minX)
+                testX = minX;
+            if (testX > maxX)
+                testX = maxX;
+            if (testZ < minZ)
+                testZ = minZ;
+            if (testZ > maxZ)
+                testZ = maxZ;
 
             if (!collidesWithAnyObject(prototype, testX, testZ))
             {
@@ -1251,10 +1170,12 @@ void scene_display()
         // shader uniforms
         float time = glutGet(GLUT_ELAPSED_TIME) * 0.001f;
         int timeLoc = glGetUniformLocation(fireShader, "time");
-        if (timeLoc >= 0) glUniform1f(timeLoc, time);
+        if (timeLoc >= 0)
+            glUniform1f(timeLoc, time);
 
         int noiseLoc = glGetUniformLocation(fireShader, "noiseTex");
-        if (noiseLoc >= 0) glUniform1i(noiseLoc, 0);
+        if (noiseLoc >= 0)
+            glUniform1i(noiseLoc, 0);
 
         // bind noise texture
         glActiveTexture(GL_TEXTURE0);

@@ -49,9 +49,9 @@
 
 // Room bounds for placement/dragging logic
 #define ROOM_MIN_X -18.0f
-#define ROOM_MAX_X  18.0f
+#define ROOM_MAX_X 18.0f
 #define ROOM_MIN_Z -28.0f
-#define ROOM_MAX_Z  28.0f
+#define ROOM_MAX_Z 28.0f
 
 #ifdef __cplusplus
 extern "C"
@@ -102,7 +102,7 @@ void Fatal(const char *format, ...);
     void lighting_update(void);
     void lighting_draw_debug_marker(void);
 
-    int CreateShaderProg(char* VertFile, char* FragFile);
+    int CreateShaderProg(char *VertFile, char *FragFile);
 
     extern int lightState;
     extern float zh;
@@ -111,7 +111,7 @@ void Fatal(const char *format, ...);
     extern int moveLight;
     extern float lightY;
 
-    extern int mode;                 // 0 = perspective, 1 = FPV, 2 = orthogonal
+    extern int mode; // 0 = perspective, 1 = FPV, 2 = orthogonal
     extern double fpvX, fpvY, fpvZ;
     extern double yaw, pitch;
 
@@ -123,8 +123,8 @@ void Fatal(const char *format, ...);
     extern int screenWidth;
     extern int screenHeight;
 
-    // Scene object definition
-    #define MAX_SUBBOXES 8
+// Scene object definition
+#define MAX_SUBBOXES 8
     typedef struct
     {
         int id;
@@ -160,6 +160,7 @@ void Fatal(const char *format, ...);
     extern bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ);
 
     extern SceneObject *selectedObject;
+    SceneObject playerObj;
     extern int dragging;
     extern bool snapToGridEnabled;
     int scene_object_supports_snap(const SceneObject *obj);
@@ -200,7 +201,7 @@ void Fatal(const char *format, ...);
     // geometry utilities
     void drawCuboid(float width, float height, float depth);
     void drawDisk(float radius, float y, float thickness);
-    void drawSphere(float radius, int slices, int stacks); 
+    void drawSphere(float radius, int slices, int stacks);
     void drawCylinder(float radius, float height, int slices);
     void drawFrustum(float bottomRadius, float topRadius, float height, int slices);
 
@@ -228,6 +229,7 @@ void Fatal(const char *format, ...);
     void whiteboard_draw_background(int width, int height);
     void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLeft, float boardRight);
     void drawWhiteboardOverlay(void);
+    void drawWhiteboardTrigger(float x, float z);
 
     // Whiteboard stroke data structure
     typedef struct
@@ -238,8 +240,8 @@ void Fatal(const char *format, ...);
     } Stroke;
 
     // Save/Load functions
-    void save_scene(const char* filename);
-    void load_scene(const char* filename);
+    void save_scene(const char *filename);
+    void load_scene(const char *filename);
 
     // Accessors to read private whiteboard data
     int whiteboard_get_stroke_count(void);
