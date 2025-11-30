@@ -8,7 +8,6 @@
 
 This project is a fully interactive 3D event-hall environment built in OpenGL, featuring complex furniture models, dynamic lighting, object spawning, mouse-based picking through ray-object intersection tests, basic AABB/OBB collision detection, and smooth first-person navigation with collision-aware movement. The codebase is modularized across geometry, rendering, scene management, lighting, controls, mouse interaction, collision logic, and a full whiteboard drawing system that supports drawing, erasing, and background capture. Users can place, rotate, move, and remove objects, walk through the scene in FPV, toggle lighting modes, and interact with a UI-driven whiteboard for sketching or planning. This framework forms a flexible foundation for an event-layout planner or virtual staging tool, with future improvements planned for more detailed assets, enhanced lighting, a top-down planning mode, and more robust collision constraints to prevent clipping against furniture and stage structures.
 
-
 ---
 
 ## How to Run
@@ -47,9 +46,10 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **L** - Load the layout using layout.csv
 
 ### Whiteboard Mode
-- **Esc** - Exit whiteboard mode  
-- **Left Mouse Drag** - Draw on whiteboard  
-- **Right Mouse Drag** - Erase  
+
+- **Esc** - Exit whiteboard mode
+- **Left Mouse Drag** - Draw on whiteboard
+- **Right Mouse Drag** - Erase
 - **Double Right Click** - Clear entire whiteboard
 
 ### Projection Mode (mode = 0)
@@ -109,29 +109,39 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 ### Object Interaction
 
 #### Object Selection & Movement
-- **Left Mouse Button** - Select object  
-- **Drag** - Move object  
-- **Release** - Place object  
+
+- **Left Mouse Button** - Select object
+- **Drag** - Move object
+- **Release** - Place object
 - **g / G** - Toggle snap-to-grid
 
 #### Object Rotation
+
 - **r** - Rotate selected object clockwise (+15°)
 - **R** - Rotate selected object counter-clockwise (-15°)
 
 #### Deletion
+
 - **q / Q** - Remove selected object
 
 #### Object Spawning
-- **1** - Spawn Lamp  
-- **2** - Spawn Event Table  
-- **3** - Spawn Meeting Table  
-- **4** - Spawn Bar Chair  
-- **5** - Spawn Banquet Chair  
-- **6** - Spawn Cocktail Table Type 1  
-- **7** - Spawn Cocktail Table Type 2  
+
+- **1** - Spawn Lamp
+- **2** - Spawn Event Table
+- **3** - Spawn Meeting Table
+- **4** - Spawn Bar Chair
+- **5** - Spawn Banquet Chair
+- **6** - Spawn Cocktail Table Type 1
+- **7** - Spawn Cocktail Table Type 2
 - **8** - Spawn Cocktail Table Type 3
 
 ---
 
 ## References
-- Ex25.c - shaders.c
+
+- Shaders
+
+  - Ex25.c - shaders.c
+  - https://www.rastertek.com/gl4linuxtut33.html
+  - https://clockworkchilli.com/blog/8_a_fire_shader_in_glsl_for_your_webgl_games
+  - https://godotshaders.com/shader/balatro-fire-shader/

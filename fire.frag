@@ -10,7 +10,7 @@ void main()
     vec2 scrollPos = st;
     scrollPos.y -= time * 1.5; 
 
-    // sample the noise texture
+    // sample the noise(cloud) texture
     vec4 noise = texture2D(noiseTex, scrollPos);
 
     // Vertical Gradient (fades out at top)
