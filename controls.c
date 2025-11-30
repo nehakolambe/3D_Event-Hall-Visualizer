@@ -206,13 +206,13 @@ void controls_key(unsigned char key, int x, int y)
     // Rotate selected object clockwise
     case 'r':
         if (selectedObject)
-            rotateObject(selectedObject, 15.0f);
+            rotateObject(selectedObject, 90.0f);
         break;
 
     // Rotate selected object counter-clockwise
     case 'R':
         if (selectedObject)
-            rotateObject(selectedObject, -15.0f);
+            rotateObject(selectedObject, -90.0f);
         break;
 
     // Remove selected object

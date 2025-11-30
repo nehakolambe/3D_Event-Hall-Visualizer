@@ -592,120 +592,205 @@ static void configureObjectBounds(SceneObject *obj)
 
     if (nameHasPrefix(obj->name, "EventTable"))
     {
-        obj->subBoxCount = 2;
+        const float topHalfX = 2.0f;
+        const float topHalfZ = 1.0f;
+        const float topBottomY = 2.0f;
+        const float topTopY = 2.15f;
+        const float legOffsetX = 1.7f;
+        const float legOffsetZ = 0.7f;
+        const float legHalf = 0.125f;
 
-        obj->subBox[0][0] = -2.15f;
-        obj->subBox[0][1] = 2.15f;
-        obj->subBox[0][2] = 0.0f;
-        obj->subBox[0][3] = 2.8f;
-        obj->subBox[0][4] = -1.45f;
-        obj->subBox[0][5] = 1.45f;
+        obj->subBoxCount = 5;
 
-        obj->subBox[1][0] = -2.05f;
-        obj->subBox[1][1] = 2.05f;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 2.2f;
-        obj->subBox[1][4] = -1.05f;
-        obj->subBox[1][5] = 1.05f;
+        // tabletop
+        obj->subBox[0][0] = -topHalfX;
+        obj->subBox[0][1] = topHalfX;
+        obj->subBox[0][2] = topBottomY;
+        obj->subBox[0][3] = topTopY;
+        obj->subBox[0][4] = -topHalfZ;
+        obj->subBox[0][5] = topHalfZ;
+
+        int box = 1;
+        for (int sx = -1; sx <= 1; sx += 2)
+        {
+            for (int sz = -1; sz <= 1; sz += 2)
+            {
+                float cx = sx * legOffsetX;
+                float cz = sz * legOffsetZ;
+
+                obj->subBox[box][0] = cx - legHalf;
+                obj->subBox[box][1] = cx + legHalf;
+                obj->subBox[box][2] = 0.0f;
+                obj->subBox[box][3] = topBottomY;
+                obj->subBox[box][4] = cz - legHalf;
+                obj->subBox[box][5] = cz + legHalf;
+                box++;
+            }
+        }
         return;
     }
 
     if (nameHasPrefix(obj->name, "Cocktail_1"))
     {
+        const float topRadius = 1.5f;
+        const float topBottomY = 4.0f;
+        const float topTopY = topBottomY + 0.1f;
+        const float legRadius = 0.15f;
+        const float legHeight = 4.0f;
+        const float baseRadius = 0.6f;
+        const float baseTopY = 0.05f;
+
         obj->subBoxCount = 3;
 
-        obj->subBox[0][0] = -1.6f;
-        obj->subBox[0][1] = 1.6f;
-        obj->subBox[0][2] = 4.0f;
-        obj->subBox[0][3] = 4.2f;
-        obj->subBox[0][4] = -1.6f;
-        obj->subBox[0][5] = 1.6f;
+        obj->subBox[0][0] = -topRadius;
+        obj->subBox[0][1] = topRadius;
+        obj->subBox[0][2] = topBottomY;
+        obj->subBox[0][3] = topTopY;
+        obj->subBox[0][4] = -topRadius;
+        obj->subBox[0][5] = topRadius;
 
-        obj->subBox[1][0] = -0.25f;
-        obj->subBox[1][1] = 0.25f;
+        obj->subBox[1][0] = -legRadius;
+        obj->subBox[1][1] = legRadius;
         obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 4.0f;
-        obj->subBox[1][4] = -0.25f;
-        obj->subBox[1][5] = 0.25f;
+        obj->subBox[1][3] = legHeight;
+        obj->subBox[1][4] = -legRadius;
+        obj->subBox[1][5] = legRadius;
 
-        obj->subBox[2][0] = -0.7f;
-        obj->subBox[2][1] = 0.7f;
+        obj->subBox[2][0] = -baseRadius;
+        obj->subBox[2][1] = baseRadius;
         obj->subBox[2][2] = 0.0f;
-        obj->subBox[2][3] = 0.15f;
-        obj->subBox[2][4] = -0.7f;
-        obj->subBox[2][5] = 0.7f;
+        obj->subBox[2][3] = baseTopY;
+        obj->subBox[2][4] = -baseRadius;
+        obj->subBox[2][5] = baseRadius;
         return;
     }
 
     if (nameHasPrefix(obj->name, "Cocktail_2"))
     {
-        obj->subBoxCount = 2;
+        const float topRadius = 1.4f;
+        const float topBottomY = 4.0f;
+        const float topTopY = topBottomY + 0.12f;
+        const float legSpread = 0.8f;
+        const float legLength = 4.0f;
+        const float legTiltDeg = 10.0f;
+        const float legHalf = 0.12f;
+        const float horizShift = legLength * sinf(legTiltDeg * (M_PI / 180.0f));
 
-        obj->subBox[0][0] = -1.5f;
-        obj->subBox[0][1] = 1.5f;
-        obj->subBox[0][2] = 4.0f;
-        obj->subBox[0][3] = 4.25f;
-        obj->subBox[0][4] = -1.5f;
-        obj->subBox[0][5] = 1.5f;
+        obj->subBoxCount = 4;
 
-        obj->subBox[1][0] = -1.0f;
-        obj->subBox[1][1] = 1.0f;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 4.0f;
-        obj->subBox[1][4] = -1.0f;
-        obj->subBox[1][5] = 1.0f;
+        obj->subBox[0][0] = -topRadius;
+        obj->subBox[0][1] = topRadius;
+        obj->subBox[0][2] = topBottomY;
+        obj->subBox[0][3] = topTopY;
+        obj->subBox[0][4] = -topRadius;
+        obj->subBox[0][5] = topRadius;
+
+        for (int i = 0; i < 3; i++)
+        {
+            float ang = (2.0f * M_PI / 3.0f) * i;
+            float dirX = cosf(ang);
+            float dirZ = sinf(ang);
+            float topX = legSpread * dirX;
+            float topZ = legSpread * dirZ;
+            float bottomX = topX + horizShift * dirX;
+            float bottomZ = topZ + horizShift * dirZ;
+
+            float minX = fminf(topX, bottomX) - legHalf;
+            float maxX = fmaxf(topX, bottomX) + legHalf;
+            float minZ = fminf(topZ, bottomZ) - legHalf;
+            float maxZ = fmaxf(topZ, bottomZ) + legHalf;
+
+            obj->subBox[i + 1][0] = minX;
+            obj->subBox[i + 1][1] = maxX;
+            obj->subBox[i + 1][2] = 0.0f;
+            obj->subBox[i + 1][3] = topBottomY;
+            obj->subBox[i + 1][4] = minZ;
+            obj->subBox[i + 1][5] = maxZ;
+        }
         return;
     }
 
     if (nameHasPrefix(obj->name, "Cocktail_3"))
     {
-        obj->subBoxCount = 2;
+        const float bottomRadius = 0.85f;
+        const float bottomHeight = 3.5f;
+        const float topRadius = 1.35f;
+        const float topHeight = 0.4f;
+        const float topDiskThickness = 0.05f;
 
-        obj->subBox[0][0] = -1.05f;
-        obj->subBox[0][1] = 1.05f;
-        obj->subBox[0][2] = 2.3f;
-        obj->subBox[0][3] = 4.00f;
-        obj->subBox[0][4] = -1.05f;
-        obj->subBox[0][5] = 1.05f;
-
-        obj->subBox[1][0] = -1.0f;
-        obj->subBox[1][1] = 1.0f;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 2.3f;
-        obj->subBox[1][4] = -1.0f;
-        obj->subBox[1][5] = 1.0f;
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "EventChair") ||
-        nameHasPrefix(obj->name, "MeetChair") ||
-        nameHasPrefix(obj->name, "BanquetChair"))
-    {
         obj->subBoxCount = 3;
 
-        obj->subBox[0][0] = -0.6f;
-        obj->subBox[0][1] = 0.6f;
-        obj->subBox[0][2] = 0.7f;
-        obj->subBox[0][3] = 1.3f;
-        obj->subBox[0][4] = -0.6f;
-        obj->subBox[0][5] = 0.6f;
+        obj->subBox[0][0] = -bottomRadius;
+        obj->subBox[0][1] = bottomRadius;
+        obj->subBox[0][2] = 0.0f;
+        obj->subBox[0][3] = bottomHeight;
+        obj->subBox[0][4] = -bottomRadius;
+        obj->subBox[0][5] = bottomRadius;
 
-        obj->subBox[1][0] = -0.5f;
-        obj->subBox[1][1] = 0.5f;
-        obj->subBox[1][2] = 1.3f;
-        obj->subBox[1][3] = 2.6f;
-        obj->subBox[1][4] = -0.80f;
-        obj->subBox[1][5] = 0.05f;
+        obj->subBox[1][0] = -topRadius;
+        obj->subBox[1][1] = topRadius;
+        obj->subBox[1][2] = bottomHeight;
+        obj->subBox[1][3] = bottomHeight + topHeight;
+        obj->subBox[1][4] = -topRadius;
+        obj->subBox[1][5] = topRadius;
 
-        obj->subBox[2][0] = -0.55f;
-        obj->subBox[2][1] = 0.55f;
-        obj->subBox[2][2] = 0.0f;
-        obj->subBox[2][3] = 0.7f;
-        obj->subBox[2][4] = -0.55f;
-        obj->subBox[2][5] = 0.55f;
+        obj->subBox[2][0] = -topRadius;
+        obj->subBox[2][1] = topRadius;
+        obj->subBox[2][2] = bottomHeight + topHeight;
+        obj->subBox[2][3] = bottomHeight + topHeight + topDiskThickness;
+        obj->subBox[2][4] = -topRadius;
+        obj->subBox[2][5] = topRadius;
         return;
     }
 
+        if (nameHasPrefix(obj->name, "EventChair") ||
+            nameHasPrefix(obj->name, "MeetChair") ||
+            nameHasPrefix(obj->name, "BanquetChair"))
+    {
+        const float seatHalfW = 0.5f;
+        const float seatHalfD = 0.5f;
+        const float seatThickness = 0.25f;
+        const float seatCenterY = 1.0f;
+        const float seatHalfT = seatThickness * 0.5f;
+        const float seatBottomY = seatCenterY - seatHalfT;
+        const float seatTopY = seatCenterY + seatHalfT;
+        const float legInset = 0.1f;
+        const float legHalfWidth = 0.07f * 0.5f;
+        const float legReachX = seatHalfW - legInset + legHalfWidth;
+        const float legReachZ = seatHalfD - legInset + legHalfWidth;
+        const float backHeight = 1.3f;
+        const float backCurve = 0.25f;
+        const float backTopY = seatBottomY + backHeight;
+        const float backMinZ = -seatHalfD - backCurve - seatHalfT;
+        const float backMaxZ = -seatHalfD + seatHalfT;
+
+        obj->subBoxCount = 3;
+
+        // seat cushion
+        obj->subBox[0][0] = -seatHalfW;
+        obj->subBox[0][1] = seatHalfW;
+        obj->subBox[0][2] = seatBottomY;
+        obj->subBox[0][3] = seatTopY;
+        obj->subBox[0][4] = -seatHalfD;
+        obj->subBox[0][5] = seatHalfD;
+
+        // backrest
+        obj->subBox[1][0] = -seatHalfW;
+        obj->subBox[1][1] = seatHalfW;
+        obj->subBox[1][2] = seatBottomY;
+        obj->subBox[1][3] = backTopY;
+        obj->subBox[1][4] = backMinZ;
+        obj->subBox[1][5] = backMaxZ;
+
+        // leg cluster
+        obj->subBox[2][0] = -legReachX;
+        obj->subBox[2][1] = legReachX;
+        obj->subBox[2][2] = 0.0f;
+        obj->subBox[2][3] = seatBottomY;
+        obj->subBox[2][4] = -legReachZ;
+        obj->subBox[2][5] = legReachZ;
+        return;
+    }
     if (nameHasPrefix(obj->name, "BarChair"))
     {
         obj->subBoxCount = 3;
@@ -735,21 +820,41 @@ static void configureObjectBounds(SceneObject *obj)
 
     if (nameHasPrefix(obj->name, "MeetingTable"))
     {
-        obj->subBoxCount = 2;
+        const float topHalfX = 3.0f;
+        const float topHalfZ = 1.35f;
+        const float topBottomY = 1.55f;
+        const float topTopY = 1.7f;
+        const float legOffsetX = 2.2f;
+        const float legOffsetZ = 0.585f;
+        const float legHalf = 0.125f;
+        const float legTop = 1.6f;
 
-        obj->subBox[0][0] = -3.0f;
-        obj->subBox[0][1] = 3.0f;
-        obj->subBox[0][2] = 1.55f;
-        obj->subBox[0][3] = 1.85f;
-        obj->subBox[0][4] = -1.7f;
-        obj->subBox[0][5] = 1.7f;
+        obj->subBoxCount = 5;
 
-        obj->subBox[1][0] = -2.35f;
-        obj->subBox[1][1] = 2.35f;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 1.6f;
-        obj->subBox[1][4] = -0.72f;
-        obj->subBox[1][5] = 0.72f;
+        obj->subBox[0][0] = -topHalfX;
+        obj->subBox[0][1] = topHalfX;
+        obj->subBox[0][2] = topBottomY;
+        obj->subBox[0][3] = topTopY;
+        obj->subBox[0][4] = -topHalfZ;
+        obj->subBox[0][5] = topHalfZ;
+
+        int box = 1;
+        for (int sx = -1; sx <= 1; sx += 2)
+        {
+            for (int sz = -1; sz <= 1; sz += 2)
+            {
+                float cx = sx * legOffsetX;
+                float cz = sz * legOffsetZ;
+
+                obj->subBox[box][0] = cx - legHalf;
+                obj->subBox[box][1] = cx + legHalf;
+                obj->subBox[box][2] = 0.0f;
+                obj->subBox[box][3] = legTop;
+                obj->subBox[box][4] = cz - legHalf;
+                obj->subBox[box][5] = cz + legHalf;
+                box++;
+            }
+        }
         return;
     }
 
@@ -1131,6 +1236,17 @@ void scene_display()
         }
 
         glPopMatrix();
+
+        if (selectedObject == obj)
+        {
+            glDisable(GL_LIGHTING);
+            glDisable(GL_TEXTURE_2D);
+
+            drawBBox(obj);
+
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_LIGHTING);
+        }
 
         // Highlight selected object
         if (selectedObject == obj)

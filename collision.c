@@ -1,16 +1,12 @@
 #include "CSCIx229.h"
 
-// Rotate AABB around Y-axis and compute its world OBB bounds
+// Rotate AABB around Y-axis in 90-degree steps and compute world bounds
 static void computeRotatedBounds(SceneObject *obj, int boxIndex,
                                  float worldX, float worldZ,
                                  float *minX, float *maxX,
                                  float *minY, float *maxY,
                                  float *minZ, float *maxZ)
 {
-    float rx = obj->rotation * (M_PI / 180.0f);
-    float c = cosf(rx);
-    float s = sinf(rx);
-
     float xmin = obj->subBox[boxIndex][0];
     float xmax = obj->subBox[boxIndex][1];
     float ymin = obj->subBox[boxIndex][2];
@@ -18,37 +14,56 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
     float zmin = obj->subBox[boxIndex][4];
     float zmax = obj->subBox[boxIndex][5];
 
-    // all 8 corners
-    float cx[8] = {xmin, xmax, xmin, xmax, xmin, xmax, xmin, xmax};
-    float cz[8] = {zmin, zmin, zmax, zmax, zmin, zmin, zmax, zmax};
+    float localMinX = xmin;
+    float localMaxX = xmax;
+    float localMinZ = zmin;
+    float localMaxZ = zmax;
 
-    *minX = *minZ = +1e9f;
-    *maxX = *maxZ = -1e9f;
+    int rotIndex = ((int)roundf(obj->rotation / 90.0f)) & 3;
 
+    switch (rotIndex)
+    {
+    case 1: // 90 degrees
+        localMinX = zmin;
+        localMaxX = zmax;
+        localMinZ = -xmax;
+        localMaxZ = -xmin;
+        break;
+    case 2: // 180 degrees
+        localMinX = -xmax;
+        localMaxX = -xmin;
+        localMinZ = -zmax;
+        localMaxZ = -zmin;
+        break;
+    case 3: // 270 degrees
+        localMinX = -zmax;
+        localMaxX = -zmin;
+        localMinZ = xmin;
+        localMaxZ = xmax;
+        break;
+    default: // 0 degrees
+        break;
+    }
+
+    if (localMinX > localMaxX)
+    {
+        float tmp = localMinX;
+        localMinX = localMaxX;
+        localMaxX = tmp;
+    }
+    if (localMinZ > localMaxZ)
+    {
+        float tmp = localMinZ;
+        localMinZ = localMaxZ;
+        localMaxZ = tmp;
+    }
+
+    *minX = localMinX + worldX;
+    *maxX = localMaxX + worldX;
     *minY = ymin + obj->y;
     *maxY = ymax + obj->y;
-
-    for (int i = 0; i < 8; i++)
-    {
-        float x = cx[i];
-        float z = cz[i];
-
-        // rotate around Y
-        float xr = c * x - s * z;
-        float zr = s * x + c * z;
-
-        xr += worldX;
-        zr += worldZ;
-
-        if (xr < *minX)
-            *minX = xr;
-        if (xr > *maxX)
-            *maxX = xr;
-        if (zr < *minZ)
-            *minZ = zr;
-        if (zr > *maxZ)
-            *maxZ = zr;
-    }
+    *minZ = localMinZ + worldZ;
+    *maxZ = localMaxZ + worldZ;
 }
 
 // Object collision + rotation helpers
