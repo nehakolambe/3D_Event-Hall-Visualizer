@@ -130,7 +130,7 @@ void controls_key(unsigned char key, int x, int y)
             playerObj.x = fpvX;
             playerObj.z = fpvZ;
 
-            if (!collidesWithAnyObject(&playerObj, newX, newZ))
+            if (!collidesWithAnyObject(&playerObj, newX, newZ, true, true))
             {
                 fpvX = newX;
                 fpvZ = newZ;
@@ -149,7 +149,7 @@ void controls_key(unsigned char key, int x, int y)
             playerObj.x = fpvX;
             playerObj.z = fpvZ;
 
-            if (!collidesWithAnyObject(&playerObj, newX, newZ))
+            if (!collidesWithAnyObject(&playerObj, newX, newZ, true, true))
             {
                 fpvX = newX;
                 fpvZ = newZ;
@@ -169,7 +169,7 @@ void controls_key(unsigned char key, int x, int y)
             playerObj.x = fpvX;
             playerObj.z = fpvZ;
 
-            if (!collidesWithAnyObject(&playerObj, newX, newZ))
+            if (!collidesWithAnyObject(&playerObj, newX, newZ, true, true))
             {
                 fpvX = newX;
                 fpvZ = newZ;
@@ -189,7 +189,7 @@ void controls_key(unsigned char key, int x, int y)
             playerObj.x = fpvX;
             playerObj.z = fpvZ;
 
-            if (!collidesWithAnyObject(&playerObj, newX, newZ))
+            if (!collidesWithAnyObject(&playerObj, newX, newZ, true, true))
             {
                 fpvX = newX;
                 fpvZ = newZ;

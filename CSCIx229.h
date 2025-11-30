@@ -157,7 +157,7 @@ void Fatal(const char *format, ...);
 
     extern SceneObject objects[MAX_OBJECTS];
     extern int objectCount;
-    extern bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ);
+    extern bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ, bool adjustPlayerHeight, bool allowStageSnap);
 
     extern SceneObject *selectedObject;
     SceneObject playerObj;
@@ -166,6 +166,7 @@ void Fatal(const char *format, ...);
     int scene_object_supports_snap(const SceneObject *obj);
     void scene_snap_position(float *x, float *z);
     void scene_snap_all_objects(void);
+    void scene_apply_stage_height(SceneObject *obj);
 
     // Mouse interaction
     void mouse_button(int button, int state, int x, int y);

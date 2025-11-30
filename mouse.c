@@ -289,10 +289,11 @@ void mouse_motion(int x, int y)
                 newZ = ROOM_MAX_Z;
 
             // object–object collision
-            if (!collidesWithAnyObject(selectedObject, newX, newZ))
+            if (!collidesWithAnyObject(selectedObject, newX, newZ, false, true))
             {
                 selectedObject->x = newX;
                 selectedObject->z = newZ;
+                scene_apply_stage_height(selectedObject);
             }
         }
     }

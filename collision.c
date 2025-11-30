@@ -130,10 +130,15 @@ static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
 
 // Object collision + rotation helpers
 // Check AABB overlap
-bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
+bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
+                           bool adjustPlayerHeight, bool allowStageSnap)
 {
     float bestPlatformTop = 0.0f; // highest platform below player
-    float playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
+    float playerHeight = 0.0f;
+    if (adjustPlayerHeight)
+    {
+        playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
+    }
 
     // Loop through all objects
     for (int i = 0; i < objectCount; i++)
@@ -179,8 +184,8 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
                     continue;
 
                 // stage climbing logic
-                bool isPlatform =
-                    strstr(other->name, "Stage") != NULL;
+                bool isPlatform = allowStageSnap &&
+                                   strstr(other->name, "Stage") != NULL;
 
                 if (isPlatform)
                 {
@@ -212,21 +217,24 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
         }
     }
 
-    if (bestPlatformTop > 0.0f)
+    if (adjustPlayerHeight && movingObj == &playerObj)
     {
-        float desiredFeetY = bestPlatformTop;
-        float desiredFpvY = desiredFeetY + playerHeight;
+        if (bestPlatformTop > 0.0f)
+        {
+            float desiredFeetY = bestPlatformTop;
+            float desiredFpvY = desiredFeetY + playerHeight;
 
-        // Smooth snap to platform
-        fpvY = desiredFpvY;
+            // Smooth snap to platform
+            fpvY = desiredFpvY;
 
-        movingObj->y = fpvY - playerHeight;
-    }
-    else
-    {
-        // Reset to floor level
-        movingObj->y = 0.0f;
-        fpvY = playerHeight; // camera height above floor
+            movingObj->y = fpvY - playerHeight;
+        }
+        else
+        {
+            // Reset to floor level
+            movingObj->y = 0.0f;
+            fpvY = playerHeight; // camera height above floor
+        }
     }
 
     return false; // no collision
@@ -242,7 +250,7 @@ bool checkRotationCollision(SceneObject *obj, float newRotation)
     
     // Check if this new state hits anything
     // We pass obj->x and obj->z because the position hasn't changed, only angle
-    bool collides = collidesWithAnyObject(obj, obj->x, obj->z);
+    bool collides = collidesWithAnyObject(obj, obj->x, obj->z, false, false);
 
     // Restore original rotation immediately
     obj->rotation = oldRotation;

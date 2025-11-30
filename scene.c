@@ -1,6 +1,11 @@
 #include "CSCIx229.h"
 
 #define GRID_SNAP_SIZE 5.0f
+#define STAGE_MIN_X -10.0f
+#define STAGE_MAX_X 10.0f
+#define STAGE_MIN_Z -30.0f
+#define STAGE_MAX_Z -20.0f
+#define STAGE_HEIGHT 2.0f
 
 bool snapToGridEnabled = false;
 
@@ -66,6 +71,24 @@ static void configureObjectBounds(SceneObject *obj);
 static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ);
 static int nameHasPrefix(const char *name, const char *prefix);
 static int nameSupportsSnap(const char *name);
+static int positionOnStage(float x, float z);
+
+static int positionOnStage(float x, float z)
+{
+    return (x >= STAGE_MIN_X && x <= STAGE_MAX_X &&
+            z >= STAGE_MIN_Z && z <= STAGE_MAX_Z);
+}
+
+void scene_apply_stage_height(SceneObject *obj)
+{
+    if (!obj || !obj->movable)
+        return;
+
+    if (positionOnStage(obj->x, obj->z))
+        obj->y = STAGE_HEIGHT;
+    else
+        obj->y = 0.0f;
+}
 
 // Quad
 static void drawQuadN(
@@ -519,7 +542,10 @@ void scene_init()
     objects[objectCount - 1].subBox[0][5] = 5.0f;
 
     for (int i = 0; i < objectCount; i++)
+    {
         configureObjectBounds(&objects[i]);
+        scene_apply_stage_height(&objects[i]);
+    }
 
     if (snapToGridEnabled)
         scene_snap_all_objects();
@@ -591,10 +617,11 @@ void scene_snap_all_objects(void)
         if (snappedZ > ROOM_MAX_Z)
             snappedZ = ROOM_MAX_Z;
 
-        if (!collidesWithAnyObject(obj, snappedX, snappedZ))
+        if (!collidesWithAnyObject(obj, snappedX, snappedZ, false, true))
         {
             obj->x = snappedX;
             obj->z = snappedZ;
+            scene_apply_stage_height(obj);
         }
     }
 }
@@ -963,7 +990,7 @@ static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
             if (testZ > maxZ)
                 testZ = maxZ;
 
-            if (!collidesWithAnyObject(prototype, testX, testZ))
+            if (!collidesWithAnyObject(prototype, testX, testZ, false, true))
             {
                 float dist = testX * testX + testZ * testZ;
                 if (!found || dist < bestDist)
@@ -1024,6 +1051,7 @@ SceneObject *scene_spawn_object(SceneSpawnType type)
     obj->rotation = tmpl->defaultRotation;
     obj->scale = tmpl->defaultScale;
     configureObjectBounds(obj);
+    scene_apply_stage_height(obj);
 
     selectedObject = obj;
     dragging = 0;
