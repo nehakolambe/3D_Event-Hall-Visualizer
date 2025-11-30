@@ -163,6 +163,7 @@ void Fatal(const char *format, ...);
     SceneObject playerObj;
     extern int dragging;
     extern bool snapToGridEnabled;
+    extern bool bboxHighlightEnabled;
     int scene_object_supports_snap(const SceneObject *obj);
     void scene_snap_position(float *x, float *z);
     void scene_snap_all_objects(void);

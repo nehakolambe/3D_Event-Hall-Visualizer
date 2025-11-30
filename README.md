@@ -140,8 +140,9 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 ## References
 
 - Shaders
-
   - Ex25.c - shaders.c
   - https://www.rastertek.com/gl4linuxtut33.html
   - https://clockworkchilli.com/blog/8_a_fire_shader_in_glsl_for_your_webgl_games
   - https://godotshaders.com/shader/balatro-fire-shader/
+- Highlight selected object
+  - Ex31.c

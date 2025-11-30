@@ -8,6 +8,7 @@
 #define STAGE_HEIGHT 2.0f
 
 bool snapToGridEnabled = false;
+bool bboxHighlightEnabled = false;
 
 // Object system globals
 SceneObject objects[MAX_OBJECTS];
@@ -1279,7 +1280,8 @@ void scene_display()
 
         glPopMatrix();
 
-        if (selectedObject == obj)
+        // Highlight bounding box of selected object when enabled
+        if (bboxHighlightEnabled && selectedObject == obj)
         {
             glDisable(GL_LIGHTING);
             glDisable(GL_TEXTURE_2D);

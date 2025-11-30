@@ -34,8 +34,13 @@ void controls_key(unsigned char key, int x, int y)
 
     // Cycle through light modes
     case 'b':
-    case 'B':
         lightState = (lightState + 1) % 3;
+        break;
+
+    // Toggle bounding box highlight
+    case 'B':
+        bboxHighlightEnabled = !bboxHighlightEnabled;
+        printf("Bounding box highlight %s.\n", bboxHighlightEnabled ? "enabled" : "disabled");
         break;
 
     // Rotate light horizontally (left)
