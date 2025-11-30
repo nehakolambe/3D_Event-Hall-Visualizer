@@ -1,7 +1,18 @@
 #include "CSCIx229.h"
 
-// Rotate AABB around Y-axis in 90-degree steps and compute world bounds
-static void computeRotatedBounds(SceneObject *obj, int boxIndex,
+typedef struct
+{
+    float centerX;
+    float centerZ;
+    float halfX;
+    float halfZ;
+    float axis[2][2]; // [0]=local X axis, [1]=local Z axis
+    float minY;
+    float maxY;
+} BoxOBB;
+
+// Rotate AABB around Y-axis and compute world-space AABB bounds
+static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
                                  float worldX, float worldZ,
                                  float *minX, float *maxX,
                                  float *minY, float *maxY,
@@ -14,56 +25,107 @@ static void computeRotatedBounds(SceneObject *obj, int boxIndex,
     float zmin = obj->subBox[boxIndex][4];
     float zmax = obj->subBox[boxIndex][5];
 
-    float localMinX = xmin;
-    float localMaxX = xmax;
-    float localMinZ = zmin;
-    float localMaxZ = zmax;
+    float angle = -obj->rotation * (M_PI / 180.0f);
+    float c = cosf(angle);
+    float s = sinf(angle);
 
-    int rotIndex = ((int)roundf(obj->rotation / 90.0f)) & 3;
+    *minX = *minZ = +1e9f;
+    *maxX = *maxZ = -1e9f;
 
-    switch (rotIndex)
-    {
-    case 1: // 90 degrees
-        localMinX = zmin;
-        localMaxX = zmax;
-        localMinZ = -xmax;
-        localMaxZ = -xmin;
-        break;
-    case 2: // 180 degrees
-        localMinX = -xmax;
-        localMaxX = -xmin;
-        localMinZ = -zmax;
-        localMaxZ = -zmin;
-        break;
-    case 3: // 270 degrees
-        localMinX = -zmax;
-        localMaxX = -zmin;
-        localMinZ = xmin;
-        localMaxZ = xmax;
-        break;
-    default: // 0 degrees
-        break;
-    }
-
-    if (localMinX > localMaxX)
-    {
-        float tmp = localMinX;
-        localMinX = localMaxX;
-        localMaxX = tmp;
-    }
-    if (localMinZ > localMaxZ)
-    {
-        float tmp = localMinZ;
-        localMinZ = localMaxZ;
-        localMaxZ = tmp;
-    }
-
-    *minX = localMinX + worldX;
-    *maxX = localMaxX + worldX;
     *minY = ymin + obj->y;
     *maxY = ymax + obj->y;
-    *minZ = localMinZ + worldZ;
-    *maxZ = localMaxZ + worldZ;
+
+    for (int ix = 0; ix < 2; ix++)
+    {
+        float x = (ix == 0) ? xmin : xmax;
+        for (int iz = 0; iz < 2; iz++)
+        {
+            float z = (iz == 0) ? zmin : zmax;
+
+            float xr = c * x - s * z + worldX;
+            float zr = s * x + c * z + worldZ;
+
+            if (xr < *minX)
+                *minX = xr;
+            if (xr > *maxX)
+                *maxX = xr;
+            if (zr < *minZ)
+                *minZ = zr;
+            if (zr > *maxZ)
+                *maxZ = zr;
+        }
+    }
+}
+
+static void buildBoxOBB(const SceneObject *obj, int boxIndex,
+                        float worldX, float worldZ, BoxOBB *box)
+{
+    float xmin = obj->subBox[boxIndex][0];
+    float xmax = obj->subBox[boxIndex][1];
+    float ymin = obj->subBox[boxIndex][2];
+    float ymax = obj->subBox[boxIndex][3];
+    float zmin = obj->subBox[boxIndex][4];
+    float zmax = obj->subBox[boxIndex][5];
+
+    float localCenterX = 0.5f * (xmin + xmax);
+    float localCenterZ = 0.5f * (zmin + zmax);
+    float halfX = 0.5f * (xmax - xmin);
+    float halfZ = 0.5f * (zmax - zmin);
+
+    float angle = -obj->rotation * (M_PI / 180.0f);
+    float c = cosf(angle);
+    float s = sinf(angle);
+
+    box->centerX = c * localCenterX - s * localCenterZ + worldX;
+    box->centerZ = s * localCenterX + c * localCenterZ + worldZ;
+    box->halfX = halfX;
+    box->halfZ = halfZ;
+    box->axis[0][0] = c;
+    box->axis[0][1] = s;
+    box->axis[1][0] = -s;
+    box->axis[1][1] = c;
+    box->minY = ymin + obj->y;
+    box->maxY = ymax + obj->y;
+}
+
+static float projectRadius(const BoxOBB *box, float axisX, float axisZ)
+{
+    float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    if (axisLen < 1e-6f)
+        return 0.0f;
+
+    float nx = axisX / axisLen;
+    float nz = axisZ / axisLen;
+
+    float dotX = nx * box->axis[0][0] + nz * box->axis[0][1];
+    float dotZ = nx * box->axis[1][0] + nz * box->axis[1][1];
+    return box->halfX * fabsf(dotX) + box->halfZ * fabsf(dotZ);
+}
+
+static int overlapOnAxis(const BoxOBB *a, const BoxOBB *b, float axisX, float axisZ)
+{
+    float ra = projectRadius(a, axisX, axisZ);
+    float rb = projectRadius(b, axisX, axisZ);
+    float dx = b->centerX - a->centerX;
+    float dz = b->centerZ - a->centerZ;
+    float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    if (axisLen < 1e-6f)
+        return 1;
+    float distance = fabsf((dx * axisX + dz * axisZ) / axisLen);
+    return distance <= (ra + rb);
+}
+
+static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
+{
+    if (!overlapOnAxis(a, b, a->axis[0][0], a->axis[0][1]))
+        return 0;
+    if (!overlapOnAxis(a, b, a->axis[1][0], a->axis[1][1]))
+        return 0;
+    if (!overlapOnAxis(a, b, b->axis[0][0], b->axis[0][1]))
+        return 0;
+    if (!overlapOnAxis(a, b, b->axis[1][0], b->axis[1][1]))
+        return 0;
+    return 1;
 }
 
 // Object collision + rotation helpers
@@ -86,21 +148,24 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
         for (int a = 0; a < movingObj->subBoxCount; a++)
         {
             float a_xmin, a_xmax, a_ymin, a_ymax, a_zmin, a_zmax;
+            BoxOBB boxA;
 
             computeRotatedBounds(movingObj, a, newX, newZ,
                                  &a_xmin, &a_xmax,
                                  &a_ymin, &a_ymax,
                                  &a_zmin, &a_zmax);
+            buildBoxOBB(movingObj, a, newX, newZ, &boxA);
 
             // Compare with each sub-box of the other object
             for (int b = 0; b < other->subBoxCount; b++)
             {
                 float b_xmin, b_xmax, b_ymin, b_ymax, b_zmin, b_zmax;
-
+                BoxOBB boxB;
                 computeRotatedBounds(other, b, other->x, other->z,
                                      &b_xmin, &b_xmax,
                                      &b_ymin, &b_ymax,
                                      &b_zmin, &b_zmax);
+                buildBoxOBB(other, b, other->x, other->z, &boxB);
 
                 // AABB horizontal overlap check
                 bool overlapXZ =
@@ -110,16 +175,19 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
                 if (!overlapXZ)
                     continue;
 
+                if (!obbOverlapXZ(&boxA, &boxB))
+                    continue;
+
                 // stage climbing logic
                 bool isPlatform =
                     strstr(other->name, "Stage") != NULL;
 
                 if (isPlatform)
                 {
-                    float stageTop = b_ymax; // actual stage height
+                    float stageTop = boxB.maxY; // actual stage height
 
                     // Check if player is above platform
-                    if (a_ymin >= stageTop - 2.0f)
+                    if (boxA.minY >= stageTop - 2.0f)
                     {
                         if (stageTop > bestPlatformTop)
                             bestPlatformTop = stageTop;
@@ -133,7 +201,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
 
                 // normal vertical overlap check
                 bool overlapY =
-                    (a_ymax > b_ymin && a_ymin < b_ymax);
+                    (boxA.maxY > boxB.minY && boxA.minY < boxB.maxY);
 
                 if (overlapY)
                 {
@@ -164,19 +232,43 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ)
     return false; // no collision
 }
 
+bool checkRotationCollision(SceneObject *obj, float newRotation)
+{
+    // Save current rotation
+    float oldRotation = obj->rotation;
+
+    // Apply temporary rotation
+    obj->rotation = newRotation;
+    
+    // Check if this new state hits anything
+    // We pass obj->x and obj->z because the position hasn't changed, only angle
+    bool collides = collidesWithAnyObject(obj, obj->x, obj->z);
+
+    // Restore original rotation immediately
+    obj->rotation = oldRotation;
+
+    return collides;
+}
+
 // Rotate object around its Y-axis
 void rotateObject(SceneObject *obj, float angle)
 {
     if (!obj)
         return;
 
-    obj->rotation += angle;
+    float newRotation = obj->rotation + angle;
 
     // Keep in 0–360 range
-    if (obj->rotation >= 360.0f)
-        obj->rotation -= 360.0f;
-    if (obj->rotation < 0.0f)
-        obj->rotation += 360.0f;
+    if (newRotation >= 360.0f)
+        newRotation -= 360.0f;
+    if (newRotation < 0.0f)
+        newRotation += 360.0f;
+
+    // apply if the new angle doesn't result in a collision
+    if (!checkRotationCollision(obj, newRotation))
+    {
+        obj->rotation = newRotation;
+    }
 }
 
 // Player bounding box

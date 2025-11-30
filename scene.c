@@ -220,9 +220,13 @@ void drawTiledSurface(
 void drawBBox(SceneObject *o)
 {
     glPushMatrix();
-    glTranslatef(o->x, o->y, o->z);
-    glRotatef(o->rotation, 0, 1, 0);
     glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
+    glLineWidth(2.0f);
+
+    // Use the exact same math as collision.c
+    float angle = -o->rotation * (M_PI / 180.0f); 
+    float c = cosf(angle);
+    float s = sinf(angle);
 
     for (int b = 0; b < o->subBoxCount; b++)
     {
@@ -233,38 +237,48 @@ void drawBBox(SceneObject *o)
         float zmin = o->subBox[b][4];
         float zmax = o->subBox[b][5];
 
+        // We need the 8 corners of the box
+        float corners[8][3] = {
+            {xmin, ymin, zmin}, {xmax, ymin, zmin},
+            {xmax, ymax, zmin}, {xmin, ymax, zmin},
+            {xmin, ymin, zmax}, {xmax, ymin, zmax},
+            {xmax, ymax, zmax}, {xmin, ymax, zmax}
+        };
+
+        // Transform corners manually
+        for (int i = 0; i < 8; i++) {
+            float lx = corners[i][0];
+            float ly = corners[i][1]; // Y is mostly unaffected by Y-axis rotation
+            float lz = corners[i][2];
+
+            // Rotate
+            float rx = c * lx - s * lz;
+            float rz = s * lx + c * lz;
+
+            // Translate
+            corners[i][0] = rx + o->x;
+            corners[i][1] = ly + o->y;
+            corners[i][2] = rz + o->z;
+        }
+
         glBegin(GL_LINES);
+        // Bottom Face
+        glVertex3fv(corners[0]); glVertex3fv(corners[1]);
+        glVertex3fv(corners[1]); glVertex3fv(corners[5]);
+        glVertex3fv(corners[5]); glVertex3fv(corners[4]);
+        glVertex3fv(corners[4]); glVertex3fv(corners[0]);
 
-        // bottom rectangle
-        glVertex3f(xmin, ymin, zmin);
-        glVertex3f(xmax, ymin, zmin);
-        glVertex3f(xmax, ymin, zmin);
-        glVertex3f(xmax, ymin, zmax);
-        glVertex3f(xmax, ymin, zmax);
-        glVertex3f(xmin, ymin, zmax);
-        glVertex3f(xmin, ymin, zmax);
-        glVertex3f(xmin, ymin, zmin);
-
-        // top rectangle
-        glVertex3f(xmin, ymax, zmin);
-        glVertex3f(xmax, ymax, zmin);
-        glVertex3f(xmax, ymax, zmin);
-        glVertex3f(xmax, ymax, zmax);
-        glVertex3f(xmax, ymax, zmax);
-        glVertex3f(xmin, ymax, zmax);
-        glVertex3f(xmin, ymax, zmax);
-        glVertex3f(xmin, ymax, zmin);
+        // Top Face
+        glVertex3fv(corners[3]); glVertex3fv(corners[2]);
+        glVertex3fv(corners[2]); glVertex3fv(corners[6]);
+        glVertex3fv(corners[6]); glVertex3fv(corners[7]);
+        glVertex3fv(corners[7]); glVertex3fv(corners[3]);
 
         // vertical lines
-        glVertex3f(xmin, ymin, zmin);
-        glVertex3f(xmin, ymax, zmin);
-        glVertex3f(xmax, ymin, zmin);
-        glVertex3f(xmax, ymax, zmin);
-        glVertex3f(xmax, ymin, zmax);
-        glVertex3f(xmax, ymax, zmax);
-        glVertex3f(xmin, ymin, zmax);
-        glVertex3f(xmin, ymax, zmax);
-
+        glVertex3fv(corners[0]); glVertex3fv(corners[3]);
+        glVertex3fv(corners[1]); glVertex3fv(corners[2]);
+        glVertex3fv(corners[5]); glVertex3fv(corners[6]);
+        glVertex3fv(corners[4]); glVertex3fv(corners[7]);
         glEnd();
     }
 
