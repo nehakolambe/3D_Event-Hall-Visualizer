@@ -6,126 +6,141 @@ static float strokePrevU = 0.0f;
 static float strokePrevV = 0.0f;
 static double lastRightClickTime = 0.0;
 
-// Ray vs AABB sub-box test
+// Check if the mouse ray hits a sub-bounding-box of an object
 static int rayIntersectsSubBoxWorld(
-    float ox, float oy, float oz,
-    float dx, float dy, float dz,
-    const SceneObject *obj,
+    float rayOriginX, float rayOriginY, float rayOriginZ,
+    float rayDirX, float rayDirY, float rayDirZ,
+    const SceneObject *sceneObject,
     int boxIndex,
-    float *tmin_out)
+    float *intersectionDistanceOut)
 {
-    float tmin = -1e9f;
-    float tmax = +1e9f;
+    float entryDistance = -1e9f;
+    float exitDistance = +1e9f;
 
     for (int axis = 0; axis < 3; axis++)
     {
-        float minB = obj->subBox[boxIndex][axis * 2] +
-                     (axis == 0 ? obj->x : axis == 1 ? obj->y
-                                                     : obj->z);
+        // Compute min/max of the box along this axis in world coordinates
+        float boxMin = sceneObject->subBox[boxIndex][axis * 2] +
+                       (axis == 0 ? sceneObject->x : axis == 1 ? sceneObject->y
+                                                               : sceneObject->z);
 
-        float maxB = obj->subBox[boxIndex][axis * 2 + 1] +
-                     (axis == 0 ? obj->x : axis == 1 ? obj->y
-                                                     : obj->z);
+        float boxMax = sceneObject->subBox[boxIndex][axis * 2 + 1] +
+                       (axis == 0 ? sceneObject->x : axis == 1 ? sceneObject->y
+                                                               : sceneObject->z);
 
-        float o = (axis == 0 ? ox : axis == 1 ? oy
-                                              : oz);
-        float d = (axis == 0 ? dx : axis == 1 ? dy
-                                              : dz);
+        // Ray origin and direction on this axis
+        float rayOriginAxis = (axis == 0 ? rayOriginX : axis == 1 ? rayOriginY
+                                                                  : rayOriginZ);
+        float rayDirAxis = (axis == 0 ? rayDirX : axis == 1 ? rayDirY
+                                                            : rayDirZ);
 
-        if (fabsf(d) < 1e-6f)
+        // If ray is parallel to the slab
+        if (fabsf(rayDirAxis) < 1e-6f)
         {
-            if (o < minB || o > maxB)
+            if (rayOriginAxis < boxMin || rayOriginAxis > boxMax)
                 return 0;
         }
         else
         {
-            float t1 = (minB - o) / d;
-            float t2 = (maxB - o) / d;
+            float entryCandidate = (boxMin - rayOriginAxis) / rayDirAxis;
+            float exitCandidate = (boxMax - rayOriginAxis) / rayDirAxis;
 
-            if (t1 > t2)
+            if (entryCandidate > exitCandidate)
             {
-                float tmp = t1;
-                t1 = t2;
-                t2 = tmp;
+                float swappedValue = entryCandidate;
+                entryCandidate = exitCandidate;
+                exitCandidate = swappedValue;
             }
 
-            if (t1 > tmin)
-                tmin = t1;
-            if (t2 < tmax)
-                tmax = t2;
+            if (entryCandidate > entryDistance)
+                entryDistance = entryCandidate;
+            if (exitCandidate < exitDistance)
+                exitDistance = exitCandidate;
 
-            if (tmin > tmax || tmax < 0)
+            // If range is invalid, no intersection
+            if (entryDistance > exitDistance || exitDistance < 0)
                 return 0;
         }
     }
 
-    *tmin_out = tmin;
+    *intersectionDistanceOut = entryDistance;
     return 1;
 }
 
-// Generate world space ray from mouse position
-static void getRayFromMouse(int x, int y,
-                            float *ox, float *oy, float *oz,
-                            float *dx, float *dy, float *dz)
+// Convert the mouse (x,y) into a 3D ray in world space
+static void getRayFromMouse(int mouseX, int mouseY,
+                            float *rayOriginX, float *rayOriginY, float *rayOriginZ,
+                            float *rayDirX, float *rayDirY, float *rayDirZ)
 {
-    GLdouble model[16], proj[16];
-    GLint view[4];
+    GLdouble modelMatrix[16], projectionMatrix[16];
+    GLint viewport[4];
 
-    glGetDoublev(GL_MODELVIEW_MATRIX, model);
-    glGetDoublev(GL_PROJECTION_MATRIX, proj);
-    glGetIntegerv(GL_VIEWPORT, view);
+    // Read the current camera matrices and viewport so we can unproject screen coords
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+    glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+    glGetIntegerv(GL_VIEWPORT, viewport);
 
-    GLdouble wx1, wy1, wz1;
-    GLdouble wx2, wy2, wz2;
+    GLdouble nearPointX, nearPointY, nearPointZ;
+    GLdouble farPointX, farPointY, farPointZ;
 
-    gluUnProject((GLdouble)x, (GLdouble)(view[3] - y), 0.0,
-                 model, proj, view, &wx1, &wy1, &wz1);
-    gluUnProject((GLdouble)x, (GLdouble)(view[3] - y), 1.0,
-                 model, proj, view, &wx2, &wy2, &wz2);
+    // Unproject the mouse position at the near and far clip planes to build a ray
+    gluUnProject((GLdouble)mouseX, (GLdouble)(viewport[3] - mouseY), 0.0,
+                 modelMatrix, projectionMatrix, viewport,
+                 &nearPointX, &nearPointY, &nearPointZ);
+    gluUnProject((GLdouble)mouseX, (GLdouble)(viewport[3] - mouseY), 1.0,
+                 modelMatrix, projectionMatrix, viewport,
+                 &farPointX, &farPointY, &farPointZ);
 
-    *ox = (float)wx1;
-    *oy = (float)wy1;
-    *oz = (float)wz1;
+    *rayOriginX = (float)nearPointX;
+    *rayOriginY = (float)nearPointY;
+    *rayOriginZ = (float)nearPointZ;
 
-    *dx = (float)(wx2 - wx1);
-    *dy = (float)(wy2 - wy1);
-    *dz = (float)(wz2 - wz1);
+    *rayDirX = (float)(farPointX - nearPointX);
+    *rayDirY = (float)(farPointY - nearPointY);
+    *rayDirZ = (float)(farPointZ - nearPointZ);
 }
 
 // Object picking function
-SceneObject *pickObject3D(int x, int y)
+SceneObject *pickObject3D(int mouseX, int mouseY)
 {
-    float ox, oy, oz, dx, dy, dz;
-    getRayFromMouse(x, y, &ox, &oy, &oz, &dx, &dy, &dz);
+    float rayOriginX, rayOriginY, rayOriginZ, rayDirX, rayDirY, rayDirZ;
+    getRayFromMouse(mouseX, mouseY,
+                    &rayOriginX, &rayOriginY, &rayOriginZ,
+                    &rayDirX, &rayDirY, &rayDirZ);
 
-    SceneObject *closest = NULL;
-    float closestT = 1e9f;
+    // Track the closest object hit by the ray so we can select it
+    SceneObject *closestObject = NULL;
+    float closestHitDistance = 1e9f;
 
-    for (int i = 0; i < objectCount; i++)
+    for (int objectIndex = 0; objectIndex < objectCount; objectIndex++)
     {
-        SceneObject *obj = &objects[i];
-        if (!obj->movable && strcmp(obj->name, "Whiteboard") != 0)
+        SceneObject *sceneObject = &objects[objectIndex];
+        // Ignore static objects except for the whiteboard, which should stay selectable
+        if (!sceneObject->movable && strcmp(sceneObject->name, "Whiteboard") != 0)
             continue;
 
-        for (int b = 0; b < obj->subBoxCount; b++)
+        for (int subBoxIndex = 0; subBoxIndex < sceneObject->subBoxCount; subBoxIndex++)
         {
-            float tmin;
-            if (rayIntersectsSubBoxWorld(ox, oy, oz, dx, dy, dz, obj, b, &tmin))
+            float subBoxHitDistance;
+            if (rayIntersectsSubBoxWorld(rayOriginX, rayOriginY, rayOriginZ,
+                                         rayDirX, rayDirY, rayDirZ,
+                                         sceneObject, subBoxIndex,
+                                         &subBoxHitDistance))
             {
-                if (tmin < closestT)
+                if (subBoxHitDistance < closestHitDistance)
                 {
-                    closestT = tmin;
-                    closest = obj;
+                    closestHitDistance = subBoxHitDistance;
+                    closestObject = sceneObject;
                 }
             }
         }
     }
 
-    return closest;
+    return closestObject;
 }
 
 // Mouse button callback
-void mouse_button(int button, int state, int x, int y)
+void mouse_button(int button, int state, int mouseX, int mouseY)
 {
     if (whiteboardMode)
     {
@@ -135,6 +150,7 @@ void mouse_button(int button, int state, int x, int y)
             {
                 if (button == GLUT_RIGHT_BUTTON)
                 {
+                    // Double right-click quickly to clear the whiteboard
                     double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
                     if (currentTime - lastRightClickTime < 0.3)
                     {
@@ -148,16 +164,18 @@ void mouse_button(int button, int state, int x, int y)
                     lastRightClickTime = currentTime;
                 }
 
-                float screenX = (float)x;
-                float screenY = (float)(screenHeight - y);
+                float screenX = (float)mouseX;
+                float screenY = (float)(screenHeight - mouseY);
                 if (whiteboard_point_in_canvas(screenX, screenY))
                 {
+                    // Begin a stroke inside the canvas
                     strokeActive = 1;
                     strokeErase = (button == GLUT_RIGHT_BUTTON);
                     whiteboard_screen_to_canvas(screenX, screenY, &strokePrevU, &strokePrevV);
                 }
                 else
                 {
+                    // Ignore clicks outside the canvas to avoid stray lines
                     strokeActive = 0;
                 }
             }
@@ -174,31 +192,35 @@ void mouse_button(int button, int state, int x, int y)
     {
         if (state == GLUT_DOWN)
         {
-            SceneObject *picked = pickObject3D(x, y);
+            SceneObject *pickedObject = pickObject3D(mouseX, mouseY);
 
-            if (picked && strcmp(picked->name, "Whiteboard") == 0)
+            if (pickedObject && strcmp(pickedObject->name, "Whiteboard") == 0)
             {
+                // Clicking the 3D whiteboard switches to whiteboard mode
                 whiteboard_activate();
                 strokeActive = 0;
                 glutPostRedisplay();
                 return;
             }
 
-            if (picked)
+            if (pickedObject)
             {
-                if (selectedObject == picked)
+                if (selectedObject == pickedObject)
                 {
+                    // Clicking the selected object starts dragging it
                     dragging = 1;
                 }
                 else
                 {
-                    selectedObject = picked;
+                    // Pick a new object and start dragging immediately
+                    selectedObject = pickedObject;
                     dragging = 1;
                     printf("Selected object: %s\n", selectedObject->name);
                 }
             }
             else
             {
+                // Clicked empty space, so deselect everything
                 selectedObject = NULL;
                 dragging = 0;
                 printf("Deselected all objects.\n");
@@ -206,6 +228,7 @@ void mouse_button(int button, int state, int x, int y)
         }
         else if (state == GLUT_UP)
         {
+            // Mouse release stops dragging
             dragging = 0;
             printf("Object placed.\n");
         }
@@ -215,24 +238,26 @@ void mouse_button(int button, int state, int x, int y)
 }
 
 // Ray-plane intersection helper
-static int rayPlaneIntersection(float ox, float oy, float oz,
-                                float dx, float dy, float dz,
-                                float *hitX, float *hitZ)
+static int rayPlaneIntersection(float rayOriginX, float rayOriginY, float rayOriginZ,
+                                float rayDirX, float rayDirY, float rayDirZ,
+                                float *planeHitX, float *planeHitZ)
 {
-    if (fabsf(dy) < 1e-6f)
+    // Ignore rays parallel to the ground plane
+    if (fabsf(rayDirY) < 1e-6f)
         return 0;
 
-    float t = -oy / dy;
+    float t = -rayOriginY / rayDirY;
     if (t < 0)
         return 0;
 
-    *hitX = ox + t * dx;
-    *hitZ = oz + t * dz;
+    // Compute the point where the ray intersects the ground plane (y=0)
+    *planeHitX = rayOriginX + t * rayDirX;
+    *planeHitZ = rayOriginZ + t * rayDirZ;
     return 1;
 }
 
 // Mouse motion callback
-void mouse_motion(int x, int y)
+void mouse_motion(int mouseX, int mouseY)
 {
     if (!whiteboardMode)
     {
@@ -243,20 +268,22 @@ void mouse_motion(int x, int y)
     {
         if (strokeActive)
         {
-            float screenX = (float)x;
-            float screenY = (float)(screenHeight - y);
+            float screenX = (float)mouseX;
+            float screenY = (float)(screenHeight - mouseY);
 
             if (!whiteboard_point_in_canvas(screenX, screenY))
             {
+                // Stop drawing if the cursor leaves the canvas
                 strokeActive = 0;
             }
             else
             {
-                float u, v;
-                whiteboard_screen_to_canvas(screenX, screenY, &u, &v);
-                whiteboard_add_stroke(strokePrevU, strokePrevV, u, v, strokeErase);
-                strokePrevU = u;
-                strokePrevV = v;
+                float canvasU, canvasV;
+                // Convert the cursor position into canvas UVs and extend the stroke
+                whiteboard_screen_to_canvas(screenX, screenY, &canvasU, &canvasV);
+                whiteboard_add_stroke(strokePrevU, strokePrevV, canvasU, canvasV, strokeErase);
+                strokePrevU = canvasU;
+                strokePrevV = canvasV;
             }
         }
 
@@ -266,16 +293,21 @@ void mouse_motion(int x, int y)
 
     if (dragging && selectedObject)
     {
-        float ox, oy, oz, dx, dy, dz;
-        getRayFromMouse(x, y, &ox, &oy, &oz, &dx, &dy, &dz);
+        float rayOriginX, rayOriginY, rayOriginZ, rayDirX, rayDirY, rayDirZ;
+        getRayFromMouse(mouseX, mouseY,
+                        &rayOriginX, &rayOriginY, &rayOriginZ,
+                        &rayDirX, &rayDirY, &rayDirZ);
 
-        float hitX, hitZ;
-        if (rayPlaneIntersection(ox, oy, oz, dx, dy, dz, &hitX, &hitZ))
+        float planeHitX, planeHitZ;
+        if (rayPlaneIntersection(rayOriginX, rayOriginY, rayOriginZ,
+                                 rayDirX, rayDirY, rayDirZ,
+                                 &planeHitX, &planeHitZ))
         {
-            float newX = hitX;
-            float newZ = hitZ;
+            float newX = planeHitX;
+            float newZ = planeHitZ;
 
             if (snapToGridEnabled && scene_object_supports_snap(selectedObject))
+                // Snap furniture to the grid if supported
                 scene_snap_position(&newX, &newZ);
 
             // room boundaries
@@ -291,6 +323,7 @@ void mouse_motion(int x, int y)
             // object–object collision
             if (!collidesWithAnyObject(selectedObject, newX, newZ, false, true))
             {
+                // Update the object's location once it is valid
                 selectedObject->x = newX;
                 selectedObject->z = newZ;
                 scene_apply_stage_height(selectedObject);

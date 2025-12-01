@@ -146,3 +146,9 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
   - https://godotshaders.com/shader/balatro-fire-shader/
 - Highlight selected object
   - Ex31.c
+- Ray Intersection - Mouse
+  - https://www.cppstories.com/2012/06/select-mouse-opengl.html/
+  - https://www.opengl.org/archives/resources/faq/technical/selection.htm
+  - https://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+  - https://stackoverflow.com/questions/28032910/opengl-picking-fastest-way
+  - https://gamedev.stackexchange.com/questions/172308/c-mouse-picking-for-ray-to-plane-intersection

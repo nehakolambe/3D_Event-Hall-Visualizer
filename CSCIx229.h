@@ -170,8 +170,8 @@ void Fatal(const char *format, ...);
     void scene_apply_stage_height(SceneObject *obj);
 
     // Mouse interaction
-    void mouse_button(int button, int state, int x, int y);
-    void mouse_motion(int x, int y);
+    void mouse_button(int button, int state, int mouseX, int mouseY);
+    void mouse_motion(int mouseX, int mouseY);
 
     // Texture handles
     extern unsigned int screenTex;
