@@ -56,10 +56,10 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 
 #### Camera Movement
 
-- **(** - Move camera backward
-- **)** - Move camera forward
-- **+ / =** - Zoom in (decrease FOV)
-- **- / _** - Zoom out (increase FOV)
+- **(** - decrease dim
+- **)** - increase dim
+- **+ / =** - decrease FOV
+- **- / _** - increase FOV
 
 #### Camera Rotation
 
@@ -85,6 +85,11 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Arrow Down** - Look down (min -60°)
 
 ### Orthogonal Mode (mode = 2)
+
+#### Camera Movement
+
+- **(** - decrease dim
+- **)** - increase dim
 
 #### Camera Rotation
 

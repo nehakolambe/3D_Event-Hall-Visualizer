@@ -103,9 +103,9 @@ void controls_key(unsigned char key, int x, int y)
             fov = 25.0;
         break;
 
-    // Move camera backward (prespective mode only)
+    // Move camera backward (prespective and orthogonal modes)
     case '(':
-        if (mode == 0)
+        if (mode != 1)
         {
             dim -= 1.0;
             if (dim < 5.0)
@@ -113,9 +113,9 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    // Move camera forward (prespective mode only)
+    // Move camera forward (prespective and orthogonal modes)
     case ')':
-        if (mode == 0)
+        if (mode != 1)
         {
             dim += 1.0;
             if (dim > 60.0)
