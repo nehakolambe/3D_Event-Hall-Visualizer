@@ -39,8 +39,8 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 
 ### General
 
-- **Esc** - Quit program
-- **m / M** - Toggle view mode (Projection / First-person)
+- **Esc** - Quit program (or exit whiteboard mode if active)
+- **m / M** - Toggle view mode (Prespective / First-person / Orthogonal)
 - **0** - Reset entire scene (camera, light, FPV, selection)
 - **S** - Save the layout as layout.csv
 - **L** - Load the layout using layout.csv
@@ -52,7 +52,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Right Mouse Drag** - Erase
 - **Double Right Click** - Clear entire whiteboard
 
-### Projection Mode (mode = 0)
+### Prespective Mode (mode = 0)
 
 #### Camera Movement
 
@@ -84,12 +84,21 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Arrow Up** - Look up (max +60°)
 - **Arrow Down** - Look down (min -60°)
 
+### Orthogonal Mode (mode = 2)
+
+#### Camera Rotation
+
+- **Arrow Left** - Rotate view left
+- **Arrow Right** - Rotate view right
+- **Arrow Up** - Rotate view upward (clamped to +90°)
+- **Arrow Down** - Rotate view downward (clamped to -90°)
+
 ### Lighting Controls
 
 #### Light Motion & Modes
 
 - **l**- Toggle automatic light motion
-- **b / B** - Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
+- **b**- Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
 
 #### Light Orbit Rotation
 
@@ -114,6 +123,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Drag** - Move object
 - **Release** - Place object
 - **g / G** - Toggle snap-to-grid
+- **B** - Toggle bounding-box highlight for objects
 
 #### Object Rotation
 
@@ -139,14 +149,14 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 
 ## References
 
-- Shaders
-  - Ex25.c - shaders.c
+- **Shaders**
+  - Ex25.c
   - https://www.rastertek.com/gl4linuxtut33.html
   - https://clockworkchilli.com/blog/8_a_fire_shader_in_glsl_for_your_webgl_games
   - https://godotshaders.com/shader/balatro-fire-shader/
-- Highlight selected object
+- **PreHighlight selected object**
   - Ex31.c
-- Ray Intersection - Mouse
+- **Ray Intersection - Mouse**
   - https://www.cppstories.com/2012/06/select-mouse-opengl.html/
   - https://www.opengl.org/archives/resources/faq/technical/selection.htm
   - https://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/

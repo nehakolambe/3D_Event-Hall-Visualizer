@@ -103,7 +103,7 @@ void controls_key(unsigned char key, int x, int y)
             fov = 25.0;
         break;
 
-    // Move camera backward (projection mode only)
+    // Move camera backward (prespective mode only)
     case '(':
         if (mode == 0)
         {
@@ -113,7 +113,7 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    // Move camera forward (projection mode only)
+    // Move camera forward (prespective mode only)
     case ')':
         if (mode == 0)
         {
@@ -202,7 +202,7 @@ void controls_key(unsigned char key, int x, int y)
         }
         break;
 
-    // Toggle FPV / Projection / Orthogonal mode
+    // Toggle FPV / Prespective / Orthogonal mode
     case 'm':
     case 'M':
         mode = (mode + 1) % 3;
@@ -308,7 +308,7 @@ void controls_special(int key, int x, int y)
     }
     else
     {
-        // Projection camera rotation
+        // prespective camera rotation
         switch (key)
         {
         case GLUT_KEY_RIGHT:
