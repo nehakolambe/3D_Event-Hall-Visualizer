@@ -26,8 +26,8 @@ static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
     float zmax = obj->subBox[boxIndex][5];
 
     float angle = -obj->rotation * (M_PI / 180.0f);
-    float c = cosf(angle);
-    float s = sinf(angle);
+    float cosYaw = cosf(angle);
+    float sinYaw = sinf(angle);
 
     *minX = *minZ = +1e9f;
     *maxX = *maxZ = -1e9f;
@@ -35,15 +35,15 @@ static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
     *minY = ymin + obj->y;
     *maxY = ymax + obj->y;
 
-    for (int ix = 0; ix < 2; ix++)
+    for (int cornerXIndex = 0; cornerXIndex < 2; cornerXIndex++)
     {
-        float x = (ix == 0) ? xmin : xmax;
-        for (int iz = 0; iz < 2; iz++)
+        float x = (cornerXIndex == 0) ? xmin : xmax;
+        for (int cornerZIndex = 0; cornerZIndex < 2; cornerZIndex++)
         {
-            float z = (iz == 0) ? zmin : zmax;
+            float z = (cornerZIndex == 0) ? zmin : zmax;
 
-            float xr = c * x - s * z + worldX;
-            float zr = s * x + c * z + worldZ;
+            float xr = cosYaw * x - sinYaw * z + worldX;
+            float zr = sinYaw * x + cosYaw * z + worldZ;
 
             if (xr < *minX)
                 *minX = xr;
@@ -73,17 +73,17 @@ static void buildBoxOBB(const SceneObject *obj, int boxIndex,
     float halfZ = 0.5f * (zmax - zmin);
 
     float angle = -obj->rotation * (M_PI / 180.0f);
-    float c = cosf(angle);
-    float s = sinf(angle);
+    float cosYaw = cosf(angle);
+    float sinYaw = sinf(angle);
 
-    box->centerX = c * localCenterX - s * localCenterZ + worldX;
-    box->centerZ = s * localCenterX + c * localCenterZ + worldZ;
+    box->centerX = cosYaw * localCenterX - sinYaw * localCenterZ + worldX;
+    box->centerZ = sinYaw * localCenterX + cosYaw * localCenterZ + worldZ;
     box->halfX = halfX;
     box->halfZ = halfZ;
-    box->axis[0][0] = c;
-    box->axis[0][1] = s;
-    box->axis[1][0] = -s;
-    box->axis[1][1] = c;
+    box->axis[0][0] = cosYaw;
+    box->axis[0][1] = sinYaw;
+    box->axis[1][0] = -sinYaw;
+    box->axis[1][1] = cosYaw;
     box->minY = ymin + obj->y;
     box->maxY = ymax + obj->y;
 }
@@ -150,32 +150,32 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
             continue;
 
         // For every sub-box of the moving object
-        for (int a = 0; a < movingObj->subBoxCount; a++)
+        for (int movingSubBoxIndex = 0; movingSubBoxIndex < movingObj->subBoxCount; movingSubBoxIndex++)
         {
-            float a_xmin, a_xmax, a_ymin, a_ymax, a_zmin, a_zmax;
+            float movingMinX, movingMaxX, movingMinY, movingMaxY, movingMinZ, movingMaxZ;
             BoxOBB boxA;
 
-            computeRotatedBounds(movingObj, a, newX, newZ,
-                                 &a_xmin, &a_xmax,
-                                 &a_ymin, &a_ymax,
-                                 &a_zmin, &a_zmax);
-            buildBoxOBB(movingObj, a, newX, newZ, &boxA);
+            computeRotatedBounds(movingObj, movingSubBoxIndex, newX, newZ,
+                                 &movingMinX, &movingMaxX,
+                                 &movingMinY, &movingMaxY,
+                                 &movingMinZ, &movingMaxZ);
+            buildBoxOBB(movingObj, movingSubBoxIndex, newX, newZ, &boxA);
 
             // Compare with each sub-box of the other object
-            for (int b = 0; b < other->subBoxCount; b++)
+            for (int otherSubBoxIndex = 0; otherSubBoxIndex < other->subBoxCount; otherSubBoxIndex++)
             {
-                float b_xmin, b_xmax, b_ymin, b_ymax, b_zmin, b_zmax;
+                float otherMinX, otherMaxX, otherMinY, otherMaxY, otherMinZ, otherMaxZ;
                 BoxOBB boxB;
-                computeRotatedBounds(other, b, other->x, other->z,
-                                     &b_xmin, &b_xmax,
-                                     &b_ymin, &b_ymax,
-                                     &b_zmin, &b_zmax);
-                buildBoxOBB(other, b, other->x, other->z, &boxB);
+                computeRotatedBounds(other, otherSubBoxIndex, other->x, other->z,
+                                     &otherMinX, &otherMaxX,
+                                     &otherMinY, &otherMaxY,
+                                     &otherMinZ, &otherMaxZ);
+                buildBoxOBB(other, otherSubBoxIndex, other->x, other->z, &boxB);
 
                 // AABB horizontal overlap check
                 bool overlapXZ =
-                    (a_xmax > b_xmin && a_xmin < b_xmax &&
-                     a_zmax > b_zmin && a_zmin < b_zmax);
+                    (movingMaxX > otherMinX && movingMinX < otherMaxX &&
+                     movingMaxZ > otherMinZ && movingMinZ < otherMaxZ);
 
                 if (!overlapXZ)
                     continue;

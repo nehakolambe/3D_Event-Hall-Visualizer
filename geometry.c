@@ -3,23 +3,23 @@
 // Cylinder
 void drawCylinder(float radius, float height, int slices)
 {
-    const float h = height;
+    const float cylinderHeight = height;
 
     // Side wall
     glBegin(GL_QUAD_STRIP);
-    for (int i = 0; i <= slices; i++)
+    for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float a = 2.0f * M_PI * i / slices;
-        float x = cos(a);
-        float z = sin(a);
+        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
+        float x = cos(angleRadians);
+        float z = sin(angleRadians);
 
         glNormal3f(x, 0, z);
 
-        glTexCoord2f((float)i / slices, 0.0f);
+        glTexCoord2f((float)sliceIndex / slices, 0.0f);
         glVertex3f(radius * x, 0.0f, radius * z);
 
-        glTexCoord2f((float)i / slices, 1.0f);
-        glVertex3f(radius * x, h, radius * z);
+        glTexCoord2f((float)sliceIndex / slices, 1.0f);
+        glVertex3f(radius * x, cylinderHeight, radius * z);
     }
     glEnd();
 
@@ -27,16 +27,16 @@ void drawCylinder(float radius, float height, int slices)
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 1, 0);
     glTexCoord2f(0.5f, 0.5f);
-    glVertex3f(0.0f, h, 0.0f);
+    glVertex3f(0.0f, cylinderHeight, 0.0f);
 
-    for (int i = 0; i <= slices; i++)
+    for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float a = 2.0f * M_PI * i / slices;
-        float x = cos(a) * radius;
-        float z = sin(a) * radius;
+        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
+        float x = cos(angleRadians) * radius;
+        float z = sin(angleRadians) * radius;
 
-        glTexCoord2f(0.5f + 0.5f * cos(a), 0.5f + 0.5f * sin(a));
-        glVertex3f(x, h, z);
+        glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
+        glVertex3f(x, cylinderHeight, z);
     }
     glEnd();
 
@@ -46,13 +46,13 @@ void drawCylinder(float radius, float height, int slices)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.0f, 0.0f);
 
-    for (int i = 0; i <= slices; i++)
+    for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float a = 2.0f * M_PI * i / slices;
-        float x = cos(a) * radius;
-        float z = sin(a) * radius;
+        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
+        float x = cos(angleRadians) * radius;
+        float z = sin(angleRadians) * radius;
 
-        glTexCoord2f(0.5f + 0.5f * cos(a), 0.5f + 0.5f * sin(a));
+        glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
         glVertex3f(x, 0.0f, z);
     }
     glEnd();
@@ -97,7 +97,7 @@ void drawSphere(float radius, int slices, int stacks)
 // Disk
 void drawDisk(float radius, float y, float thickness)
 {
-    const int segs = 48;
+    const int segmentCount = 48;
     float topY = y + thickness;
 
     if (glIsEnabled(GL_LIGHTING))
@@ -113,14 +113,14 @@ void drawDisk(float radius, float y, float thickness)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, topY, 0);
 
-    for (int i = 0; i <= segs; i++)
+    for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float a = 2.0f * M_PI * i / segs;
-        float x = radius * cosf(a);
-        float z = radius * sinf(a);
+        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
+        float x = radius * cosf(angleRadians);
+        float z = radius * sinf(angleRadians);
 
-        float u = 0.5f + 0.5f * cosf(a);
-        float v = 0.5f + 0.5f * sinf(a);
+        float u = 0.5f + 0.5f * cosf(angleRadians);
+        float v = 0.5f + 0.5f * sinf(angleRadians);
 
         glTexCoord2f(u, v);
         glVertex3f(x, topY, z);
@@ -133,14 +133,14 @@ void drawDisk(float radius, float y, float thickness)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, y, 0);
 
-    for (int i = 0; i <= segs; i++)
+    for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float a = 2.0f * M_PI * i / segs;
-        float x = radius * cosf(a);
-        float z = radius * sinf(a);
+        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
+        float x = radius * cosf(angleRadians);
+        float z = radius * sinf(angleRadians);
 
-        float u = 0.5f + 0.5f * cosf(a);
-        float v = 0.5f + 0.5f * sinf(a);
+        float u = 0.5f + 0.5f * cosf(angleRadians);
+        float v = 0.5f + 0.5f * sinf(angleRadians);
 
         glTexCoord2f(u, v);
         glVertex3f(x, y, z);
@@ -149,14 +149,14 @@ void drawDisk(float radius, float y, float thickness)
 
     // side wall
     glBegin(GL_QUAD_STRIP);
-    for (int i = 0; i <= segs; i++)
+    for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float a = 2.0f * M_PI * i / segs;
-        float x = radius * cosf(a);
-        float z = radius * sinf(a);
+        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
+        float x = radius * cosf(angleRadians);
+        float z = radius * sinf(angleRadians);
 
-        glNormal3f(cosf(a), 0, sinf(a));
-        float u = (float)i / segs;
+        glNormal3f(cosf(angleRadians), 0, sinf(angleRadians));
+        float u = (float)segmentIndex / segmentCount;
 
         glTexCoord2f(u, 0);
         glVertex3f(x, y, z);

@@ -35,7 +35,7 @@ void drawTable(float x, float z)
     float length = 4.0f;
     float width = 2.0f;
     float radius = 0.3f;
-    int segs = 20;
+    int cornerSegmentCount = 20;
 
     float yBottom = tabletopY;
     float yTop = tabletopY + thickness;
@@ -109,28 +109,28 @@ void drawTable(float x, float z)
     glEnd();
 
     // rounded corners (top)
-    for (int c = 0; c < 4; c++)
+    for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        float cx = (c == 0 || c == 3) ? innerX : -innerX;
-        float cz = (c < 2) ? innerZ : -innerZ;
+        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerX : -innerX;
+        float cornerZ = (cornerIndex < 2) ? innerZ : -innerZ;
 
-        float startDeg = (float)(c * 90);
+        float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
 
         glBegin(GL_TRIANGLE_FAN);
         glNormal3f(0, 1, 0);
 
         glTexCoord2f(0.5f, 0.5f);
-        glVertex3f(cx, yTop, cz);
+        glVertex3f(cornerX, yTop, cornerZ);
 
-        for (int i = 0; i <= segs; i++)
+        for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
-            float a = (startDeg + i * (endDeg - startDeg) / segs) * (M_PI / 180.0f);
-            float xPos = cx + radius * cosf(a);
-            float zPos = cz + radius * sinf(a);
+            float angle = (startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount) * (M_PI / 180.0f);
+            float xPos = cornerX + radius * cosf(angle);
+            float zPos = cornerZ + radius * sinf(angle);
 
-            float u = 0.5f + 0.5f * cosf(a);
-            float v = 0.5f + 0.5f * sinf(a);
+            float u = 0.5f + 0.5f * cosf(angle);
+            float v = 0.5f + 0.5f * sinf(angle);
 
             glTexCoord2f(u, v);
             glVertex3f(xPos, yTop, zPos);
@@ -139,27 +139,27 @@ void drawTable(float x, float z)
     }
 
     // curved side walls
-    for (int c = 0; c < 4; c++)
+    for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        float cx = (c == 0 || c == 3) ? innerX : -innerX;
-        float cz = (c < 2) ? innerZ : -innerZ;
+        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerX : -innerX;
+        float cornerZ = (cornerIndex < 2) ? innerZ : -innerZ;
 
-        float startDeg = (float)(c * 90);
+        float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
 
         glBegin(GL_QUAD_STRIP);
-        for (int i = 0; i <= segs; i++)
+        for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
-            float a = (startDeg + i * (endDeg - startDeg) / segs) * (M_PI / 180.0f);
+            float angle = (startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount) * (M_PI / 180.0f);
 
-            float xPos = cx + radius * cosf(a);
-            float zPos = cz + radius * sinf(a);
-            float nx = cosf(a);
-            float nz = sinf(a);
+            float xPos = cornerX + radius * cosf(angle);
+            float zPos = cornerZ + radius * sinf(angle);
+            float nx = cosf(angle);
+            float nz = sinf(angle);
 
             glNormal3f(nx, 0, nz);
 
-            float u = (float)i / segs;
+            float u = (float)segmentIndex / cornerSegmentCount;
 
             glTexCoord2f(u, 0);
             glVertex3f(xPos, yBottom, zPos);
@@ -219,7 +219,7 @@ void drawTable(float x, float z)
     glEnd();
 
     // legs
-    float pos[4][2] = {
+    float legOffsets[4][2] = {
         {innerX, innerZ},
         {-innerX, innerZ},
         {-innerX, -innerZ},
@@ -228,7 +228,7 @@ void drawTable(float x, float z)
     for (int i = 0; i < 4; i++)
     {
         glPushMatrix();
-        glTranslatef(pos[i][0], legHeight * 0.5f, pos[i][1]);
+        glTranslatef(legOffsets[i][0], legHeight * 0.5f, legOffsets[i][1]);
         drawCuboid(legSize, legHeight, legSize);
         glPopMatrix();
     }
@@ -360,8 +360,8 @@ void drawDoor(float x, float z, float width, float height)
 void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                       float yBase, float radiusH, float radiusV, float zOffset)
 {
-    int segH = 64;
-    int segV = 32;
+    int horizontalSegmentCount = 64;
+    int verticalSegmentCount = 32;
 
     float halfH = height * 0.5f;
     float angleH = width / radiusH;
@@ -377,65 +377,65 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 
     glBegin(GL_QUADS);
 
-    for (int i = 0; i < segH; i++)
+    for (int horizontalIndex = 0; horizontalIndex < horizontalSegmentCount; horizontalIndex++)
     {
-        float u1 = (float)i / segH;
-        float u2 = (float)(i + 1) / segH;
+        float uStart = (float)horizontalIndex / horizontalSegmentCount;
+        float uEnd = (float)(horizontalIndex + 1) / horizontalSegmentCount;
 
-        float t1 = -angleH * 0.5f + angleH * u1;
-        float t2 = -angleH * 0.5f + angleH * u2;
+        float thetaStart = -angleH * 0.5f + angleH * uStart;
+        float thetaEnd = -angleH * 0.5f + angleH * uEnd;
 
-        for (int j = 0; j < segV; j++)
+        for (int verticalIndex = 0; verticalIndex < verticalSegmentCount; verticalIndex++)
         {
-            float v1 = (float)j / segV;
-            float v2 = (float)(j + 1) / segV;
+            float vStart = (float)verticalIndex / verticalSegmentCount;
+            float vEnd = (float)(verticalIndex + 1) / verticalSegmentCount;
 
-            float p1 = -angleV * 0.5f + angleV * v1;
-            float p2 = -angleV * 0.5f + angleV * v2;
+            float phiStart = -angleV * 0.5f + angleV * vStart;
+            float phiEnd = -angleV * 0.5f + angleV * vEnd;
 
             // Precompute trig values
-            float sin_t1 = sinf(t1), cos_t1 = cosf(t1);
-            float sin_t2 = sinf(t2), cos_t2 = cosf(t2);
+            float sinThetaStart = sinf(thetaStart), cosThetaStart = cosf(thetaStart);
+            float sinThetaEnd = sinf(thetaEnd), cosThetaEnd = cosf(thetaEnd);
 
-            float sin_p1 = sinf(p1), sin_p2 = sinf(p2);
+            float sinPhiStart = sinf(phiStart), sinPhiEnd = sinf(phiEnd);
 
             // Vertex positions
-            float x11 = radiusH * sin_t1;
-            float z11 = -radiusH * cos_t1 + radiusH + zOffset;
-            float y11 = radiusV * sin_p1;
+            float bottomLeftX = radiusH * sinThetaStart;
+            float bottomLeftZ = -radiusH * cosThetaStart + radiusH + zOffset;
+            float bottomLeftY = radiusV * sinPhiStart;
 
-            float x21 = radiusH * sin_t2;
-            float z21 = -radiusH * cos_t2 + radiusH + zOffset;
-            float y21 = radiusV * sin_p1;
+            float bottomRightX = radiusH * sinThetaEnd;
+            float bottomRightZ = -radiusH * cosThetaEnd + radiusH + zOffset;
+            float bottomRightY = radiusV * sinPhiStart;
 
-            float x22 = x21;
-            float z22 = z21;
-            float y22 = radiusV * sin_p2;
+            float topRightX = bottomRightX;
+            float topRightZ = bottomRightZ;
+            float topRightY = radiusV * sinPhiEnd;
 
-            float x12 = x11;
-            float z12 = z11;
-            float y12 = radiusV * sin_p2;
+            float topLeftX = bottomLeftX;
+            float topLeftZ = bottomLeftZ;
+            float topLeftY = radiusV * sinPhiEnd;
 
             // Normals
-            float nx_t1 = sin_t1, nz_t1 = cos_t1;
-            float nx_t2 = sin_t2, nz_t2 = cos_t2;
+            float normalThetaStart = sinThetaStart, normalZThetaStart = cosThetaStart;
+            float normalThetaEnd = sinThetaEnd, normalZThetaEnd = cosThetaEnd;
 
             // Quad vertices
-            glNormal3f(nx_t1, sin_p1, nz_t1);
-            glTexCoord2f(u1, v1);
-            glVertex3f(x11, y11, z11);
+            glNormal3f(normalThetaStart, sinPhiStart, normalZThetaStart);
+            glTexCoord2f(uStart, vStart);
+            glVertex3f(bottomLeftX, bottomLeftY, bottomLeftZ);
 
-            glNormal3f(nx_t2, sin_p1, nz_t2);
-            glTexCoord2f(u2, v1);
-            glVertex3f(x21, y21, z21);
+            glNormal3f(normalThetaEnd, sinPhiStart, normalZThetaEnd);
+            glTexCoord2f(uEnd, vStart);
+            glVertex3f(bottomRightX, bottomRightY, bottomRightZ);
 
-            glNormal3f(nx_t2, sin_p2, nz_t2);
-            glTexCoord2f(u2, v2);
-            glVertex3f(x22, y22, z22);
+            glNormal3f(normalThetaEnd, sinPhiEnd, normalZThetaEnd);
+            glTexCoord2f(uEnd, vEnd);
+            glVertex3f(topRightX, topRightY, topRightZ);
 
-            glNormal3f(nx_t1, sin_p2, nz_t1);
-            glTexCoord2f(u1, v2);
-            glVertex3f(x12, y12, z12);
+            glNormal3f(normalThetaStart, sinPhiEnd, normalZThetaStart);
+            glTexCoord2f(uStart, vEnd);
+            glVertex3f(topLeftX, topLeftY, topLeftZ);
         }
     }
 
@@ -448,7 +448,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 // lamp with bulb and light mode
 void drawLamp(float xPos, float zPos)
 {
-    int segments = 32;
+    int segmentCount = 32;
 
     float baseRadius = 0.25f;
     float baseHeight = 0.05f;
@@ -474,9 +474,9 @@ void drawLamp(float xPos, float zPos)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.0f, 0.0f);
 
-    for (int i = 0; i <= segments; i++)
+    for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float t = 2.0f * M_PI * i / segments;
+        float t = 2.0f * M_PI * segmentIndex / segmentCount;
         float u = (cosf(t) + 1.0f) * 0.5f;
         float v = (sinf(t) + 1.0f) * 0.5f;
 
@@ -486,10 +486,10 @@ void drawLamp(float xPos, float zPos)
     glEnd();
 
     // Pole cylinder
-    for (int i = 0; i < segments; i++)
+    for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
-        float t1 = 2.0f * M_PI * i / segments;
-        float t2 = 2.0f * M_PI * (i + 1) / segments;
+        float t1 = 2.0f * M_PI * segmentIndex / segmentCount;
+        float t2 = 2.0f * M_PI * (segmentIndex + 1) / segmentCount;
 
         float x1 = poleRadius * cosf(t1);
         float z1 = poleRadius * sinf(t1);
@@ -502,19 +502,19 @@ void drawLamp(float xPos, float zPos)
         glBegin(GL_QUADS);
 
         glNormal3f(nx1, 0.0f, nz1);
-        glTexCoord2f((float)i / segments, 0.0f);
+        glTexCoord2f((float)segmentIndex / segmentCount, 0.0f);
         glVertex3f(x1, 0.0f, z1);
 
         glNormal3f(nx2, 0.0f, nz2);
-        glTexCoord2f((float)(i + 1) / segments, 0.0f);
+        glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 0.0f);
         glVertex3f(x2, 0.0f, z2);
 
         glNormal3f(nx2, 0.0f, nz2);
-        glTexCoord2f((float)(i + 1) / segments, 1.0f);
+        glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 1.0f);
         glVertex3f(x2, poleHeight, z2);
 
         glNormal3f(nx1, 0.0f, nz1);
-        glTexCoord2f((float)i / segments, 1.0f);
+        glTexCoord2f((float)segmentIndex / segmentCount, 1.0f);
         glVertex3f(x1, poleHeight, z1);
 
         glEnd();
@@ -546,10 +546,10 @@ void drawLamp(float xPos, float zPos)
     float shadeBottomY = poleHeight;
     float shadeTopY = poleHeight + shadeHeight;
 
-    for (int i = 0; i < segments; i++)
+    for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
-        float t1 = 2.0f * M_PI * i / segments;
-        float t2 = 2.0f * M_PI * (i + 1) / segments;
+        float t1 = 2.0f * M_PI * segmentIndex / segmentCount;
+        float t2 = 2.0f * M_PI * (segmentIndex + 1) / segmentCount;
 
         float x1b = shadeBottomRadius * cosf(t1);
         float z1b = shadeBottomRadius * sinf(t1);
@@ -567,19 +567,19 @@ void drawLamp(float xPos, float zPos)
         glBegin(GL_QUADS);
 
         glNormal3f(nx1, 0.0f, nz1);
-        glTexCoord2f((float)i / segments, 0.0f);
+        glTexCoord2f((float)segmentIndex / segmentCount, 0.0f);
         glVertex3f(x1b, shadeBottomY, z1b);
 
         glNormal3f(nx2, 0.0f, nz2);
-        glTexCoord2f((float)(i + 1) / segments, 0.0f);
+        glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 0.0f);
         glVertex3f(x2b, shadeBottomY, z2b);
 
         glNormal3f(nx2, 0.0f, nz2);
-        glTexCoord2f((float)(i + 1) / segments, 1.0f);
+        glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 1.0f);
         glVertex3f(x2t, shadeTopY, z2t);
 
         glNormal3f(nx1, 0.0f, nz1);
-        glTexCoord2f((float)i / segments, 1.0f);
+        glTexCoord2f((float)segmentIndex / segmentCount, 1.0f);
         glVertex3f(x1t, shadeTopY, z1t);
 
         glEnd();
@@ -667,7 +667,7 @@ void drawBanquetChair(float x, float z)
     // backrest params
     const float backH = 1.3f;
     const float curveD = 0.25f;
-    const int segs = 20;
+    const int backrestSegments = 20;
 
     const float halfT = seatT * 0.5f;
     const float backBaseY = seatY - halfT;
@@ -828,10 +828,10 @@ void drawBanquetChair(float x, float z)
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
     }
 
-    for (int i = 0; i < segs; i++)
+    for (int segmentIndex = 0; segmentIndex < backrestSegments; segmentIndex++)
     {
-        float t1 = (float)i / segs;
-        float t2 = (float)(i + 1) / segs;
+        float t1 = (float)segmentIndex / backrestSegments;
+        float t2 = (float)(segmentIndex + 1) / backrestSegments;
 
         float y1 = backBaseY + t1 * backH;
         float y2 = backBaseY + t2 * backH;

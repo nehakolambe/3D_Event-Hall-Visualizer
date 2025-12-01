@@ -138,19 +138,19 @@ void drawTiledSurface(
     float nx, float ny, float nz,
     float tileSize)
 {
-    int dir;
+    int planeOrientation;
 
     if (y1 == y2)
-        dir = 0; // XZ plane
+        planeOrientation = 0; // XZ plane
     else if (z1 == z2)
-        dir = 1; // XY plane
+        planeOrientation = 1; // XY plane
     else
-        dir = 2; // ZY plane
+        planeOrientation = 2; // ZY plane
 
     glNormal3f(nx, ny, nz);
 
     // XZ plane (floor/ceiling)
-    if (dir == 0)
+    if (planeOrientation == 0)
     {
         float xmin = x1, xmax = x2;
         float zmin = z1, zmax = z2;
@@ -160,27 +160,27 @@ void drawTiledSurface(
         {
             for (float z = zmin; z < zmax; z += tileSize)
             {
-                float xA = x;
-                float xB = fminf(x + tileSize, xmax);
-                float zA = z;
-                float zB = fminf(z + tileSize, zmax);
+                float tileMinX = x;
+                float tileMaxX = fminf(x + tileSize, xmax);
+                float tileMinZ = z;
+                float tileMaxZ = fminf(z + tileSize, zmax);
 
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
-                glVertex3f(xA, y, zA);
+                glVertex3f(tileMinX, y, tileMinZ);
                 glTexCoord2f(1, 0);
-                glVertex3f(xB, y, zA);
+                glVertex3f(tileMaxX, y, tileMinZ);
                 glTexCoord2f(1, 1);
-                glVertex3f(xB, y, zB);
+                glVertex3f(tileMaxX, y, tileMaxZ);
                 glTexCoord2f(0, 1);
-                glVertex3f(xA, y, zB);
+                glVertex3f(tileMinX, y, tileMaxZ);
                 glEnd();
             }
         }
     }
 
     // XY plane (front/back walls)
-    else if (dir == 1)
+    else if (planeOrientation == 1)
     {
         float xmin = x1, xmax = x2;
         float ymin = y1, ymax = y2;
@@ -190,20 +190,20 @@ void drawTiledSurface(
         {
             for (float y = ymin; y < ymax; y += tileSize)
             {
-                float xA = x;
-                float xB = fminf(x + tileSize, xmax);
-                float yA = y;
-                float yB = fminf(y + tileSize, ymax);
+                float tileMinX = x;
+                float tileMaxX = fminf(x + tileSize, xmax);
+                float tileMinY = y;
+                float tileMaxY = fminf(y + tileSize, ymax);
 
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
-                glVertex3f(xA, yA, z);
+                glVertex3f(tileMinX, tileMinY, z);
                 glTexCoord2f(1, 0);
-                glVertex3f(xB, yA, z);
+                glVertex3f(tileMaxX, tileMinY, z);
                 glTexCoord2f(1, 1);
-                glVertex3f(xB, yB, z);
+                glVertex3f(tileMaxX, tileMaxY, z);
                 glTexCoord2f(0, 1);
-                glVertex3f(xA, yB, z);
+                glVertex3f(tileMinX, tileMaxY, z);
                 glEnd();
             }
         }
@@ -220,20 +220,20 @@ void drawTiledSurface(
         {
             for (float y = ymin; y < ymax; y += tileSize)
             {
-                float zA = z;
-                float zB = fminf(z + tileSize, zmax);
-                float yA = y;
-                float yB = fminf(y + tileSize, ymax);
+                float tileMinZ = z;
+                float tileMaxZ = fminf(z + tileSize, zmax);
+                float tileMinY = y;
+                float tileMaxY = fminf(y + tileSize, ymax);
 
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
-                glVertex3f(x, yA, zA);
+                glVertex3f(x, tileMinY, tileMinZ);
                 glTexCoord2f(1, 0);
-                glVertex3f(x, yA, zB);
+                glVertex3f(x, tileMinY, tileMaxZ);
                 glTexCoord2f(1, 1);
-                glVertex3f(x, yB, zB);
+                glVertex3f(x, tileMaxY, tileMaxZ);
                 glTexCoord2f(0, 1);
-                glVertex3f(x, yB, zA);
+                glVertex3f(x, tileMaxY, tileMinZ);
                 glEnd();
             }
         }

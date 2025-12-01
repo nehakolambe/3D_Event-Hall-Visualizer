@@ -10,9 +10,9 @@ static double prevFpvY = 0.0;
 static double prevFpvZ = 0.0;
 static double prevYaw = 0.0;
 static double prevPitch = 0.0;
-static double prevTh = 0.0;
-static double prevPh = 0.0;
-static double prevDim = 0.0;
+static double prevAzimuthDeg = 0.0;
+static double prevElevationDeg = 0.0;
+static double prevViewRadius = 0.0;
 
 static Stroke strokes[MAX_STROKES];
 static int strokeCount = 0;
@@ -207,9 +207,9 @@ void whiteboard_activate(void)
     prevFpvZ = fpvZ;
     prevYaw = yaw;
     prevPitch = pitch;
-    prevTh = th;
-    prevPh = ph;
-    prevDim = dim;
+    prevAzimuthDeg = th;
+    prevElevationDeg = ph;
+    prevViewRadius = dim;
 
     whiteboardMode = 1;
     dragging = 0;
@@ -229,9 +229,9 @@ void whiteboard_deactivate(void)
     fpvZ = prevFpvZ;
     yaw = prevYaw;
     pitch = prevPitch;
-    th = prevTh;
-    ph = prevPh;
-    dim = prevDim;
+    th = prevAzimuthDeg;
+    ph = prevElevationDeg;
+    dim = prevViewRadius;
     whiteboard_background_invalidate();
 }
 
@@ -269,15 +269,15 @@ void whiteboard_render(float x, float y, float width, float height)
     glLineWidth(4.0f);
     for (int i = 0; i < strokeCount; i++)
     {
-        Stroke *s = &strokes[i];
-        if (s->erase)
+        Stroke *stroke = &strokes[i];
+        if (stroke->erase)
             glColor3f(1.0f, 1.0f, 1.0f);
         else
             glColor3f(0.0f, 0.0f, 0.0f);
 
         glBegin(GL_LINES);
-        glVertex2f(x + s->u1 * width, y + s->v1 * height);
-        glVertex2f(x + s->u2 * width, y + s->v2 * height);
+        glVertex2f(x + stroke->u1 * width, y + stroke->v1 * height);
+        glVertex2f(x + stroke->u2 * width, y + stroke->v2 * height);
         glEnd();
     }
 
@@ -304,13 +304,13 @@ void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLe
     glLineWidth(3.0f);
     for (int i = 0; i < strokeCount; i++)
     {
-        Stroke *s = &strokes[i];
-        float z1 = boardRight - s->u1 * boardWidth;
-        float z2 = boardRight - s->u2 * boardWidth;
-        float y1 = boardBottom + s->v1 * boardHeight;
-        float y2 = boardBottom + s->v2 * boardHeight;
+        Stroke *stroke = &strokes[i];
+        float z1 = boardRight - stroke->u1 * boardWidth;
+        float z2 = boardRight - stroke->u2 * boardWidth;
+        float y1 = boardBottom + stroke->v1 * boardHeight;
+        float y2 = boardBottom + stroke->v2 * boardHeight;
 
-        if (s->erase)
+        if (stroke->erase)
             glColor3f(1.0f, 1.0f, 1.0f);
         else
             glColor3f(0.0f, 0.0f, 0.0f);
@@ -331,8 +331,8 @@ void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLe
 
 void drawWhiteboardOverlay(void)
 {
-    float boardX, boardY, boardW, boardH;
-    whiteboard_get_canvas_rect(&boardX, &boardY, &boardW, &boardH);
+    float canvasX, canvasY, canvasWidth, canvasHeight;
+    whiteboard_get_canvas_rect(&canvasX, &canvasY, &canvasWidth, &canvasHeight);
 
     glDisable(GL_DEPTH_TEST);
 
@@ -364,7 +364,7 @@ void drawWhiteboardOverlay(void)
     glVertex2f(-4.0f, (float)screenHeight + 4.0f);
     glEnd();
 
-    whiteboard_render(boardX, boardY, boardW, boardH);
+    whiteboard_render(canvasX, canvasY, canvasWidth, canvasHeight);
 
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
