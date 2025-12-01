@@ -42,8 +42,8 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Esc** - Quit program (or exit whiteboard mode if active)
 - **m / M** - Toggle view mode (Prespective / First-person / Orthogonal)
 - **0** - Reset entire scene (camera, light, FPV, selection)
-- **S** - Save the layout as layout.csv
-- **L** - Load the layout using layout.csv
+- **/** - Save the layout as layout.csv
+- **?** - Load the layout using layout.csv
 
 ### Whiteboard Mode
 
@@ -73,7 +73,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 #### Movement
 
 - **W / w** - Move forward
-- **s** - Move backward
+- **s / S** - Move backward
 - **A / a** - Move left
 - **D / d** - Move right
 
@@ -102,8 +102,8 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 
 #### Light Motion & Modes
 
-- **l**- Toggle automatic light motion
-- **b**- Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
+- **l/L**- Toggle automatic light motion
+- **b/B**- Cycle light modes (0 = Off, 1 = Normal, 2 = Lamp-shade mode)
 
 #### Light Orbit Rotation
 
@@ -128,7 +128,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
 - **Drag** - Move object
 - **Release** - Place object
 - **g / G** - Toggle snap-to-grid
-- **B** - Toggle bounding-box highlight for objects
+- **`** - Toggle bounding-box highlight for objects
 
 #### Object Rotation
 

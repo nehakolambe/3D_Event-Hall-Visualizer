@@ -20,6 +20,7 @@ void controls_key(unsigned char key, int x, int y)
     {
     // Toggle dynamic light motion
     case 'l':
+    case 'L':
         moveLight = !moveLight;
         break;
 
@@ -34,11 +35,12 @@ void controls_key(unsigned char key, int x, int y)
 
     // Cycle through light modes
     case 'b':
+    case 'B':
         lightState = (lightState + 1) % 3;
         break;
 
     // Toggle bounding box highlight
-    case 'B':
+    case '`':
         bboxHighlightEnabled = !bboxHighlightEnabled;
         printf("Bounding box highlight %s.\n", bboxHighlightEnabled ? "enabled" : "disabled");
         break;
@@ -78,12 +80,12 @@ void controls_key(unsigned char key, int x, int y)
         break;
 
     // Save scene layout
-    case 'S':
+    case '/':
         save_scene("layout.csv");
         break;
 
     // Load scene layout
-    case 'L':
+    case '?':
         load_scene("layout.csv");
         break;
 
@@ -145,6 +147,7 @@ void controls_key(unsigned char key, int x, int y)
 
     // FPV backward
     case 's':
+    case 'S':
         if (mode == 1)
         {
             float newX = fpvX - speed * sin(radYaw);
