@@ -625,6 +625,13 @@ void drawLamp(float xPos, float zPos)
 
     drawSphere(0.25f, 20, 20); // bulb
 
+    // Clear the emission so other objects don't inherit the bulb glow
+    if (glIsEnabled(GL_LIGHTING))
+    {
+        float noGlow[] = {0, 0, 0, 1};
+        glMaterialfv(GL_FRONT, GL_EMISSION, noGlow);
+    }
+
     glPopMatrix();
 
     // set light position if lamp is on
