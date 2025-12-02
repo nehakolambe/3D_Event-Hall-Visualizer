@@ -1,7 +1,7 @@
 #include "CSCIx229.h"
 
-// cylinder leg
-static void drawLeg(float x, float z, float height, float radius)
+// Draw a textured cylinder used for table legs
+static void drawLeg(float legPosX, float legPosZ, float legHeight, float legRadius)
 {
     if (glIsEnabled(GL_LIGHTING))
     {
@@ -11,9 +11,9 @@ static void drawLeg(float x, float z, float height, float radius)
     }
 
     glPushMatrix();
-    glTranslatef(x, 0.0f, z);
+    glTranslatef(legPosX, 0.0f, legPosZ);
 
-    drawCylinder(radius, height, 32);
+    drawCylinder(legRadius, legHeight, 32);
 
     glPopMatrix();
     if (glIsEnabled(GL_LIGHTING))
@@ -22,25 +22,27 @@ static void drawLeg(float x, float z, float height, float radius)
     }
 }
 
-// rectangular event table
-void drawTable(float x, float z)
+// Render the rectangular event table with rounded corners and legs
+void drawTable(float posX, float posZ)
 {
     glPushMatrix();
-    glTranslatef(x, 0, z);
+    glTranslatef(posX, 0, posZ);
 
-    float tabletopY = 2.0f;
-    float thickness = 0.15f;
-    float legHeight = tabletopY;
-    float legSize = 0.25f;
-    float length = 4.0f;
-    float width = 2.0f;
-    float radius = 0.3f;
+    float tabletopHeight = 2.0f;
+    float tabletopThickness = 0.15f;
+    float legHeight = tabletopHeight;
+    float legThickness = 0.25f;
+    float tabletopLength = 4.0f;
+    float tabletopWidth = 2.0f;
+    float cornerRadius = 0.3f;
     int cornerSegmentCount = 20;
 
-    float yBottom = tabletopY;
-    float yTop = tabletopY + thickness;
-    float innerX = length * 0.5f - radius;
-    float innerZ = width * 0.5f - radius;
+    float tabletopBottomY = tabletopHeight;
+    float tabletopTopY = tabletopHeight + tabletopThickness;
+    float tabletopHalfLength = tabletopLength * 0.5f;
+    float tabletopHalfWidth = tabletopWidth * 0.5f;
+    float innerHalfLength = tabletopHalfLength - cornerRadius;
+    float innerHalfWidth = tabletopHalfWidth - cornerRadius;
 
     if (glIsEnabled(GL_LIGHTING))
     {
@@ -53,13 +55,13 @@ void drawTable(float x, float z)
     glNormal3f(0, 1, 0);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX, yTop, -innerZ);
+    glVertex3f(-innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX, yTop, -innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX, yTop, innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX, yTop, innerZ);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glEnd();
 
     // flat edge pads
@@ -68,51 +70,51 @@ void drawTable(float x, float z)
     // front
     glNormal3f(0, 1, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX, yTop, innerZ);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX, yTop, innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX, yTop, innerZ + radius);
+    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX, yTop, innerZ + radius);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
 
     // back
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX, yTop, -innerZ - radius);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX, yTop, -innerZ - radius);
+    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX, yTop, -innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX, yTop, -innerZ);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth);
 
     // left
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX - radius, yTop, -innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(-innerX, yTop, -innerZ);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(-innerX, yTop, innerZ);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX - radius, yTop, innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, innerHalfWidth);
 
     // right
     glTexCoord2f(0, 0);
-    glVertex3f(innerX, yTop, -innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX + radius, yTop, -innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX + radius, yTop, innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(innerX, yTop, innerZ);
+    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
 
     glEnd();
 
-    // rounded corners (top)
+    // Generate rounded top corners at each end
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerX : -innerX;
-        float cornerZ = (cornerIndex < 2) ? innerZ : -innerZ;
+        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
+        float cornerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
 
         float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
@@ -121,50 +123,54 @@ void drawTable(float x, float z)
         glNormal3f(0, 1, 0);
 
         glTexCoord2f(0.5f, 0.5f);
-        glVertex3f(cornerX, yTop, cornerZ);
+        glVertex3f(cornerX, tabletopTopY, cornerZ);
 
+        // Sweep around this corner to create the fan
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
-            float angle = (startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount) * (M_PI / 180.0f);
-            float xPos = cornerX + radius * cosf(angle);
-            float zPos = cornerZ + radius * sinf(angle);
+            float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
+            float angleRadians = angleDegrees * (M_PI / 180.0f);
+            float vertexX = cornerX + cornerRadius * cosf(angleRadians);
+            float vertexZ = cornerZ + cornerRadius * sinf(angleRadians);
 
-            float u = 0.5f + 0.5f * cosf(angle);
-            float v = 0.5f + 0.5f * sinf(angle);
+            float texU = 0.5f + 0.5f * cosf(angleRadians);
+            float texV = 0.5f + 0.5f * sinf(angleRadians);
 
-            glTexCoord2f(u, v);
-            glVertex3f(xPos, yTop, zPos);
+            glTexCoord2f(texU, texV);
+            glVertex3f(vertexX, tabletopTopY, vertexZ);
         }
         glEnd();
     }
 
-    // curved side walls
+    // Build curved side strips along each rounded corner
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerX : -innerX;
-        float cornerZ = (cornerIndex < 2) ? innerZ : -innerZ;
+        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
+        float cornerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
 
         float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
 
         glBegin(GL_QUAD_STRIP);
+        // Connect bottom/top edges for each angular step
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
-            float angle = (startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount) * (M_PI / 180.0f);
+            float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
+            float angleRadians = angleDegrees * (M_PI / 180.0f);
 
-            float xPos = cornerX + radius * cosf(angle);
-            float zPos = cornerZ + radius * sinf(angle);
-            float nx = cosf(angle);
-            float nz = sinf(angle);
+            float vertexX = cornerX + cornerRadius * cosf(angleRadians);
+            float vertexZ = cornerZ + cornerRadius * sinf(angleRadians);
+            float normalX = cosf(angleRadians);
+            float normalZ = sinf(angleRadians);
 
-            glNormal3f(nx, 0, nz);
+            glNormal3f(normalX, 0, normalZ);
 
-            float u = (float)segmentIndex / cornerSegmentCount;
+            float texU = (float)segmentIndex / cornerSegmentCount;
 
-            glTexCoord2f(u, 0);
-            glVertex3f(xPos, yBottom, zPos);
-            glTexCoord2f(u, 1);
-            glVertex3f(xPos, yTop, zPos);
+            glTexCoord2f(texU, 0);
+            glVertex3f(vertexX, tabletopBottomY, vertexZ);
+            glTexCoord2f(texU, 1);
+            glVertex3f(vertexX, tabletopTopY, vertexZ);
         }
         glEnd();
     }
@@ -175,61 +181,62 @@ void drawTable(float x, float z)
     // front
     glNormal3f(0, 0, 1);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX, yBottom, innerZ + radius);
+    glVertex3f(-innerHalfLength, tabletopBottomY, innerHalfWidth + cornerRadius);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX, yBottom, innerZ + radius);
+    glVertex3f(tabletopHalfLength, tabletopBottomY, innerHalfWidth + cornerRadius);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX, yTop, innerZ + radius);
+    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX, yTop, innerZ + radius);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
 
     // back
     glNormal3f(0, 0, -1);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX, yBottom, -innerZ - radius);
+    glVertex3f(-tabletopHalfLength, tabletopBottomY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX, yBottom, -innerZ - radius);
+    glVertex3f(tabletopHalfLength, tabletopBottomY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX, yTop, -innerZ - radius);
+    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX, yTop, -innerZ - radius);
+    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
 
     // left
     glNormal3f(-1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerX - radius, yBottom, -innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopBottomY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(-innerX - radius, yBottom, innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopBottomY, innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(-innerX - radius, yTop, innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-innerX - radius, yTop, -innerZ);
+    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
 
     // right
     glNormal3f(1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(innerX + radius, yBottom, -innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopBottomY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(innerX + radius, yBottom, innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopBottomY, innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(innerX + radius, yTop, innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(innerX + radius, yTop, -innerZ);
+    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, -innerHalfWidth);
 
     glEnd();
 
     // legs
     float legOffsets[4][2] = {
-        {innerX, innerZ},
-        {-innerX, innerZ},
-        {-innerX, -innerZ},
-        {innerX, -innerZ}};
+        {innerHalfLength, innerHalfWidth},
+        {-innerHalfLength, innerHalfWidth},
+        {-innerHalfLength, -innerHalfWidth},
+        {innerHalfLength, -innerHalfWidth}};
 
-    for (int i = 0; i < 4; i++)
+    // Place four legs at the corners
+    for (int legIndex = 0; legIndex < 4; legIndex++)
     {
         glPushMatrix();
-        glTranslatef(legOffsets[i][0], legHeight * 0.5f, legOffsets[i][1]);
-        drawCuboid(legSize, legHeight, legSize);
+        glTranslatef(legOffsets[legIndex][0], legHeight * 0.5f, legOffsets[legIndex][1]);
+        drawCuboid(legThickness, legHeight, legThickness);
         glPopMatrix();
     }
 
@@ -377,6 +384,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
 
     glBegin(GL_QUADS);
 
+    // Iterate over horizontal slices of the curved panel
     for (int horizontalIndex = 0; horizontalIndex < horizontalSegmentCount; horizontalIndex++)
     {
         float uStart = (float)horizontalIndex / horizontalSegmentCount;
@@ -385,6 +393,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
         float thetaStart = -angleH * 0.5f + angleH * uStart;
         float thetaEnd = -angleH * 0.5f + angleH * uEnd;
 
+        // For each slice, cover the vertical bands
         for (int verticalIndex = 0; verticalIndex < verticalSegmentCount; verticalIndex++)
         {
             float vStart = (float)verticalIndex / verticalSegmentCount;
@@ -474,6 +483,7 @@ void drawLamp(float xPos, float zPos)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.0f, 0.0f);
 
+    // Step around the base disk circumference
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
         float t = 2.0f * M_PI * segmentIndex / segmentCount;
@@ -485,7 +495,8 @@ void drawLamp(float xPos, float zPos)
     }
     glEnd();
 
-    // Pole cylinder
+    // Build the cylindrical pole by connecting each segment
+    // Extrude the lamp shade cone in segments
     for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
         float t1 = 2.0f * M_PI * segmentIndex / segmentCount;
@@ -763,61 +774,62 @@ void drawBanquetChair(float x, float z)
         glBindTexture(GL_TEXTURE_2D, chairLegTex);
     }
 
-    float legX = seatW / 2 - 0.1f;
-    float legZ = seatD / 2 - 0.1f;
+    float legOffsetX = seatW / 2 - 0.1f;
+    float legOffsetZ = seatD / 2 - 0.1f;
 
-    for (int sx = -1; sx <= 1; sx += 2)     // left/right
-        for (int sz = -1; sz <= 1; sz += 2) // front/back
+    // Iterate over the four seat corners to place legs
+    for (int legSignX = -1; legSignX <= 1; legSignX += 2)
+        for (int legSignZ = -1; legSignZ <= 1; legSignZ += 2)
         {
-            float lx = sx * legX;
-            float lz = sz * legZ;
+            float legCenterX = legSignX * legOffsetX;
+            float legCenterZ = legSignZ * legOffsetZ;
+            float legBaseY = yBot - legH;
 
             glBegin(GL_QUADS);
-            float lb = yBot - legH;
 
             // front face
             glNormal3f(0, 0, 1);
             glTexCoord2f(0, 0);
-            glVertex3f(lx - legW / 2, lb, lz - legW / 2);
+            glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ - legW / 2);
             glTexCoord2f(1, 0);
-            glVertex3f(lx + legW / 2, lb, lz - legW / 2);
+            glVertex3f(legCenterX + legW / 2, legBaseY, legCenterZ - legW / 2);
             glTexCoord2f(1, 1);
-            glVertex3f(lx + legW / 2, yBot, lz - legW / 2);
+            glVertex3f(legCenterX + legW / 2, yBot, legCenterZ - legW / 2);
             glTexCoord2f(0, 1);
-            glVertex3f(lx - legW / 2, yBot, lz - legW / 2);
+            glVertex3f(legCenterX - legW / 2, yBot, legCenterZ - legW / 2);
 
             // back
             glNormal3f(0, 0, -1);
             glTexCoord2f(0, 0);
-            glVertex3f(lx - legW / 2, lb, lz + legW / 2);
+            glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ + legW / 2);
             glTexCoord2f(1, 0);
-            glVertex3f(lx + legW / 2, lb, lz + legW / 2);
+            glVertex3f(legCenterX + legW / 2, legBaseY, legCenterZ + legW / 2);
             glTexCoord2f(1, 1);
-            glVertex3f(lx + legW / 2, yBot, lz + legW / 2);
+            glVertex3f(legCenterX + legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
-            glVertex3f(lx - legW / 2, yBot, lz + legW / 2);
+            glVertex3f(legCenterX - legW / 2, yBot, legCenterZ + legW / 2);
 
             // left
             glNormal3f(-1, 0, 0);
             glTexCoord2f(0, 0);
-            glVertex3f(lx - legW / 2, lb, lz - legW / 2);
+            glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ - legW / 2);
             glTexCoord2f(1, 0);
-            glVertex3f(lx - legW / 2, lb, lz + legW / 2);
+            glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ + legW / 2);
             glTexCoord2f(1, 1);
-            glVertex3f(lx - legW / 2, yBot, lz + legW / 2);
+            glVertex3f(legCenterX - legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
-            glVertex3f(lx - legW / 2, yBot, lz - legW / 2);
+            glVertex3f(legCenterX - legW / 2, yBot, legCenterZ - legW / 2);
 
             // right
             glNormal3f(1, 0, 0);
             glTexCoord2f(0, 0);
-            glVertex3f(lx + legW / 2, lb, lz - legW / 2);
+            glVertex3f(legCenterX + legW / 2, legBaseY, legCenterZ - legW / 2);
             glTexCoord2f(1, 0);
-            glVertex3f(lx + legW / 2, lb, lz + legW / 2);
+            glVertex3f(legCenterX + legW / 2, legBaseY, legCenterZ + legW / 2);
             glTexCoord2f(1, 1);
-            glVertex3f(lx + legW / 2, yBot, lz + legW / 2);
+            glVertex3f(legCenterX + legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
-            glVertex3f(lx + legW / 2, yBot, lz - legW / 2);
+            glVertex3f(legCenterX + legW / 2, yBot, legCenterZ - legW / 2);
 
             glEnd();
         }
@@ -828,6 +840,7 @@ void drawBanquetChair(float x, float z)
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
     }
 
+    // Sweep along the curved backrest segments
     for (int segmentIndex = 0; segmentIndex < backrestSegments; segmentIndex++)
     {
         float t1 = (float)segmentIndex / backrestSegments;

@@ -1,25 +1,26 @@
 #include "CSCIx229.h"
 
-// Cylinder
+// Draw a cylinder using textured quads for the side and triangle fans for caps
 void drawCylinder(float radius, float height, int slices)
 {
     const float cylinderHeight = height;
 
     // Side wall
     glBegin(GL_QUAD_STRIP);
+    // Sample around the circumference to build the curved surface
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
         float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float x = cos(angleRadians);
-        float z = sin(angleRadians);
+        float unitX = cos(angleRadians);
+        float unitZ = sin(angleRadians);
 
-        glNormal3f(x, 0, z);
+        glNormal3f(unitX, 0, unitZ);
 
         glTexCoord2f((float)sliceIndex / slices, 0.0f);
-        glVertex3f(radius * x, 0.0f, radius * z);
+        glVertex3f(radius * unitX, 0.0f, radius * unitZ);
 
         glTexCoord2f((float)sliceIndex / slices, 1.0f);
-        glVertex3f(radius * x, cylinderHeight, radius * z);
+        glVertex3f(radius * unitX, cylinderHeight, radius * unitZ);
     }
     glEnd();
 
@@ -29,14 +30,15 @@ void drawCylinder(float radius, float height, int slices)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, cylinderHeight, 0.0f);
 
+    // Sweep a fan across the top disk
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
         float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float x = cos(angleRadians) * radius;
-        float z = sin(angleRadians) * radius;
+        float capX = cos(angleRadians) * radius;
+        float capZ = sin(angleRadians) * radius;
 
         glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
-        glVertex3f(x, cylinderHeight, z);
+        glVertex3f(capX, cylinderHeight, capZ);
     }
     glEnd();
 
@@ -46,48 +48,50 @@ void drawCylinder(float radius, float height, int slices)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.0f, 0.0f);
 
+    // Sweep a fan across the bottom disk
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
         float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float x = cos(angleRadians) * radius;
-        float z = sin(angleRadians) * radius;
+        float capX = cos(angleRadians) * radius;
+        float capZ = sin(angleRadians) * radius;
 
         glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
-        glVertex3f(x, 0.0f, z);
+        glVertex3f(capX, 0.0f, capZ);
     }
     glEnd();
 }
 
-// Sphere
+// Draw a sphere using triangle strips per latitude band
 void drawSphere(float radius, int slices, int stacks)
 {
-    for (int i = 0; i < stacks; i++)
+    for (int stackIndex = 0; stackIndex < stacks; stackIndex++)
     {
-        float lat0 = M_PI * (-0.5f + (float)i / stacks);
-        float lat1 = M_PI * (-0.5f + (float)(i + 1) / stacks);
+        float latitudeStart = M_PI * (-0.5f + (float)stackIndex / stacks);
+        float latitudeEnd = M_PI * (-0.5f + (float)(stackIndex + 1) / stacks);
 
-        float z0 = sinf(lat0);
-        float zr0 = cosf(lat0);
-        float z1 = sinf(lat1);
-        float zr1 = cosf(lat1);
+        float sinLatStart = sinf(latitudeStart);
+        float cosLatStart = cosf(latitudeStart);
+        float sinLatEnd = sinf(latitudeEnd);
+        float cosLatEnd = cosf(latitudeEnd);
 
         glBegin(GL_TRIANGLE_STRIP);
 
-        for (int j = 0; j <= slices; j++)
+        // Sweep longitudinal slices for this latitude band
+        for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
         {
-            float lng = 2.0f * M_PI * (float)j / slices;
-            float x = cosf(lng);
-            float y = sinf(lng);
+            float longitude = 2.0f * M_PI * (float)sliceIndex / slices;
+            float cosLng = cosf(longitude);
+            float sinLng = sinf(longitude);
 
             // first vertex
-            glNormal3f(x * zr0, z0, y * zr0);
-            glTexCoord2f((float)j / slices, (float)i / stacks);
-            glVertex3f(radius * x * zr0, radius * z0, radius * y * zr0);
+            glNormal3f(cosLng * cosLatStart, sinLatStart, sinLng * cosLatStart);
+            glTexCoord2f((float)sliceIndex / slices, (float)stackIndex / stacks);
+            glVertex3f(radius * cosLng * cosLatStart, radius * sinLatStart, radius * sinLng * cosLatStart);
 
             // second vertex
-            glNormal3f(x * zr1, z1, y * zr1);
-            glTexCoord2f((float)j / slices, (float)(i + 1) / stacks);
-            glVertex3f(radius * x * zr1, radius * z1, radius * y * zr1);
+            glNormal3f(cosLng * cosLatEnd, sinLatEnd, sinLng * cosLatEnd);
+            glTexCoord2f((float)sliceIndex / slices, (float)(stackIndex + 1) / stacks);
+            glVertex3f(radius * cosLng * cosLatEnd, radius * sinLatEnd, radius * sinLng * cosLatEnd);
         }
 
         glEnd();
@@ -113,17 +117,18 @@ void drawDisk(float radius, float y, float thickness)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, topY, 0);
 
+    // Walk around the circle to form the top cap
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
         float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float x = radius * cosf(angleRadians);
-        float z = radius * sinf(angleRadians);
+        float ringX = radius * cosf(angleRadians);
+        float ringZ = radius * sinf(angleRadians);
 
-        float u = 0.5f + 0.5f * cosf(angleRadians);
-        float v = 0.5f + 0.5f * sinf(angleRadians);
+        float texU = 0.5f + 0.5f * cosf(angleRadians);
+        float texV = 0.5f + 0.5f * sinf(angleRadians);
 
-        glTexCoord2f(u, v);
-        glVertex3f(x, topY, z);
+        glTexCoord2f(texU, texV);
+        glVertex3f(ringX, topY, ringZ);
     }
     glEnd();
 
@@ -133,36 +138,38 @@ void drawDisk(float radius, float y, float thickness)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, y, 0);
 
+    // Walk around the circle to form the bottom cap
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
         float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float x = radius * cosf(angleRadians);
-        float z = radius * sinf(angleRadians);
+        float ringX = radius * cosf(angleRadians);
+        float ringZ = radius * sinf(angleRadians);
 
-        float u = 0.5f + 0.5f * cosf(angleRadians);
-        float v = 0.5f + 0.5f * sinf(angleRadians);
+        float texU = 0.5f + 0.5f * cosf(angleRadians);
+        float texV = 0.5f + 0.5f * sinf(angleRadians);
 
-        glTexCoord2f(u, v);
-        glVertex3f(x, y, z);
+        glTexCoord2f(texU, texV);
+        glVertex3f(ringX, y, ringZ);
     }
     glEnd();
 
     // side wall
     glBegin(GL_QUAD_STRIP);
+    // Extrude the perimeter to give the disk thickness
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
         float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float x = radius * cosf(angleRadians);
-        float z = radius * sinf(angleRadians);
+        float ringX = radius * cosf(angleRadians);
+        float ringZ = radius * sinf(angleRadians);
 
         glNormal3f(cosf(angleRadians), 0, sinf(angleRadians));
-        float u = (float)segmentIndex / segmentCount;
+        float texU = (float)segmentIndex / segmentCount;
 
-        glTexCoord2f(u, 0);
-        glVertex3f(x, y, z);
+        glTexCoord2f(texU, 0);
+        glVertex3f(ringX, y, ringZ);
 
-        glTexCoord2f(u, 1);
-        glVertex3f(x, topY, z);
+        glTexCoord2f(texU, 1);
+        glVertex3f(ringX, topY, ringZ);
     }
     glEnd();
 
@@ -173,139 +180,142 @@ void drawDisk(float radius, float y, float thickness)
 }
 
 // Cuboid
+// Draw a textured rectangular prism centered at the origin
 void drawCuboid(float width, float height, float depth)
 {
-    float w = width * 0.5f;
-    float h = height * 0.5f;
-    float d = depth * 0.5f;
+    float halfWidth = width * 0.5f;
+    float halfHeight = height * 0.5f;
+    float halfDepth = depth * 0.5f;
 
     glBegin(GL_QUADS);
 
     // front (+Z)
     glNormal3f(0, 0, 1);
     glTexCoord2f(0, 0);
-    glVertex3f(-w, -h, d);
+    glVertex3f(-halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(w, -h, d);
+    glVertex3f(halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(w, h, d);
+    glVertex3f(halfWidth, halfHeight, halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(-w, h, d);
+    glVertex3f(-halfWidth, halfHeight, halfDepth);
 
     // back (−Z)
     glNormal3f(0, 0, -1);
     glTexCoord2f(0, 0);
-    glVertex3f(w, -h, -d);
+    glVertex3f(halfWidth, -halfHeight, -halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(-w, -h, -d);
+    glVertex3f(-halfWidth, -halfHeight, -halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(-w, h, -d);
+    glVertex3f(-halfWidth, halfHeight, -halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(w, h, -d);
+    glVertex3f(halfWidth, halfHeight, -halfDepth);
 
     // left (−X)
     glNormal3f(-1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-w, -h, -d);
+    glVertex3f(-halfWidth, -halfHeight, -halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(-w, -h, d);
+    glVertex3f(-halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(-w, h, d);
+    glVertex3f(-halfWidth, halfHeight, halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(-w, h, -d);
+    glVertex3f(-halfWidth, halfHeight, -halfDepth);
 
     // right (+X)
     glNormal3f(1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(w, -h, d);
+    glVertex3f(halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(w, -h, -d);
+    glVertex3f(halfWidth, -halfHeight, -halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(w, h, -d);
+    glVertex3f(halfWidth, halfHeight, -halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(w, h, d);
+    glVertex3f(halfWidth, halfHeight, halfDepth);
 
     // top (+Y)
     glNormal3f(0, 1, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-w, h, -d);
+    glVertex3f(-halfWidth, halfHeight, -halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(-w, h, d);
+    glVertex3f(-halfWidth, halfHeight, halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(w, h, d);
+    glVertex3f(halfWidth, halfHeight, halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(w, h, -d);
+    glVertex3f(halfWidth, halfHeight, -halfDepth);
 
     // bottom (−Y)
     glNormal3f(0, -1, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-w, -h, d);
+    glVertex3f(-halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 0);
-    glVertex3f(w, -h, d);
+    glVertex3f(halfWidth, -halfHeight, halfDepth);
     glTexCoord2f(1, 1);
-    glVertex3f(w, -h, -d);
+    glVertex3f(halfWidth, -halfHeight, -halfDepth);
     glTexCoord2f(0, 1);
-    glVertex3f(-w, -h, -d);
+    glVertex3f(-halfWidth, -halfHeight, -halfDepth);
 
     glEnd();
 }
 
 // Frustum
+// Draws a truncated cone with textured sides
 void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
 {
     float angleStep = (2.0f * M_PI) / slices;
 
     glBegin(GL_TRIANGLES);
-    for (int i = 0; i < slices; i++)
+    // Iterate around the frustum perimeter to build side triangles
+    for (int sliceIndex = 0; sliceIndex < slices; sliceIndex++)
     {
-        float a0 = i * angleStep;
-        float a1 = (i + 1) * angleStep;
+        float angleStart = sliceIndex * angleStep;
+        float angleEnd = (sliceIndex + 1) * angleStep;
 
-        float x0b = bottomRadius * cosf(a0);
-        float z0b = bottomRadius * sinf(a0);
-        float x1b = bottomRadius * cosf(a1);
-        float z1b = bottomRadius * sinf(a1);
+        float bottomXStart = bottomRadius * cosf(angleStart);
+        float bottomZStart = bottomRadius * sinf(angleStart);
+        float bottomXEnd = bottomRadius * cosf(angleEnd);
+        float bottomZEnd = bottomRadius * sinf(angleEnd);
 
-        float x0t = topRadius * cosf(a0);
-        float z0t = topRadius * sinf(a0);
-        float x1t = topRadius * cosf(a1);
-        float z1t = topRadius * sinf(a1);
+        float topXStart = topRadius * cosf(angleStart);
+        float topZStart = topRadius * sinf(angleStart);
+        float topXEnd = topRadius * cosf(angleEnd);
+        float topZEnd = topRadius * sinf(angleEnd);
 
         // Cylindrical texture coordinates
-        float u0 = (float)i / slices;
-        float u1 = (float)(i + 1) / slices;
+        float texUStart = (float)sliceIndex / slices;
+        float texUEnd = (float)(sliceIndex + 1) / slices;
 
-        float nx0 = x0b + x0t;
-        float nz0 = z0b + z0t;
-        float len0 = sqrtf(nx0 * nx0 + nz0 * nz0);
-        nx0 /= len0;
-        nz0 /= len0;
+        float normalXStart = bottomXStart + topXStart;
+        float normalZStart = bottomZStart + topZStart;
+        float normalLengthStart = sqrtf(normalXStart * normalXStart + normalZStart * normalZStart);
+        normalXStart /= normalLengthStart;
+        normalZStart /= normalLengthStart;
 
-        float nx1 = x1b + x1t;
-        float nz1 = z1b + z1t;
-        float len1 = sqrtf(nx1 * nx1 + nz1 * nz1);
-        nx1 /= len1;
-        nz1 /= len1;
+        float normalXEnd = bottomXEnd + topXEnd;
+        float normalZEnd = bottomZEnd + topZEnd;
+        float normalLengthEnd = sqrtf(normalXEnd * normalXEnd + normalZEnd * normalZEnd);
+        normalXEnd /= normalLengthEnd;
+        normalZEnd /= normalLengthEnd;
 
         // First side triangle
-        glNormal3f(nx0, 0, nz0);
-        glTexCoord2f(u0, 0);
-        glVertex3f(x0b, 0, z0b);
-        glTexCoord2f(u0, 1);
-        glVertex3f(x0t, height, z0t);
-        glNormal3f(nx1, 0, nz1);
-        glTexCoord2f(u1, 1);
-        glVertex3f(x1t, height, z1t);
+        glNormal3f(normalXStart, 0, normalZStart);
+        glTexCoord2f(texUStart, 0);
+        glVertex3f(bottomXStart, 0, bottomZStart);
+        glTexCoord2f(texUStart, 1);
+        glVertex3f(topXStart, height, topZStart);
+        glNormal3f(normalXEnd, 0, normalZEnd);
+        glTexCoord2f(texUEnd, 1);
+        glVertex3f(topXEnd, height, topZEnd);
 
         // Second side triangle
-        glNormal3f(nx0, 0, nz0);
-        glTexCoord2f(u0, 0);
-        glVertex3f(x0b, 0, z0b);
-        glNormal3f(nx1, 0, nz1);
-        glTexCoord2f(u1, 1);
-        glVertex3f(x1t, height, z1t);
-        glTexCoord2f(u1, 0);
-        glVertex3f(x1b, 0, z1b);
+        glNormal3f(normalXStart, 0, normalZStart);
+        glTexCoord2f(texUStart, 0);
+        glVertex3f(bottomXStart, 0, bottomZStart);
+        glNormal3f(normalXEnd, 0, normalZEnd);
+        glTexCoord2f(texUEnd, 1);
+        glVertex3f(topXEnd, height, topZEnd);
+        glTexCoord2f(texUEnd, 0);
+        glVertex3f(bottomXEnd, 0, bottomZEnd);
     }
     glEnd();
 }
