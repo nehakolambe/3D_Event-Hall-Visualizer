@@ -11,33 +11,35 @@ typedef struct
     float maxY;
 } BoxOBB;
 
-// Rotate AABB around Y-axis and compute world-space AABB bounds
-static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
+// Rotate a sub-box around Y and compute its world-space AABB extents
+static void computeRotatedBounds(const SceneObject *sceneObject, int boxIndex,
                                  float worldX, float worldZ,
                                  float *minX, float *maxX,
                                  float *minY, float *maxY,
                                  float *minZ, float *maxZ)
 {
-    float xmin = obj->subBox[boxIndex][0];
-    float xmax = obj->subBox[boxIndex][1];
-    float ymin = obj->subBox[boxIndex][2];
-    float ymax = obj->subBox[boxIndex][3];
-    float zmin = obj->subBox[boxIndex][4];
-    float zmax = obj->subBox[boxIndex][5];
+    float xmin = sceneObject->subBox[boxIndex][0];
+    float xmax = sceneObject->subBox[boxIndex][1];
+    float ymin = sceneObject->subBox[boxIndex][2];
+    float ymax = sceneObject->subBox[boxIndex][3];
+    float zmin = sceneObject->subBox[boxIndex][4];
+    float zmax = sceneObject->subBox[boxIndex][5];
 
-    float angle = -obj->rotation * (M_PI / 180.0f);
+    float angle = -sceneObject->rotation * (M_PI / 180.0f);
     float cosYaw = cosf(angle);
     float sinYaw = sinf(angle);
 
     *minX = *minZ = +1e9f;
     *maxX = *maxZ = -1e9f;
 
-    *minY = ymin + obj->y;
-    *maxY = ymax + obj->y;
+    *minY = ymin + sceneObject->y;
+    *maxY = ymax + sceneObject->y;
 
+    // Iterate over both min/max X corners
     for (int cornerXIndex = 0; cornerXIndex < 2; cornerXIndex++)
     {
         float x = (cornerXIndex == 0) ? xmin : xmax;
+        // For each X corner, iterate across the Z limits
         for (int cornerZIndex = 0; cornerZIndex < 2; cornerZIndex++)
         {
             float z = (cornerZIndex == 0) ? zmin : zmax;
@@ -45,6 +47,7 @@ static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
             float xr = cosYaw * x - sinYaw * z + worldX;
             float zr = sinYaw * x + cosYaw * z + worldZ;
 
+            // Track global min/max projections for the rotated bounds
             if (xr < *minX)
                 *minX = xr;
             if (xr > *maxX)
@@ -57,22 +60,23 @@ static void computeRotatedBounds(const SceneObject *obj, int boxIndex,
     }
 }
 
-static void buildBoxOBB(const SceneObject *obj, int boxIndex,
+// Build an oriented bounding box for a sub-box using object transform
+static void buildBoxOBB(const SceneObject *sceneObject, int boxIndex,
                         float worldX, float worldZ, BoxOBB *box)
 {
-    float xmin = obj->subBox[boxIndex][0];
-    float xmax = obj->subBox[boxIndex][1];
-    float ymin = obj->subBox[boxIndex][2];
-    float ymax = obj->subBox[boxIndex][3];
-    float zmin = obj->subBox[boxIndex][4];
-    float zmax = obj->subBox[boxIndex][5];
+    float xmin = sceneObject->subBox[boxIndex][0];
+    float xmax = sceneObject->subBox[boxIndex][1];
+    float ymin = sceneObject->subBox[boxIndex][2];
+    float ymax = sceneObject->subBox[boxIndex][3];
+    float zmin = sceneObject->subBox[boxIndex][4];
+    float zmax = sceneObject->subBox[boxIndex][5];
 
     float localCenterX = 0.5f * (xmin + xmax);
     float localCenterZ = 0.5f * (zmin + zmax);
     float halfX = 0.5f * (xmax - xmin);
     float halfZ = 0.5f * (zmax - zmin);
 
-    float angle = -obj->rotation * (M_PI / 180.0f);
+    float angle = -sceneObject->rotation * (M_PI / 180.0f);
     float cosYaw = cosf(angle);
     float sinYaw = sinf(angle);
 
@@ -84,13 +88,15 @@ static void buildBoxOBB(const SceneObject *obj, int boxIndex,
     box->axis[0][1] = sinYaw;
     box->axis[1][0] = -sinYaw;
     box->axis[1][1] = cosYaw;
-    box->minY = ymin + obj->y;
-    box->maxY = ymax + obj->y;
+    box->minY = ymin + sceneObject->y;
+    box->maxY = ymax + sceneObject->y;
 }
 
+// Calculate the projection radius of an OBB onto the given axis
 static float projectRadius(const BoxOBB *box, float axisX, float axisZ)
 {
     float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    // Treat near-zero axis lengths as zero projection
     if (axisLen < 1e-6f)
         return 0.0f;
 
@@ -102,6 +108,7 @@ static float projectRadius(const BoxOBB *box, float axisX, float axisZ)
     return box->halfX * fabsf(dotX) + box->halfZ * fabsf(dotZ);
 }
 
+// Check whether two OBBs overlap along a particular separating axis
 static int overlapOnAxis(const BoxOBB *a, const BoxOBB *b, float axisX, float axisZ)
 {
     float ra = projectRadius(a, axisX, axisZ);
@@ -109,18 +116,22 @@ static int overlapOnAxis(const BoxOBB *a, const BoxOBB *b, float axisX, float ax
     float dx = b->centerX - a->centerX;
     float dz = b->centerZ - a->centerZ;
     float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    // Zero-length axis can't separate boxes, so treat as overlap
     if (axisLen < 1e-6f)
         return 1;
     float distance = fabsf((dx * axisX + dz * axisZ) / axisLen);
     return distance <= (ra + rb);
 }
 
+// Run SAT tests using both box axes to confirm XZ overlap
 static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
 {
+    // Test the two axes that belong to box A
     if (!overlapOnAxis(a, b, a->axis[0][0], a->axis[0][1]))
         return 0;
     if (!overlapOnAxis(a, b, a->axis[1][0], a->axis[1][1]))
         return 0;
+    // Test the two axes that belong to box B
     if (!overlapOnAxis(a, b, b->axis[0][0], b->axis[0][1]))
         return 0;
     if (!overlapOnAxis(a, b, b->axis[1][0], b->axis[1][1]))
@@ -128,71 +139,73 @@ static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
     return 1;
 }
 
-// Object collision + rotation helpers
-// Check AABB overlap
-bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
+// Determine if moving an object to (newX,newZ) would collide with anything
+bool collidesWithAnyObject(SceneObject *movingObject, float newX, float newZ,
                            bool adjustPlayerHeight, bool allowStageSnap)
 {
     float bestPlatformTop = 0.0f; // highest platform below player
     float playerHeight = 0.0f;
+    // When adjusting player height, precompute capsule height
     if (adjustPlayerHeight)
     {
-        playerHeight = movingObj->subBox[0][3] - movingObj->subBox[0][2];
+        playerHeight = movingObject->subBox[0][3] - movingObject->subBox[0][2];
     }
 
-    // Loop through all objects
+    // Iterate over every object in the scene to check collisions
     for (int i = 0; i < objectCount; i++)
     {
-        SceneObject *other = &objects[i];
+        SceneObject *otherObject = &objects[i];
 
         // Skip self and non-solid objects
-        if (other == movingObj || !other->solid)
+        if (otherObject == movingObject || !otherObject->solid)
             continue;
 
-        // For every sub-box of the moving object
-        for (int movingSubBoxIndex = 0; movingSubBoxIndex < movingObj->subBoxCount; movingSubBoxIndex++)
+        // Test each sub-box that composes the moving object
+        for (int movingSubBoxIndex = 0; movingSubBoxIndex < movingObject->subBoxCount; movingSubBoxIndex++)
         {
             float movingMinX, movingMaxX, movingMinY, movingMaxY, movingMinZ, movingMaxZ;
-            BoxOBB boxA;
+            BoxOBB movingObb;
 
-            computeRotatedBounds(movingObj, movingSubBoxIndex, newX, newZ,
+            computeRotatedBounds(movingObject, movingSubBoxIndex, newX, newZ,
                                  &movingMinX, &movingMaxX,
                                  &movingMinY, &movingMaxY,
                                  &movingMinZ, &movingMaxZ);
-            buildBoxOBB(movingObj, movingSubBoxIndex, newX, newZ, &boxA);
+            buildBoxOBB(movingObject, movingSubBoxIndex, newX, newZ, &movingObb);
 
             // Compare with each sub-box of the other object
-            for (int otherSubBoxIndex = 0; otherSubBoxIndex < other->subBoxCount; otherSubBoxIndex++)
+            for (int otherSubBoxIndex = 0; otherSubBoxIndex < otherObject->subBoxCount; otherSubBoxIndex++)
             {
                 float otherMinX, otherMaxX, otherMinY, otherMaxY, otherMinZ, otherMaxZ;
-                BoxOBB boxB;
-                computeRotatedBounds(other, otherSubBoxIndex, other->x, other->z,
+                BoxOBB otherObb;
+                computeRotatedBounds(otherObject, otherSubBoxIndex, otherObject->x, otherObject->z,
                                      &otherMinX, &otherMaxX,
                                      &otherMinY, &otherMaxY,
                                      &otherMinZ, &otherMaxZ);
-                buildBoxOBB(other, otherSubBoxIndex, other->x, other->z, &boxB);
+                buildBoxOBB(otherObject, otherSubBoxIndex, otherObject->x, otherObject->z, &otherObb);
 
                 // AABB horizontal overlap check
                 bool overlapXZ =
                     (movingMaxX > otherMinX && movingMinX < otherMaxX &&
                      movingMaxZ > otherMinZ && movingMinZ < otherMaxZ);
 
+                // Skip OBB test if the axis-aligned boxes already separate
                 if (!overlapXZ)
                     continue;
 
-                if (!obbOverlapXZ(&boxA, &boxB))
+                // Perform the more expensive OBB check next
+                if (!obbOverlapXZ(&movingObb, &otherObb))
                     continue;
 
-                // stage climbing logic
+                // Detect stage platform volumes when snapping is allowed
                 bool isPlatform = allowStageSnap &&
-                                   strstr(other->name, "Stage") != NULL;
+                                   strstr(otherObject->name, "Stage") != NULL;
 
                 if (isPlatform)
                 {
-                    float stageTop = boxB.maxY; // actual stage height
+                    float stageTop = otherObb.maxY; // actual stage height
 
                     // Check if player is above platform
-                    if (boxA.minY >= stageTop - 2.0f)
+                    if (movingObb.minY >= stageTop - 2.0f)
                     {
                         if (stageTop > bestPlatformTop)
                             bestPlatformTop = stageTop;
@@ -206,7 +219,7 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
 
                 // normal vertical overlap check
                 bool overlapY =
-                    (boxA.maxY > boxB.minY && boxA.minY < boxB.maxY);
+                    (movingObb.maxY > otherObb.minY && movingObb.minY < otherObb.maxY);
 
                 if (overlapY)
                 {
@@ -217,8 +230,10 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
         }
     }
 
-    if (adjustPlayerHeight && movingObj == &playerObj)
+    // Adjust FPV height when the player is moving and snap-to-platform is active
+    if (adjustPlayerHeight && movingObject == &playerObj)
     {
+        // If we found a platform below the player, place them on it
         if (bestPlatformTop > 0.0f)
         {
             float desiredFeetY = bestPlatformTop;
@@ -227,12 +242,12 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
             // Smooth snap to platform
             fpvY = desiredFpvY;
 
-            movingObj->y = fpvY - playerHeight;
+            movingObject->y = fpvY - playerHeight;
         }
         else
         {
             // Reset to floor level
-            movingObj->y = 0.0f;
+            movingObject->y = 0.0f;
             fpvY = playerHeight; // camera height above floor
         }
     }
@@ -240,46 +255,46 @@ bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ,
     return false; // no collision
 }
 
-bool checkRotationCollision(SceneObject *obj, float newRotation)
+// Helper that tests whether a temporary rotation would hit anything
+bool checkRotationCollision(SceneObject *sceneObject, float newRotation)
 {
     // Save current rotation
-    float oldRotation = obj->rotation;
+    float oldRotation = sceneObject->rotation;
 
     // Apply temporary rotation
-    obj->rotation = newRotation;
+    sceneObject->rotation = newRotation;
     
     // Check if this new state hits anything
-    // We pass obj->x and obj->z because the position hasn't changed, only angle
-    bool collides = collidesWithAnyObject(obj, obj->x, obj->z, false, false);
+    bool collides = collidesWithAnyObject(sceneObject, sceneObject->x, sceneObject->z, false, false);
 
     // Restore original rotation immediately
-    obj->rotation = oldRotation;
+    sceneObject->rotation = oldRotation;
 
     return collides;
 }
 
-// Rotate object around its Y-axis
-void rotateObject(SceneObject *obj, float angle)
+// Rotate an object by the given angle when no collision occurs
+void rotateObject(SceneObject *sceneObject, float angle)
 {
-    if (!obj)
+    if (!sceneObject)
         return;
 
-    float newRotation = obj->rotation + angle;
+    float newRotation = sceneObject->rotation + angle;
 
-    // Keep in 0–360 range
+    // Wrap rotation into [0, 360)
     if (newRotation >= 360.0f)
         newRotation -= 360.0f;
     if (newRotation < 0.0f)
         newRotation += 360.0f;
 
     // apply if the new angle doesn't result in a collision
-    if (!checkRotationCollision(obj, newRotation))
+    if (!checkRotationCollision(sceneObject, newRotation))
     {
-        obj->rotation = newRotation;
+        sceneObject->rotation = newRotation;
     }
 }
 
-// Player bounding box
+// Initialize the player's collision box dimensions
 void initPlayerCollision(void)
 {
     playerObj.subBoxCount = 1;

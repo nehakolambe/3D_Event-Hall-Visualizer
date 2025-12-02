@@ -1,15 +1,18 @@
 #include "CSCIx229.h"
 
-#define GRID_SNAP_SIZE 5.0f
-#define STAGE_MIN_X -10.0f
-#define STAGE_MAX_X 10.0f
-#define STAGE_MIN_Z -30.0f
-#define STAGE_MAX_Z -20.0f
-#define STAGE_HEIGHT 2.0f
+// Stage grid and elevation settings
+const float GRID_SNAP_SIZE = 5.0f;
+static const float STAGE_MIN_X = -10.0f;
+static const float STAGE_MAX_X = 10.0f;
+static const float STAGE_MIN_Z = -30.0f;
+static const float STAGE_MAX_Z = -20.0f;
+static const float STAGE_HEIGHT = 2.0f;
 
+// Door measurements
 #define DOOR_WIDTH 3.0f
 #define DOOR_HEIGHT 7.0f
 
+// Curved screen display geometry
 #define CURVED_SCREEN_WIDTH 35.0f
 #define CURVED_SCREEN_HEIGHT 10.0f
 #define CURVED_SCREEN_Y_BASE 3.5f
@@ -17,7 +20,7 @@
 #define CURVED_SCREEN_RADIUS_V 35.0f
 #define CURVED_SCREEN_Z_OFFSET 0.5f
 
-bool snapToGridEnabled = false;
+// Toggles that can be switched at runtime
 bool bboxHighlightEnabled = false;
 
 // Object system globals
@@ -56,46 +59,25 @@ unsigned int barChairBackTex;
 unsigned int fireplaceTex;
 unsigned int fireNoiseTex;
 
+// GLSL shader for animated fire plane
 int fireShader = 0;
 
-typedef struct
-{
-    const char *baseName;
-    void (*drawFunc)(float, float);
-    int movable;
-    float defaultRotation;
-    float defaultScale;
-} ObjectTemplate;
-
-static const ObjectTemplate spawnTemplates[SPAWN_TYPE_COUNT] = {
-    [SPAWN_LAMP] = {"Lamp", drawLamp, 1, 0.0f, 1.0f},
-    [SPAWN_EVENT_TABLE] = {"EventTable", drawTable, 1, 0.0f, 1.0f},
-    [SPAWN_MEETING_TABLE] = {"MeetingTable", drawMeetingTable, 1, 0.0f, 1.0f},
-    [SPAWN_BAR_CHAIR] = {"BarChair", drawBarChairObj, 1, 0.0f, 1.0f},
-    [SPAWN_BANQUET_CHAIR] = {"BanquetChair", drawBanquetChair, 1, 0.0f, 1.0f},
-    [SPAWN_COCKTAIL_1] = {"Cocktail_1", drawCocktailTable, 1, 0.0f, 1.0f},
-    [SPAWN_COCKTAIL_2] = {"Cocktail_2", drawCocktailTable2, 1, 0.0f, 1.0f},
-    [SPAWN_COCKTAIL_3] = {"Cocktail_3", drawCocktailTable3, 1, 0.0f, 1.0f}};
-
-static int spawnCounters[SPAWN_TYPE_COUNT] = {0};
-
-static void configureObjectBounds(SceneObject *obj);
-static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ);
-static int nameHasPrefix(const char *name, const char *prefix);
-static int nameSupportsSnap(const char *name);
 static int positionOnStage(float x, float z);
 
+// Returns true when a point is inside the stage area
 static int positionOnStage(float x, float z)
 {
     return (x >= STAGE_MIN_X && x <= STAGE_MAX_X &&
             z >= STAGE_MIN_Z && z <= STAGE_MAX_Z);
 }
 
+// Helper used when spawning the door
 static void drawDoorObject(float x, float z)
 {
     drawDoor(x, z, DOOR_WIDTH, DOOR_HEIGHT);
 }
 
+// Helper used when spawning the curved screen
 static void drawCurvedScreenObject(float x, float z)
 {
     drawCurvedScreen(x,
@@ -108,18 +90,21 @@ static void drawCurvedScreenObject(float x, float z)
                      CURVED_SCREEN_Z_OFFSET);
 }
 
-void scene_apply_stage_height(SceneObject *obj)
+// Lifts objects placed on the stage platform
+void scene_apply_stage_height(SceneObject *sceneObject)
 {
-    if (!obj || !obj->movable)
+    // Only movable objects should be adjusted
+    if (!sceneObject || !sceneObject->movable)
         return;
-
-    if (positionOnStage(obj->x, obj->z))
-        obj->y = STAGE_HEIGHT;
+    // If object sits on stage, raise it to stage height
+    if (positionOnStage(sceneObject->x, sceneObject->z))
+        sceneObject->y = STAGE_HEIGHT;
+    // Otherwise keep it on floor
     else
-        obj->y = 0.0f;
+        sceneObject->y = 0.0f;
 }
 
-// Quad
+// Helper used to draw quads
 static void drawQuadN(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -129,14 +114,15 @@ static void drawQuadN(
     float r, float g, float b)
 {
     GLboolean texEnabled;
-    glGetBooleanv(GL_TEXTURE_2D, &texEnabled);
+    glGetBooleanv(GL_TEXTURE_2D, &texEnabled); // check if textures are active
 
     if (!texEnabled)
-        glColor3f(r, g, b);
+        glColor3f(r, g, b); // fallback color when no texture
 
     glNormal3f(nx, ny, nz);
     glBegin(GL_QUADS);
 
+    // Emit texture coordinates only when textures are active
     if (texEnabled)
     {
         glTexCoord2f(0, 0);
@@ -159,7 +145,7 @@ static void drawQuadN(
     glEnd();
 }
 
-// tiled surface
+// Helper used to draw textured rectangle surfaces with tiling
 void drawTiledSurface(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -168,6 +154,7 @@ void drawTiledSurface(
 {
     int planeOrientation;
 
+    // Decide which axis-aligned plane this quad lies on
     if (y1 == y2)
         planeOrientation = 0; // XZ plane
     else if (z1 == z2)
@@ -178,14 +165,17 @@ void drawTiledSurface(
     glNormal3f(nx, ny, nz);
 
     // XZ plane (floor/ceiling)
+    // Handle each plane orientation separately
     if (planeOrientation == 0)
     {
         float xmin = x1, xmax = x2;
         float zmin = z1, zmax = z2;
         float y = y1;
 
+        // Step through X and Z to draw each floor tile quad
         for (float x = xmin; x < xmax; x += tileSize)
         {
+            // For each X column, iterate down the Z rows
             for (float z = zmin; z < zmax; z += tileSize)
             {
                 float tileMinX = x;
@@ -214,8 +204,10 @@ void drawTiledSurface(
         float ymin = y1, ymax = y2;
         float z = z1;
 
+        // Sweep across X and Y to cover the wall area
         for (float x = xmin; x < xmax; x += tileSize)
         {
+            // For each X column, step upward in Y
             for (float y = ymin; y < ymax; y += tileSize)
             {
                 float tileMinX = x;
@@ -244,8 +236,10 @@ void drawTiledSurface(
         float ymin = y1, ymax = y2;
         float x = x1;
 
+        // Walk across Z rows along the wall
         for (float z = zmin; z < zmax; z += tileSize)
         {
+            // For each row, step up in Y to fill the column
             for (float y = ymin; y < ymax; y += tileSize)
             {
                 float tileMinZ = z;
@@ -269,25 +263,25 @@ void drawTiledSurface(
 }
 
 // draws a simple bounding box
-void drawBBox(SceneObject *o)
+void drawBBox(SceneObject *sceneObject)
 {
     glPushMatrix();
     glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
     glLineWidth(2.0f);
 
-    // Use the exact same math as collision.c
-    float angle = -o->rotation * (M_PI / 180.0f); 
-    float c = cosf(angle);
-    float s = sinf(angle);
+    float rotationRadians = -sceneObject->rotation * (M_PI / 180.0f); 
+    float cosRotation = cosf(rotationRadians);
+    float sinRotation = sinf(rotationRadians);
 
-    for (int b = 0; b < o->subBoxCount; b++)
+    // Loop through each collision sub-box that belongs to this object
+    for (int subBoxIdx = 0; subBoxIdx < sceneObject->subBoxCount; subBoxIdx++)
     {
-        float xmin = o->subBox[b][0];
-        float xmax = o->subBox[b][1];
-        float ymin = o->subBox[b][2];
-        float ymax = o->subBox[b][3];
-        float zmin = o->subBox[b][4];
-        float zmax = o->subBox[b][5];
+        float xmin = sceneObject->subBox[subBoxIdx][0];
+        float xmax = sceneObject->subBox[subBoxIdx][1];
+        float ymin = sceneObject->subBox[subBoxIdx][2];
+        float ymax = sceneObject->subBox[subBoxIdx][3];
+        float zmin = sceneObject->subBox[subBoxIdx][4];
+        float zmax = sceneObject->subBox[subBoxIdx][5];
 
         // We need the 8 corners of the box
         float corners[8][3] = {
@@ -298,19 +292,20 @@ void drawBBox(SceneObject *o)
         };
 
         // Transform corners manually
-        for (int i = 0; i < 8; i++) {
-            float lx = corners[i][0];
-            float ly = corners[i][1]; // Y is mostly unaffected by Y-axis rotation
-            float lz = corners[i][2];
+        // Loop over every box corner to rotate/translate it into world space
+        for (int cornerIdx = 0; cornerIdx < 8; cornerIdx++) {
+            float localX = corners[cornerIdx][0];
+            float localY = corners[cornerIdx][1]; // Y is mostly unaffected by Y-axis rotation
+            float localZ = corners[cornerIdx][2];
 
             // Rotate
-            float rx = c * lx - s * lz;
-            float rz = s * lx + c * lz;
+            float rotatedX = cosRotation * localX - sinRotation * localZ;
+            float rotatedZ = sinRotation * localX + cosRotation * localZ;
 
             // Translate
-            corners[i][0] = rx + o->x;
-            corners[i][1] = ly + o->y;
-            corners[i][2] = rz + o->z;
+            corners[cornerIdx][0] = rotatedX + sceneObject->x;
+            corners[cornerIdx][1] = localY + sceneObject->y;
+            corners[cornerIdx][2] = rotatedZ + sceneObject->z;
         }
 
         glBegin(GL_LINES);
@@ -326,7 +321,7 @@ void drawBBox(SceneObject *o)
         glVertex3fv(corners[6]); glVertex3fv(corners[7]);
         glVertex3fv(corners[7]); glVertex3fv(corners[3]);
 
-        // vertical lines
+        // Vertical lines
         glVertex3fv(corners[0]); glVertex3fv(corners[3]);
         glVertex3fv(corners[1]); glVertex3fv(corners[2]);
         glVertex3fv(corners[5]); glVertex3fv(corners[6]);
@@ -337,46 +332,50 @@ void drawBBox(SceneObject *o)
     glPopMatrix();
 }
 
-// creates a new scene object
+// Adds an object to the scene array and returns a pointer to it
 SceneObject *addObject(const char *name,
-                       float x, float z,
+                       float positionX, float positionZ,
                        void (*drawFunc)(float, float),
                        int movable)
 {
+    // Stop if we've already reached the maximum allowed objects
     if (objectCount >= MAX_OBJECTS)
         return NULL;
 
-    SceneObject *obj = &objects[objectCount];
+    SceneObject *newObject = &objects[objectCount];
 
-    obj->id = objectCount;
+    newObject->id = objectCount;
 
-    // safe copy
-    strncpy(obj->name, name, sizeof(obj->name) - 1);
-    obj->name[sizeof(obj->name) - 1] = '\0';
+    // Safe copy
+    strncpy(newObject->name, name, sizeof(newObject->name) - 1);
+    newObject->name[sizeof(newObject->name) - 1] = '\0';
 
-    obj->x = x;
-    obj->y = 0.0f;
-    obj->z = z;
+    newObject->x = positionX;
+    newObject->y = 0.0f;
+    newObject->z = positionZ;
 
-    obj->scale = 1.0f;
-    obj->rotation = 0.0f;
-    obj->drawFunc = drawFunc;
-    obj->movable = movable;
-    obj->solid = 1;
+    newObject->scale = 1.0f;
+    newObject->rotation = 0.0f;
+    newObject->drawFunc = drawFunc;
+    newObject->movable = movable;
+    newObject->solid = 1;
 
-    // reset bbox
-    obj->subBoxCount = 0;
-    for (int k = 0; k < MAX_SUBBOXES; k++)
-        for (int j = 0; j < 6; j++)
-            obj->subBox[k][j] = 0.0f;
+    // Reset bbox
+    newObject->subBoxCount = 0;
+    // Clear every possible sub-box slot and each of their six values
+    for (int subBoxIdx = 0; subBoxIdx < MAX_SUBBOXES; subBoxIdx++)
+        // Within each slot, iterate through its six faces
+        for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+            newObject->subBox[subBoxIdx][faceIdx] = 0.0f;
 
+    // Track how many objects currently exist
     objectCount++;
-    return obj;
+    return newObject;
 }
 
 void scene_init(void)
 {
-    // load textures
+    // Load textures
     wallTex = LoadTexBMP("textures/wall.bmp");
     floorTex = LoadTexBMP("textures/carpet.bmp");
     screenTex = LoadTexBMP("textures/screen.bmp");
@@ -408,109 +407,113 @@ void scene_init(void)
     fireShader = CreateShaderProg("fire.vert", "fire.frag");
 
     objectCount = 0;
-    memset(spawnCounters, 0, sizeof(spawnCounters));
+    scene_spawn_reset();
 
-    // fixed objects
+    // Fixed objects
     addObject("Door", 0.0f, 29.9f, drawDoorObject, 0);
     addObject("CurvedScreen", 0.0f, -30.0f, drawCurvedScreenObject, 0);
-    SceneObject *fp = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
-    if (fp)
+    SceneObject *fireplaceObject = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
+    if (fireplaceObject)
     {
-        fp->scale = 1.2f;
+        // Slightly scale the fireplace for better room presence
+        fireplaceObject->scale = 1.2f;
     }
 
-    // event tables
-    float tableX[4] = {-10, -10, 10, 10};
-    float tableZ[4] = {-10, 0, -10, 0};
+    // Event tables
+    float eventTablePosX[4] = {-10, -10, 10, 10};
+    float eventTablePosZ[4] = {-10, 0, -10, 0};
 
+    // Create four default event tables at the preset positions
     for (int i = 0; i < 4; i++)
     {
         char name[32];
         sprintf(name, "EventTable%d", i + 1);
-        addObject(name, tableX[i], tableZ[i], drawTable, 1);
+        addObject(name, eventTablePosX[i], eventTablePosZ[i], drawTable, 1);
     }
 
-    // event chairs
+    // Event chairs
     float chairOffsetX[2] = {0.0f, 0.0f};
     float chairOffsetZ[2] = {-1.8f, 1.8f};
-    float chairRot[2] = {0.0f, 180.0f};
+    float chairRotation[2] = {0.0f, 180.0f};
 
+    // For each table, place two chairs around it
     for (int t = 0; t < 4; t++)
     {
+        // Each table gets two chairs with mirrored offsets
         for (int c = 0; c < 2; c++)
         {
             char cname[32];
             sprintf(cname, "EventChair_T%d_C%d", t + 1, c + 1);
 
-            float cx = tableX[t] + chairOffsetX[c];
-            float cz = tableZ[t] + chairOffsetZ[c];
+            float chairPosX = eventTablePosX[t] + chairOffsetX[c];
+            float chairPosZ = eventTablePosZ[t] + chairOffsetZ[c];
 
-            addObject(cname, cx, cz, drawBanquetChair, 1);
-            objects[objectCount - 1].rotation = chairRot[c];
+            addObject(cname, chairPosX, chairPosZ, drawBanquetChair, 1);
+            objects[objectCount - 1].rotation = chairRotation[c];
         }
     }
 
-    // cocktail tables
-    float ctX[3] = {0, -12, 12};
-    float ctZ[3] = {-5, -3, -3};
+    // Cocktail tables
+    float cocktailTablePosX[3] = {0, -12, 12};
+    float cocktailTablePosZ[3] = {-5, -3, -3};
 
-    addObject("Cocktail_1", ctX[0], ctZ[0], drawCocktailTable, 1);
-    addObject("Cocktail_2", ctX[1], ctZ[1] + 10.0f, drawCocktailTable2, 1);
-    addObject("Cocktail_3", ctX[2], ctZ[2] + 10.0f, drawCocktailTable3, 1);
+    addObject("Cocktail_1", cocktailTablePosX[0], cocktailTablePosZ[0], drawCocktailTable, 1);
+    addObject("Cocktail_2", cocktailTablePosX[1], cocktailTablePosZ[1] + 10.0f, drawCocktailTable2, 1);
+    addObject("Cocktail_3", cocktailTablePosX[2], cocktailTablePosZ[2] + 10.0f, drawCocktailTable3, 1);
 
-    // bar chairs
+    // Bar chairs
     addObject("BarChair_1",
-              ctX[2] + 1.25f,
-              ctZ[2] + 11.8f,
+              cocktailTablePosX[2] + 1.25f,
+              cocktailTablePosZ[2] + 11.8f,
               drawBarChairObj,
               1);
     objects[objectCount - 1].rotation = 200.0f;
 
     addObject("BarChair_2",
-              ctX[2] - 1.25f,
-              ctZ[2] + 11.8f,
+              cocktailTablePosX[2] - 1.25f,
+              cocktailTablePosZ[2] + 11.8f,
               drawBarChairObj,
               1);
     objects[objectCount - 1].rotation = 160.0f;
 
-    // door lamp
+    // Lamp
     addObject("Lamp", -5.0f, 11.0f, drawLamp, 1);
 
-    // meeting table
-    float meetX = 0.0f;
-    float meetZ = 11.0f;
+    // Meeting table
+    float meetingTableX = 0.0f;
+    float meetingTableZ = 11.0f;
 
-    addObject("MeetingTable", meetX, meetZ, drawMeetingTable, 1);
+    addObject("MeetingTable", meetingTableX, meetingTableZ, drawMeetingTable, 1);
 
-    // meeting chairs
-    float mChairX[2] = {-1.8f, 1.8f};
-    float mChairZfront = -2.2f;
-    float mChairZback = 2.2f;
+    // Meeting chairs
+    float meetingChairOffsetX[2] = {-1.8f, 1.8f};
+    float meetingChairFrontZ = -2.2f;
+    float meetingChairBackZ = 2.2f;
 
-    // front chairs
+    // Spawn two chairs on the front side of the meeting table
     for (int i = 0; i < 2; i++)
     {
         char cname[32];
         sprintf(cname, "MeetChair_F%d", i + 1);
 
         addObject(cname,
-                  meetX + mChairX[i],
-                  meetZ + mChairZfront,
+                  meetingTableX + meetingChairOffsetX[i],
+                  meetingTableZ + meetingChairFrontZ,
                   drawBanquetChair,
                   1);
 
         objects[objectCount - 1].rotation = 0.0f;
     }
 
-    // back chairs
+    // Spawn two chairs on the back side of the meeting table
     for (int i = 0; i < 2; i++)
     {
         char cname[32];
         sprintf(cname, "MeetChair_B%d", i + 1);
 
         addObject(cname,
-                  meetX + mChairX[i],
-                  meetZ + mChairZback,
+                  meetingTableX + meetingChairOffsetX[i],
+                  meetingTableZ + meetingChairBackZ,
                   drawBanquetChair,
                   1);
 
@@ -567,515 +570,26 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -5.0f;
     objects[objectCount - 1].subBox[0][5] = 5.0f;
 
+    // Initialize bounds and apply stage height for every preloaded object
+    // Visit every object so we can snap the ones that support it
+    // Find the array index for the selected object
+    // Render every object with its current transform
     for (int i = 0; i < objectCount; i++)
     {
         configureObjectBounds(&objects[i]);
         scene_apply_stage_height(&objects[i]);
     }
 
+    // Optionally snap everything right after initialization
+    // Only draw the placement grid overlay when snapping is enabled
     if (snapToGridEnabled)
         scene_snap_all_objects();
 }
 
-static int nameHasPrefix(const char *name, const char *prefix)
-{
-    if (!name || !prefix)
-        return 0;
-
-    size_t len = strlen(prefix);
-    return strncmp(name, prefix, len) == 0;
-}
-
-static int nameSupportsSnap(const char *name)
-{
-    if (!name)
-        return 0;
-
-    if (nameHasPrefix(name, "EventTable") ||
-        nameHasPrefix(name, "MeetingTable") ||
-        nameHasPrefix(name, "BanquetChair") ||
-        nameHasPrefix(name, "EventChair") ||
-        nameHasPrefix(name, "MeetChair"))
-        return 1;
-
-    if (nameHasPrefix(name, "Cocktail_") ||
-        nameHasPrefix(name, "BarChair"))
-        return 1;
-
-    return 0;
-}
-
-int scene_object_supports_snap(const SceneObject *obj)
-{
-    if (!obj)
-        return 0;
-
-    return nameSupportsSnap(obj->name);
-}
-
-void scene_snap_position(float *x, float *z)
-{
-    if (!x || !z || GRID_SNAP_SIZE <= 0.0f)
-        return;
-
-    *x = roundf(*x / GRID_SNAP_SIZE) * GRID_SNAP_SIZE;
-    *z = roundf(*z / GRID_SNAP_SIZE) * GRID_SNAP_SIZE;
-}
-
-void scene_snap_all_objects(void)
-{
-    for (int i = 0; i < objectCount; i++)
-    {
-        SceneObject *obj = &objects[i];
-        if (!scene_object_supports_snap(obj))
-            continue;
-
-        float snappedX = obj->x;
-        float snappedZ = obj->z;
-        scene_snap_position(&snappedX, &snappedZ);
-
-        if (snappedX < ROOM_MIN_X)
-            snappedX = ROOM_MIN_X;
-        if (snappedX > ROOM_MAX_X)
-            snappedX = ROOM_MAX_X;
-        if (snappedZ < ROOM_MIN_Z)
-            snappedZ = ROOM_MIN_Z;
-        if (snappedZ > ROOM_MAX_Z)
-            snappedZ = ROOM_MAX_Z;
-
-        if (!collidesWithAnyObject(obj, snappedX, snappedZ, false, true))
-        {
-            obj->x = snappedX;
-            obj->z = snappedZ;
-            scene_apply_stage_height(obj);
-        }
-    }
-}
-
-static void configureObjectBounds(SceneObject *obj)
-{
-    if (!obj)
-        return;
-
-    if (nameHasPrefix(obj->name, "EventTable"))
-    {
-        const float topHalfX = 2.0f;
-        const float topHalfZ = 1.0f;
-        const float topBottomY = 2.0f;
-        const float topTopY = 2.15f;
-        const float legOffsetX = 1.7f;
-        const float legOffsetZ = 0.7f;
-        const float legHalf = 0.125f;
-
-        obj->subBoxCount = 5;
-
-        // tabletop
-        obj->subBox[0][0] = -topHalfX;
-        obj->subBox[0][1] = topHalfX;
-        obj->subBox[0][2] = topBottomY;
-        obj->subBox[0][3] = topTopY;
-        obj->subBox[0][4] = -topHalfZ;
-        obj->subBox[0][5] = topHalfZ;
-
-        int box = 1;
-        for (int sx = -1; sx <= 1; sx += 2)
-        {
-            for (int sz = -1; sz <= 1; sz += 2)
-            {
-                float cx = sx * legOffsetX;
-                float cz = sz * legOffsetZ;
-
-                obj->subBox[box][0] = cx - legHalf;
-                obj->subBox[box][1] = cx + legHalf;
-                obj->subBox[box][2] = 0.0f;
-                obj->subBox[box][3] = topBottomY;
-                obj->subBox[box][4] = cz - legHalf;
-                obj->subBox[box][5] = cz + legHalf;
-                box++;
-            }
-        }
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "Cocktail_1"))
-    {
-        const float topRadius = 1.5f;
-        const float topBottomY = 4.0f;
-        const float topTopY = topBottomY + 0.1f;
-        const float legRadius = 0.15f;
-        const float legHeight = 4.0f;
-        const float baseRadius = 0.6f;
-        const float baseTopY = 0.05f;
-
-        obj->subBoxCount = 3;
-
-        obj->subBox[0][0] = -topRadius;
-        obj->subBox[0][1] = topRadius;
-        obj->subBox[0][2] = topBottomY;
-        obj->subBox[0][3] = topTopY;
-        obj->subBox[0][4] = -topRadius;
-        obj->subBox[0][5] = topRadius;
-
-        obj->subBox[1][0] = -legRadius;
-        obj->subBox[1][1] = legRadius;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = legHeight;
-        obj->subBox[1][4] = -legRadius;
-        obj->subBox[1][5] = legRadius;
-
-        obj->subBox[2][0] = -baseRadius;
-        obj->subBox[2][1] = baseRadius;
-        obj->subBox[2][2] = 0.0f;
-        obj->subBox[2][3] = baseTopY;
-        obj->subBox[2][4] = -baseRadius;
-        obj->subBox[2][5] = baseRadius;
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "Cocktail_2"))
-    {
-        const float topRadius = 1.4f;
-        const float topBottomY = 4.0f;
-        const float topTopY = topBottomY + 0.12f;
-        const float legSpread = 0.8f;
-        const float legLength = 4.0f;
-        const float legTiltDeg = 10.0f;
-        const float legHalf = 0.12f;
-        const float horizShift = legLength * sinf(legTiltDeg * (M_PI / 180.0f));
-
-        obj->subBoxCount = 4;
-
-        obj->subBox[0][0] = -topRadius;
-        obj->subBox[0][1] = topRadius;
-        obj->subBox[0][2] = topBottomY;
-        obj->subBox[0][3] = topTopY;
-        obj->subBox[0][4] = -topRadius;
-        obj->subBox[0][5] = topRadius;
-
-        for (int i = 0; i < 3; i++)
-        {
-            float ang = (2.0f * M_PI / 3.0f) * i;
-            float dirX = cosf(ang);
-            float dirZ = sinf(ang);
-            float topX = legSpread * dirX;
-            float topZ = legSpread * dirZ;
-            float bottomX = topX + horizShift * dirX;
-            float bottomZ = topZ + horizShift * dirZ;
-
-            float minX = fminf(topX, bottomX) - legHalf;
-            float maxX = fmaxf(topX, bottomX) + legHalf;
-            float minZ = fminf(topZ, bottomZ) - legHalf;
-            float maxZ = fmaxf(topZ, bottomZ) + legHalf;
-
-            obj->subBox[i + 1][0] = minX;
-            obj->subBox[i + 1][1] = maxX;
-            obj->subBox[i + 1][2] = 0.0f;
-            obj->subBox[i + 1][3] = topBottomY;
-            obj->subBox[i + 1][4] = minZ;
-            obj->subBox[i + 1][5] = maxZ;
-        }
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "Cocktail_3"))
-    {
-        const float bottomRadius = 0.85f;
-        const float bottomHeight = 3.5f;
-        const float topRadius = 1.35f;
-        const float topHeight = 0.4f;
-        const float topDiskThickness = 0.05f;
-
-        obj->subBoxCount = 3;
-
-        obj->subBox[0][0] = -bottomRadius;
-        obj->subBox[0][1] = bottomRadius;
-        obj->subBox[0][2] = 0.0f;
-        obj->subBox[0][3] = bottomHeight;
-        obj->subBox[0][4] = -bottomRadius;
-        obj->subBox[0][5] = bottomRadius;
-
-        obj->subBox[1][0] = -topRadius;
-        obj->subBox[1][1] = topRadius;
-        obj->subBox[1][2] = bottomHeight;
-        obj->subBox[1][3] = bottomHeight + topHeight;
-        obj->subBox[1][4] = -topRadius;
-        obj->subBox[1][5] = topRadius;
-
-        obj->subBox[2][0] = -topRadius;
-        obj->subBox[2][1] = topRadius;
-        obj->subBox[2][2] = bottomHeight + topHeight;
-        obj->subBox[2][3] = bottomHeight + topHeight + topDiskThickness;
-        obj->subBox[2][4] = -topRadius;
-        obj->subBox[2][5] = topRadius;
-        return;
-    }
-
-        if (nameHasPrefix(obj->name, "EventChair") ||
-            nameHasPrefix(obj->name, "MeetChair") ||
-            nameHasPrefix(obj->name, "BanquetChair"))
-    {
-        const float seatHalfW = 0.5f;
-        const float seatHalfD = 0.5f;
-        const float seatThickness = 0.25f;
-        const float seatCenterY = 1.0f;
-        const float seatHalfT = seatThickness * 0.5f;
-        const float seatBottomY = seatCenterY - seatHalfT;
-        const float seatTopY = seatCenterY + seatHalfT;
-        const float legInset = 0.1f;
-        const float legHalfWidth = 0.07f * 0.5f;
-        const float legReachX = seatHalfW - legInset + legHalfWidth;
-        const float legReachZ = seatHalfD - legInset + legHalfWidth;
-        const float backHeight = 1.3f;
-        const float backCurve = 0.25f;
-        const float backTopY = seatBottomY + backHeight;
-        const float backMinZ = -seatHalfD - backCurve - seatHalfT;
-        const float backMaxZ = -seatHalfD + seatHalfT;
-
-        obj->subBoxCount = 3;
-
-        // seat cushion
-        obj->subBox[0][0] = -seatHalfW;
-        obj->subBox[0][1] = seatHalfW;
-        obj->subBox[0][2] = seatBottomY;
-        obj->subBox[0][3] = seatTopY;
-        obj->subBox[0][4] = -seatHalfD;
-        obj->subBox[0][5] = seatHalfD;
-
-        // backrest
-        obj->subBox[1][0] = -seatHalfW;
-        obj->subBox[1][1] = seatHalfW;
-        obj->subBox[1][2] = seatBottomY;
-        obj->subBox[1][3] = backTopY;
-        obj->subBox[1][4] = backMinZ;
-        obj->subBox[1][5] = backMaxZ;
-
-        // leg cluster
-        obj->subBox[2][0] = -legReachX;
-        obj->subBox[2][1] = legReachX;
-        obj->subBox[2][2] = 0.0f;
-        obj->subBox[2][3] = seatBottomY;
-        obj->subBox[2][4] = -legReachZ;
-        obj->subBox[2][5] = legReachZ;
-        return;
-    }
-    if (nameHasPrefix(obj->name, "BarChair"))
-    {
-        obj->subBoxCount = 3;
-
-        obj->subBox[0][0] = -0.65f;
-        obj->subBox[0][1] = 0.65f;
-        obj->subBox[0][2] = 0.0f;
-        obj->subBox[0][3] = 2.2f;
-        obj->subBox[0][4] = -0.55f;
-        obj->subBox[0][5] = 0.55f;
-
-        obj->subBox[1][0] = -0.65f;
-        obj->subBox[1][1] = 0.65f;
-        obj->subBox[1][2] = 2.30f;
-        obj->subBox[1][3] = 2.95f;
-        obj->subBox[1][4] = -0.65f;
-        obj->subBox[1][5] = 0.65f;
-
-        obj->subBox[2][0] = -0.70f;
-        obj->subBox[2][1] = 0.70f;
-        obj->subBox[2][2] = 2.40f;
-        obj->subBox[2][3] = 4.35f;
-        obj->subBox[2][4] = -0.65f;
-        obj->subBox[2][5] = -0.05f;
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "MeetingTable"))
-    {
-        const float topHalfX = 3.0f;
-        const float topHalfZ = 1.35f;
-        const float topBottomY = 1.55f;
-        const float topTopY = 1.7f;
-        const float legOffsetX = 2.2f;
-        const float legOffsetZ = 0.585f;
-        const float legHalf = 0.125f;
-        const float legTop = 1.6f;
-
-        obj->subBoxCount = 5;
-
-        obj->subBox[0][0] = -topHalfX;
-        obj->subBox[0][1] = topHalfX;
-        obj->subBox[0][2] = topBottomY;
-        obj->subBox[0][3] = topTopY;
-        obj->subBox[0][4] = -topHalfZ;
-        obj->subBox[0][5] = topHalfZ;
-
-        int box = 1;
-        for (int sx = -1; sx <= 1; sx += 2)
-        {
-            for (int sz = -1; sz <= 1; sz += 2)
-            {
-                float cx = sx * legOffsetX;
-                float cz = sz * legOffsetZ;
-
-                obj->subBox[box][0] = cx - legHalf;
-                obj->subBox[box][1] = cx + legHalf;
-                obj->subBox[box][2] = 0.0f;
-                obj->subBox[box][3] = legTop;
-                obj->subBox[box][4] = cz - legHalf;
-                obj->subBox[box][5] = cz + legHalf;
-                box++;
-            }
-        }
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "Lamp"))
-    {
-        obj->subBoxCount = 3;
-
-        obj->subBox[0][0] = -0.75f;
-        obj->subBox[0][1] = 0.75f;
-        obj->subBox[0][2] = 4.9f;
-        obj->subBox[0][3] = 5.7f;
-        obj->subBox[0][4] = -0.75f;
-        obj->subBox[0][5] = 0.75f;
-
-        obj->subBox[1][0] = -0.25f;
-        obj->subBox[1][1] = 0.25f;
-        obj->subBox[1][2] = 0.0f;
-        obj->subBox[1][3] = 5.15f;
-        obj->subBox[1][4] = -0.25f;
-        obj->subBox[1][5] = 0.25f;
-
-        obj->subBox[2][0] = -0.45f;
-        obj->subBox[2][1] = 0.45f;
-        obj->subBox[2][2] = 0.0f;
-        obj->subBox[2][3] = 0.2f;
-        obj->subBox[2][4] = -0.45f;
-        obj->subBox[2][5] = 0.45f;
-        return;
-    }
-
-    if (strcmp(obj->name, "Wall_Back") == 0 ||
-        strcmp(obj->name, "Wall_Front") == 0 ||
-        strcmp(obj->name, "Wall_Left") == 0 ||
-        strcmp(obj->name, "Wall_Right") == 0 ||
-        strcmp(obj->name, "Stage") == 0)
-    {
-        return;
-    }
-
-    obj->subBoxCount = 1;
-    obj->subBox[0][0] = -0.8f;
-    obj->subBox[0][1] = 0.8f;
-    obj->subBox[0][2] = 0.0f;
-    obj->subBox[0][3] = 3.0f;
-    obj->subBox[0][4] = -0.8f;
-    obj->subBox[0][5] = 0.8f;
-}
-
-static int findFreeGroundSpot(SceneObject *prototype, float *outX, float *outZ)
-{
-    if (!prototype || prototype->subBoxCount == 0)
-        return 0;
-
-    const float margin = 0.5f;
-    const int snapCandidate = snapToGridEnabled && nameSupportsSnap(prototype->name);
-    const float step = snapCandidate ? GRID_SNAP_SIZE : 1.0f;
-    float minX = ROOM_MIN_X + margin;
-    float maxX = ROOM_MAX_X - margin;
-    float minZ = ROOM_MIN_Z + margin;
-    float maxZ = ROOM_MAX_Z - margin;
-    float bestDist = 1e9f;
-    int found = 0;
-
-    for (float z = minZ; z <= maxZ; z += step)
-    {
-        for (float x = minX; x <= maxX; x += step)
-        {
-            float testX = x;
-            float testZ = z;
-
-            if (snapCandidate)
-                scene_snap_position(&testX, &testZ);
-
-            if (testX < minX)
-                testX = minX;
-            if (testX > maxX)
-                testX = maxX;
-            if (testZ < minZ)
-                testZ = minZ;
-            if (testZ > maxZ)
-                testZ = maxZ;
-
-            if (!collidesWithAnyObject(prototype, testX, testZ, false, true))
-            {
-                float dist = testX * testX + testZ * testZ;
-                if (!found || dist < bestDist)
-                {
-                    bestDist = dist;
-                    *outX = testX;
-                    *outZ = testZ;
-                    found = 1;
-                }
-            }
-        }
-    }
-
-    return found;
-}
-
-SceneObject *scene_spawn_object(SceneSpawnType type)
-{
-    if (type < 0 || type >= SPAWN_TYPE_COUNT)
-        return NULL;
-
-    const ObjectTemplate *tmpl = &spawnTemplates[type];
-
-    SceneObject prototype;
-    memset(&prototype, 0, sizeof(SceneObject));
-    strncpy(prototype.name, tmpl->baseName, sizeof(prototype.name) - 1);
-    prototype.name[sizeof(prototype.name) - 1] = '\0';
-    prototype.x = 0.0f;
-    prototype.y = 0.0f;
-    prototype.z = 0.0f;
-    prototype.drawFunc = tmpl->drawFunc;
-    prototype.movable = tmpl->movable;
-    prototype.scale = tmpl->defaultScale;
-    prototype.rotation = tmpl->defaultRotation;
-    prototype.solid = 1;
-
-    configureObjectBounds(&prototype);
-
-    float spawnX = 0.0f;
-    float spawnZ = 0.0f;
-    if (!findFreeGroundSpot(&prototype, &spawnX, &spawnZ))
-    {
-        printf("No available space for %s.\n", tmpl->baseName);
-        return NULL;
-    }
-
-    char uniqueName[32];
-    int count = ++spawnCounters[type];
-    snprintf(uniqueName, sizeof(uniqueName), "%s_New%d", tmpl->baseName, count);
-
-    SceneObject *obj = addObject(uniqueName, spawnX, spawnZ, tmpl->drawFunc, tmpl->movable);
-    if (!obj)
-    {
-        printf("Maximum object count reached.\n");
-        return NULL;
-    }
-
-    obj->rotation = tmpl->defaultRotation;
-    obj->scale = tmpl->defaultScale;
-    configureObjectBounds(obj);
-    scene_apply_stage_height(obj);
-
-    selectedObject = obj;
-    dragging = 0;
-
-    printf("Spawned %s at (%.1f, %.1f).\n", obj->name, spawnX, spawnZ);
-    return obj;
-}
-
+// Deletes the currently selected movable object
 void scene_remove_selected_object(void)
 {
+    // Nothing to remove if no selection
     if (!selectedObject)
     {
         printf("No object selected to remove.\n");
@@ -1085,6 +599,7 @@ void scene_remove_selected_object(void)
     int index = -1;
     for (int i = 0; i < objectCount; i++)
     {
+        // Look for the array slot that matches the current selection
         if (&objects[i] == selectedObject)
         {
             index = i;
@@ -1092,9 +607,11 @@ void scene_remove_selected_object(void)
         }
     }
 
+    // Safety: selection must exist inside the array
     if (index < 0)
         return;
 
+    // Static fixtures cannot be deleted
     if (!objects[index].movable)
     {
         printf("Object %s cannot be removed.\n", objects[index].name);
@@ -1103,6 +620,7 @@ void scene_remove_selected_object(void)
 
     printf("Removed %s.\n", objects[index].name);
 
+    // Shift every later object forward to fill the gap
     for (int i = index; i < objectCount - 1; i++)
     {
         objects[i] = objects[i + 1];
@@ -1149,11 +667,13 @@ void scene_display(void)
 
         glColor4f(0.2f, 0.9f, 0.2f, 0.35f);
         glBegin(GL_LINES);
+        // Draw vertical grid lines across the floor
         for (float x = minX; x <= maxX; x += GRID_SNAP_SIZE)
         {
             glVertex3f(x, 0.02f, minZ);
             glVertex3f(x, 0.02f, maxZ);
         }
+        // Draw horizontal grid lines across the floor
         for (float z = minZ; z <= maxZ; z += GRID_SNAP_SIZE)
         {
             glVertex3f(minX, 0.02f, z);
@@ -1166,6 +686,8 @@ void scene_display(void)
         glColor3f(1.0f, 1.0f, 1.0f);
     }
 
+    // Only draw the ceiling when not inside VR mode
+    // Only draw ceiling fixtures outside VR mode
     if (mode != 2)
     {
         // Ceiling
@@ -1175,6 +697,7 @@ void scene_display(void)
         glDisable(GL_TEXTURE_2D);
     }
 
+    // Draw the back wall only in non-VR view
     if (mode != 2)
     {
         // Back wall
@@ -1184,6 +707,7 @@ void scene_display(void)
         glDisable(GL_TEXTURE_2D);
     }
 
+    // Draw the front wall only in non-VR view
     if (mode != 2)
     {
         // Front wall
@@ -1193,6 +717,7 @@ void scene_display(void)
         glDisable(GL_TEXTURE_2D);
     }
 
+    // Draw the left wall only in non-VR view
     if (mode != 2)
     {
         // Left wall
@@ -1202,6 +727,7 @@ void scene_display(void)
         glDisable(GL_TEXTURE_2D);
     }
 
+    // Draw the right wall only in non-VR view
     if (mode != 2)
     {
         // Right wall
@@ -1270,40 +796,41 @@ void scene_display(void)
     // Scene objects
     for (int i = 0; i < objectCount; i++)
     {
-        SceneObject *obj = &objects[i];
+        SceneObject *sceneObject = &objects[i];
 
         glPushMatrix();
-        glTranslatef(obj->x, obj->y, obj->z);
-        glRotatef(obj->rotation, 0, 1, 0);
-        glScalef(obj->scale, obj->scale, obj->scale);
+        glTranslatef(sceneObject->x, sceneObject->y, sceneObject->z);
+        glRotatef(sceneObject->rotation, 0, 1, 0);
+        glScalef(sceneObject->scale, sceneObject->scale, sceneObject->scale);
         glColor3f(1.0f, 1.0f, 1.0f);
 
-        if (obj->drawFunc)
+        // Only draw objects that provide a callback
+        if (sceneObject->drawFunc)
         {
-            obj->drawFunc(0, 0);
+            sceneObject->drawFunc(0, 0);
         }
 
         glPopMatrix();
 
         // Highlight bounding box of selected object when enabled
-        if (bboxHighlightEnabled && selectedObject == obj)
+        if (bboxHighlightEnabled && selectedObject == sceneObject)
         {
             glDisable(GL_LIGHTING);
             glDisable(GL_TEXTURE_2D);
 
-            drawBBox(obj);
+            drawBBox(sceneObject);
 
             glEnable(GL_TEXTURE_2D);
             glEnable(GL_LIGHTING);
         }
 
         // Highlight selected object
-        if (selectedObject == obj)
+        if (selectedObject == sceneObject)
         {
             glPushMatrix();
-            glTranslatef(obj->x, obj->y, obj->z);
-            glRotatef(obj->rotation, 0, 1, 0);
-            glScalef(obj->scale, obj->scale, obj->scale);
+            glTranslatef(sceneObject->x, sceneObject->y, sceneObject->z);
+            glRotatef(sceneObject->rotation, 0, 1, 0);
+            glScalef(sceneObject->scale, sceneObject->scale, sceneObject->scale);
 
             glDisable(GL_LIGHTING);
             glDisable(GL_TEXTURE_2D);
@@ -1315,8 +842,9 @@ void scene_display(void)
             glLineWidth(3.0f);
             glColor3f(1.0f, 0.0f, 0.0f);
 
-            if (obj->drawFunc)
-                obj->drawFunc(0, 0);
+            // Only re-draw if there is a mesh callback
+            if (sceneObject->drawFunc)
+                sceneObject->drawFunc(0, 0);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_LINE);
@@ -1328,17 +856,21 @@ void scene_display(void)
         }
     }
 
+    // Render animated fire plane if shader compiled successfully
     if (fireShader > 0)
     {
+        // Render the heat plane with animated shader
         glUseProgram(fireShader);
 
         // shader uniforms
         float time = glutGet(GLUT_ELAPSED_TIME) * 0.001f;
         int timeLoc = glGetUniformLocation(fireShader, "time");
+        // Upload elapsed time uniform when found
         if (timeLoc >= 0)
             glUniform1f(timeLoc, time);
 
         int noiseLoc = glGetUniformLocation(fireShader, "noiseTex");
+        // Bind the noise texture uniform when found
         if (noiseLoc >= 0)
             glUniform1i(noiseLoc, 0);
 

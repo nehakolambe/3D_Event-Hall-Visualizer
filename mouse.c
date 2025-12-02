@@ -11,24 +11,25 @@ static int rayIntersectsSubBoxWorld(
     float entryDistance = -1e9f;
     float exitDistance = +1e9f;
 
-    for (int axis = 0; axis < 3; axis++)
+    // Sweep across X,Y,Z slabs
+    for (int axisIndex = 0; axisIndex < 3; axisIndex++)
     {
         // Compute min/max of the box along this axis in world coordinates
-        float boxMin = sceneObject->subBox[boxIndex][axis * 2] +
-                       (axis == 0 ? sceneObject->x : axis == 1 ? sceneObject->y
-                                                               : sceneObject->z);
+        float boxMin = sceneObject->subBox[boxIndex][axisIndex * 2] +
+                       (axisIndex == 0 ? sceneObject->x : axisIndex == 1 ? sceneObject->y
+                                                                         : sceneObject->z);
 
-        float boxMax = sceneObject->subBox[boxIndex][axis * 2 + 1] +
-                       (axis == 0 ? sceneObject->x : axis == 1 ? sceneObject->y
-                                                               : sceneObject->z);
+        float boxMax = sceneObject->subBox[boxIndex][axisIndex * 2 + 1] +
+                       (axisIndex == 0 ? sceneObject->x : axisIndex == 1 ? sceneObject->y
+                                                                         : sceneObject->z);
 
         // Ray origin and direction on this axis
-        float rayOriginAxis = (axis == 0 ? rayOriginX : axis == 1 ? rayOriginY
-                                                                  : rayOriginZ);
-        float rayDirAxis = (axis == 0 ? rayDirX : axis == 1 ? rayDirY
-                                                            : rayDirZ);
+        float rayOriginAxis = (axisIndex == 0 ? rayOriginX : axisIndex == 1 ? rayOriginY
+                                                                           : rayOriginZ);
+        float rayDirAxis = (axisIndex == 0 ? rayDirX : axisIndex == 1 ? rayDirY
+                                                                      : rayDirZ);
 
-        // If ray is parallel to the slab
+        // Handle rays parallel to the current axis-aligned slab
         if (fabsf(rayDirAxis) < 1e-6f)
         {
             if (rayOriginAxis < boxMin || rayOriginAxis > boxMax)
@@ -41,11 +42,12 @@ static int rayIntersectsSubBoxWorld(
 
             if (entryCandidate > exitCandidate)
             {
-                float swappedValue = entryCandidate;
+                float swapTemp = entryCandidate;
                 entryCandidate = exitCandidate;
-                exitCandidate = swappedValue;
+                exitCandidate = swapTemp;
             }
 
+            // Grow the entry interval and shrink exit interval
             if (entryCandidate > entryDistance)
                 entryDistance = entryCandidate;
             if (exitCandidate < exitDistance)
@@ -106,6 +108,7 @@ SceneObject *pickObject3D(int mouseX, int mouseY)
     SceneObject *closestObject = NULL;
     float closestHitDistance = 1e9f;
 
+    // Trace the ray against all movable objects
     for (int objectIndex = 0; objectIndex < objectCount; objectIndex++)
     {
         SceneObject *sceneObject = &objects[objectIndex];
@@ -113,6 +116,7 @@ SceneObject *pickObject3D(int mouseX, int mouseY)
         if (!sceneObject->movable)
             continue;
 
+        // Test each sub-box of the object
         for (int subBoxIndex = 0; subBoxIndex < sceneObject->subBoxCount; subBoxIndex++)
         {
             float subBoxHitDistance;
@@ -136,6 +140,7 @@ SceneObject *pickObject3D(int mouseX, int mouseY)
 // Mouse button callback
 void mouse_button(int button, int state, int mouseX, int mouseY)
 {
+    // Only handle left clicks for selection/drag
     if (button == GLUT_LEFT_BUTTON)
     {
         if (state == GLUT_DOWN)
@@ -185,19 +190,22 @@ static int rayPlaneIntersection(float rayOriginX, float rayOriginY, float rayOri
     if (fabsf(rayDirY) < 1e-6f)
         return 0;
 
-    float t = -rayOriginY / rayDirY;
-    if (t < 0)
+    float rayParameter = -rayOriginY / rayDirY;
+    
+    // Intersections behind the camera are ignored
+    if (rayParameter < 0)
         return 0;
 
     // Compute the point where the ray intersects the ground plane (y=0)
-    *planeHitX = rayOriginX + t * rayDirX;
-    *planeHitZ = rayOriginZ + t * rayDirZ;
+    *planeHitX = rayOriginX + rayParameter * rayDirX;
+    *planeHitZ = rayOriginZ + rayParameter * rayDirZ;
     return 1;
 }
 
 // Mouse motion callback
 void mouse_motion(int mouseX, int mouseY)
 {
+    // Only move objects while dragging a valid selection
     if (dragging && selectedObject)
     {
         float rayOriginX, rayOriginY, rayOriginZ, rayDirX, rayDirY, rayDirZ;
@@ -213,11 +221,11 @@ void mouse_motion(int mouseX, int mouseY)
             float newX = planeHitX;
             float newZ = planeHitZ;
 
+            // Snap furniture to the grid if supported
             if (snapToGridEnabled && scene_object_supports_snap(selectedObject))
-                // Snap furniture to the grid if supported
                 scene_snap_position(&newX, &newZ);
 
-            // room boundaries
+            // Enforce room boundaries
             if (newX < ROOM_MIN_X)
                 newX = ROOM_MIN_X;
             if (newX > ROOM_MAX_X)
@@ -227,7 +235,7 @@ void mouse_motion(int mouseX, int mouseY)
             if (newZ > ROOM_MAX_Z)
                 newZ = ROOM_MAX_Z;
 
-            // object–object collision
+            // Only accept the movement if it does not collide
             if (!collidesWithAnyObject(selectedObject, newX, newZ, false, true))
             {
                 // Update the object's location once it is valid

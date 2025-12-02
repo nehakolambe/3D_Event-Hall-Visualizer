@@ -53,6 +53,9 @@
 #define ROOM_MIN_Z -28.0f
 #define ROOM_MAX_Z 28.0f
 
+// Stage grid and elevation settings
+extern const float GRID_SNAP_SIZE;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -105,11 +108,11 @@ void Fatal(const char *format, ...);
     int CreateShaderProg(char *VertFile, char *FragFile);
 
     extern int lightState;
-    extern float zh;
-    extern float lightSpeed;
-    extern float radius;
-    extern int moveLight;
-    extern float lightY;
+    extern float movingLightAngle;
+    extern float movingLightSpeed;
+    extern float movingLightRadius;
+    extern int movingLightEnabled;
+    extern float movingLightHeight;
 
     extern int mode; // 0 = perspective, 1 = FPV, 2 = orthogonal
     extern double fpvX, fpvY, fpvZ;
@@ -158,6 +161,10 @@ void Fatal(const char *format, ...);
     extern SceneObject objects[MAX_OBJECTS];
     extern int objectCount;
     extern bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ, bool adjustPlayerHeight, bool allowStageSnap);
+    SceneObject *addObject(const char *name,
+                           float positionX, float positionZ,
+                           void (*drawFunc)(float, float),
+                           int movable);
 
     extern SceneObject *selectedObject;
     extern SceneObject playerObj;
@@ -168,6 +175,8 @@ void Fatal(const char *format, ...);
     void scene_snap_position(float *x, float *z);
     void scene_snap_all_objects(void);
     void scene_apply_stage_height(SceneObject *obj);
+    void configureObjectBounds(SceneObject *sceneObject);
+    void scene_spawn_reset(void);
 
     // Mouse interaction
     void mouse_button(int button, int state, int mouseX, int mouseY);

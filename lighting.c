@@ -4,17 +4,17 @@
 int lightState = 1;
 
 // moving light parameters
-float zh = 0.0f;
-float lightSpeed = 1.0f;
-float radius = 10.0f;
-float lightY = 5.0f;
+float movingLightAngle = 0.0f;
+float movingLightSpeed = 1.0f;
+float movingLightRadius = 10.0f;
+float movingLightHeight = 5.0f;
 
-float lx = 5.0f;
-float ly = 5.0f;
-float lz = 0.0f;
+float movingLightPosX = 5.0f;
+float movingLightPosY = 5.0f;
+float movingLightPosZ = 0.0f;
 
 // toggle
-int moveLight = 1;
+int movingLightEnabled = 1;
 
 // material shininess
 int shininess = 32;
@@ -44,6 +44,7 @@ void lighting_init(void)
 // update lighting each frame
 void lighting_update(void)
 {
+    // Disable everything when lights are off
     if (lightState == 0)
     {
         glDisable(GL_LIGHTING);
@@ -60,14 +61,15 @@ void lighting_update(void)
         glEnable(GL_LIGHT0);
         glDisable(GL_LIGHT1);
 
-        if (moveLight)
-            zh += lightSpeed;
+        // Advance the animation when movement is enabled
+        if (movingLightEnabled)
+            movingLightAngle += movingLightSpeed;
 
-        lx = radius * Cos(zh);
-        lz = radius * Sin(zh);
-        ly = lightY;
+        movingLightPosX = movingLightRadius * Cos(movingLightAngle);
+        movingLightPosZ = movingLightRadius * Sin(movingLightAngle);
+        movingLightPosY = movingLightHeight;
 
-        float pos0[] = {lx, ly, lz, 1.0f};
+        float pos0[] = {movingLightPosX, movingLightPosY, movingLightPosZ, 1.0f};
 
         glLightfv(GL_LIGHT0, GL_POSITION, pos0);
         glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
@@ -113,6 +115,7 @@ void lighting_update(void)
 // debug sphere
 void lighting_draw_debug_marker(void)
 {
+    // Only draw the marker for the moving light
     if (lightState != 1)
         return;
 
@@ -120,7 +123,7 @@ void lighting_draw_debug_marker(void)
     glColor3f(1.0f, 1.0f, 1.0f);
 
     glPushMatrix();
-    glTranslatef(lx, ly, lz);
+    glTranslatef(movingLightPosX, movingLightPosY, movingLightPosZ);
     glutSolidSphere(0.2, 16, 16);
     glPopMatrix();
 

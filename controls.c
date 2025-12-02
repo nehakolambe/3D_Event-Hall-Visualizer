@@ -13,7 +13,7 @@ void controls_key(unsigned char key, int x, int y)
     // Toggle dynamic light motion
     case 'l':
     case 'L':
-        moveLight = !moveLight;
+        movingLightEnabled = !movingLightEnabled;
         break;
 
     // Toggle snap-to-grid
@@ -39,36 +39,36 @@ void controls_key(unsigned char key, int x, int y)
 
     // Rotate light horizontally (left)
     case '[':
-        zh -= 5;
+        movingLightAngle -= 5;
         break;
 
     // Rotate light horizontally (right)
     case ']':
-        zh += 5;
+        movingLightAngle += 5;
         break;
 
     // Shrink light radius
     case '{':
-        radius -= 1;
+        movingLightRadius -= 1;
         break;
 
     // Expand light radius
     case '}':
-        radius += 1;
-        if (radius > 40)
-            radius = 40;
+        movingLightRadius += 1;
+        if (movingLightRadius > 40)
+            movingLightRadius = 40;
         break;
 
     // Move light down
     case 'y':
-        lightY -= 0.5f;
+        movingLightHeight -= 0.5f;
         break;
 
     // Move light up
     case 'Y':
-        lightY += 0.5f;
-        if (lightY > 30)
-            lightY = 30;
+        movingLightHeight += 0.5f;
+        if (movingLightHeight > 30)
+            movingLightHeight = 30;
         break;
 
     // Save scene layout
@@ -255,9 +255,10 @@ void controls_key(unsigned char key, int x, int y)
         fpvZ = 24;
         fov = 55;
         dim = 20;
-        moveLight = 1;
-        radius = 10.0f;
-        zh = 0;
+        movingLightEnabled = 1;
+        movingLightRadius = 10.0f;
+        movingLightAngle = 0;
+        movingLightHeight = 5.0f;
         mode = 0;
         selectedObject = NULL;
         break;

@@ -96,8 +96,8 @@ void display(void)
     glPushMatrix();
     glLoadIdentity();
 
+    // disable lightting for text overlay
     glDisable(GL_LIGHTING);
-
     glColor3f(1, 1, 1);
 
     const char *modeStr =
@@ -110,8 +110,8 @@ void display(void)
     {
     case 1:
         Print("Light Mode: Moving ");
-        Print(" Light Radius:%.1f", radius);
-        Print(" Light Height (Y): %.1f", lightY);
+        Print(" Light Radius:%.1f", movingLightRadius);
+        Print(" Light Height (Y): %.1f", movingLightHeight);
         break;
 
     case 2:

@@ -3,6 +3,7 @@
 // map object name substrings to spawn types
 static int get_type_from_name(const char *name)
 {
+    // Map substrings to spawn menu entries
     if (strstr(name, "Lamp"))
         return SPAWN_LAMP;
     if (strstr(name, "EventTable"))
@@ -13,7 +14,6 @@ static int get_type_from_name(const char *name)
         return SPAWN_BAR_CHAIR;
     if (strstr(name, "BanquetChair") || strstr(name, "EventChair") || strstr(name, "MeetChair"))
         return SPAWN_BANQUET_CHAIR;
-
     if (strstr(name, "Cocktail_1"))
         return SPAWN_COCKTAIL_1;
     if (strstr(name, "Cocktail_2"))
@@ -27,8 +27,8 @@ static int get_type_from_name(const char *name)
 // save logic
 void save_scene(const char *filename)
 {
-    FILE *f = fopen(filename, "w");
-    if (!f)
+    FILE *sceneFile = fopen(filename, "w");
+    if (!sceneFile)
     {
         printf("Error: Could not save to %s\n", filename);
         return;
@@ -37,25 +37,30 @@ void save_scene(const char *filename)
     // save objects
     for (int i = 0; i < objectCount; i++)
     {
-        SceneObject *obj = &objects[i];
+        SceneObject *sceneObject = &objects[i];
 
         // skip non-movable objects
-        if (!obj->movable)
+        if (!sceneObject->movable)
             continue;
 
-        fprintf(f, "O,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n",
-                obj->name, obj->x, obj->y, obj->z, obj->rotation, obj->scale);
+        fprintf(sceneFile, "O,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+                sceneObject->name,
+                sceneObject->x,
+                sceneObject->y,
+                sceneObject->z,
+                sceneObject->rotation,
+                sceneObject->scale);
     }
 
-    fclose(f);
+    fclose(sceneFile);
     printf("Scene saved to %s\n", filename);
 }
 
 // load logic
 void load_scene(const char *filename)
 {
-    FILE *f = fopen(filename, "r");
-    if (!f)
+    FILE *sceneFile = fopen(filename, "r");
+    if (!sceneFile)
     {
         printf("Error: Could not load %s\n", filename);
         return;
@@ -66,6 +71,7 @@ void load_scene(const char *filename)
     {
         if (objects[i].movable)
         {
+            // Shift the remaining objects down to fill the gap
             for (int j = i; j < objectCount - 1; j++)
             {
                 objects[j] = objects[j + 1];
@@ -78,37 +84,37 @@ void load_scene(const char *filename)
 
     // read file line by line
     char line[256];
-    while (fgets(line, sizeof(line), f))
+    while (fgets(line, sizeof(line), sceneFile))
     {
         // check line type
         if (line[0] == 'O') // Object
         {
             char nameBuffer[64];
-            float x, y, z, rot, scl;
+            float savedX, savedY, savedZ, savedRotation, savedScale;
 
             // parse object line
             if (sscanf(line, "O,%[^,],%f,%f,%f,%f,%f",
-                       nameBuffer, &x, &y, &z, &rot, &scl) == 6)
+                       nameBuffer, &savedX, &savedY, &savedZ, &savedRotation, &savedScale) == 6)
             {
-                int type = get_type_from_name(nameBuffer);
-                if (type >= 0)
+                int spawnType = get_type_from_name(nameBuffer);
+                if (spawnType >= 0)
                 {
                     // spawn object
-                    SceneObject *newObj = scene_spawn_object((SceneSpawnType)type);
-                    if (newObj)
+                    SceneObject *spawnedObject = scene_spawn_object((SceneSpawnType)spawnType);
+                    if (spawnedObject)
                     {
-                        newObj->x = x;
-                        newObj->y = y;
-                        newObj->z = z;
-                        newObj->rotation = rot;
-                        newObj->scale = scl;
+                        spawnedObject->x = savedX;
+                        spawnedObject->y = savedY;
+                        spawnedObject->z = savedZ;
+                        spawnedObject->rotation = savedRotation;
+                        spawnedObject->scale = savedScale;
                     }
                 }
             }
         }
     }
 
-    fclose(f);
+    fclose(sceneFile);
     printf("Scene loaded from %s\n", filename);
     glutPostRedisplay();
 }

@@ -38,6 +38,8 @@ fatal.o: fatal.c CSCIx229.h
 print.o: print.c CSCIx229.h
 persistence.o: persistence.c CSCIx229.h
 shader.o: shader.c CSCIx229.h
+snap.o: snap.c CSCIx229.h
+spawn.o: spawn.c CSCIx229.h
 
 #  Create archive (professor’s helper lib)
 CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o shader.o
@@ -50,7 +52,7 @@ CSCIx229.a: fatal.o  errcheck.o print.o loadtexbmp.o shader.o
 	g++ -c $(CFLG) $<
 
 #  Link final executable
-$(EXE): main.o scene.o object.o controls.o mouse.o lighting.o geometry.o collision.o persistence.o CSCIx229.a
+$(EXE): main.o scene.o object.o controls.o mouse.o lighting.o geometry.o collision.o persistence.o snap.o spawn.o CSCIx229.a
 	gcc $(CFLG) -o $@ $^ $(LIBS)
 
 #  Clean
