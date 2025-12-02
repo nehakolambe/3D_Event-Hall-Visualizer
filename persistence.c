@@ -1,7 +1,7 @@
 #include "CSCIx229.h"
 
 // map object name substrings to spawn types
-static SceneSpawnType get_type_from_name(const char *name)
+static int get_type_from_name(const char *name)
 {
     if (strstr(name, "Lamp"))
         return SPAWN_LAMP;
@@ -101,11 +101,11 @@ void load_scene(const char *filename)
             if (sscanf(line, "O,%[^,],%f,%f,%f,%f,%f",
                        nameBuffer, &x, &y, &z, &rot, &scl) == 6)
             {
-                SceneSpawnType type = get_type_from_name(nameBuffer);
-                if (type != -1)
+                int type = get_type_from_name(nameBuffer);
+                if (type >= 0)
                 {
                     // spawn object
-                    SceneObject *newObj = scene_spawn_object(type);
+                    SceneObject *newObj = scene_spawn_object((SceneSpawnType)type);
                     if (newObj)
                     {
                         newObj->x = x;

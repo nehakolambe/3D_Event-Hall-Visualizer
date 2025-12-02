@@ -1303,7 +1303,7 @@ static void drawRope(float length)
     glPopMatrix();
 }
 
-void drawStarShape()
+void drawStarShape(void)
 {
     const float outerR = 1.0f;
     const float innerR = 0.55f;
@@ -1385,7 +1385,7 @@ void drawStarShape()
     glDisable(GL_TEXTURE_2D);
 }
 
-void drawCloudShape()
+void drawCloudShape(void)
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cloudTex);
@@ -1443,7 +1443,7 @@ void drawCloudShape()
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawMoonShape()
+static void drawMoonShape(void)
 {
     float outerR = 0.9f;
     float innerR = 0.60f;
@@ -1618,7 +1618,7 @@ void drawCeilingShape(float x, float y, float z, int shapeType)
     glPopMatrix();
 }
 
-void drawCeilingShapes()
+void drawCeilingShapes(void)
 {
     // Row 1
     drawCeilingShape(-10, 14.5f, -10, 0);
@@ -1650,7 +1650,7 @@ float ROD_TOP;
 float LEG_OFFSET_X = 0.45f;
 float LEG_OFFSET_Z = 0.35f;
 
-void drawSeat()
+void drawSeat(void)
 {
     float width = 1.0f;
     float halfW = width * 0.5f;
@@ -1769,7 +1769,7 @@ void drawSeat()
 }
 
 // Seat base under the cushion
-void drawSeatBase()
+void drawSeatBase(void)
 {
     glPushMatrix();
     if (glIsEnabled(GL_LIGHTING))
@@ -1899,7 +1899,7 @@ void drawFootBar(float x1, float z1, float x2, float z2, float y)
 }
 
 // Curved wooden backrest
-void drawCurvedBackrest()
+void drawCurvedBackrest(void)
 {
     float rodBottom = SEAT_HEIGHT - CUSHION_THICK + 0.02f;
     float rodTop = rodBottom + (0.75f * CHAIR_SCALE);
@@ -2029,7 +2029,7 @@ void drawBackrestRod(float x, float z)
 }
 
 // Bar chair
-void drawBarChair()
+void drawBarChair(void)
 {
     BASE_THICK = 0.15f * CHAIR_SCALE;
     CUSHION_THICK = 0.18f * CHAIR_SCALE;

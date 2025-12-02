@@ -30,7 +30,7 @@ void main()
     float intensity = noise.r * finalGradient * 3.5;
 
     // fire colors based on intensity
-    vec4 color;
+    vec4 color = vec4(0.0);
     if (intensity > 1.4)
         color = vec4(1.0, 1.0, 0.6, 1.0); // White/Yellow Core
     else if (intensity > 0.6)

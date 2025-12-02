@@ -7,6 +7,16 @@
 #define STAGE_MAX_Z -20.0f
 #define STAGE_HEIGHT 2.0f
 
+#define DOOR_WIDTH 3.0f
+#define DOOR_HEIGHT 7.0f
+
+#define CURVED_SCREEN_WIDTH 35.0f
+#define CURVED_SCREEN_HEIGHT 10.0f
+#define CURVED_SCREEN_Y_BASE 3.5f
+#define CURVED_SCREEN_RADIUS_H 25.0f
+#define CURVED_SCREEN_RADIUS_V 35.0f
+#define CURVED_SCREEN_Z_OFFSET 0.5f
+
 bool snapToGridEnabled = false;
 bool bboxHighlightEnabled = false;
 
@@ -14,6 +24,7 @@ bool bboxHighlightEnabled = false;
 SceneObject objects[MAX_OBJECTS];
 int objectCount = 0;
 SceneObject *selectedObject = NULL;
+SceneObject playerObj;
 int dragging = 0;
 
 // Texture IDs
@@ -78,6 +89,23 @@ static int positionOnStage(float x, float z)
 {
     return (x >= STAGE_MIN_X && x <= STAGE_MAX_X &&
             z >= STAGE_MIN_Z && z <= STAGE_MAX_Z);
+}
+
+static void drawDoorObject(float x, float z)
+{
+    drawDoor(x, z, DOOR_WIDTH, DOOR_HEIGHT);
+}
+
+static void drawCurvedScreenObject(float x, float z)
+{
+    drawCurvedScreen(x,
+                     z,
+                     CURVED_SCREEN_WIDTH,
+                     CURVED_SCREEN_HEIGHT,
+                     CURVED_SCREEN_Y_BASE,
+                     CURVED_SCREEN_RADIUS_H,
+                     CURVED_SCREEN_RADIUS_V,
+                     CURVED_SCREEN_Z_OFFSET);
 }
 
 void scene_apply_stage_height(SceneObject *obj)
@@ -346,7 +374,7 @@ SceneObject *addObject(const char *name,
     return obj;
 }
 
-void scene_init()
+void scene_init(void)
 {
     // load textures
     wallTex = LoadTexBMP("textures/wall.bmp");
@@ -383,8 +411,8 @@ void scene_init()
     memset(spawnCounters, 0, sizeof(spawnCounters));
 
     // fixed objects
-    addObject("Door", 0.0f, 29.9f, (void (*)(float, float))drawDoor, 0);
-    addObject("CurvedScreen", 0.0f, -30.0f, (void (*)(float, float))drawCurvedScreen, 0);
+    addObject("Door", 0.0f, 29.9f, drawDoorObject, 0);
+    addObject("CurvedScreen", 0.0f, -30.0f, drawCurvedScreenObject, 0);
     SceneObject *fp = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
     if (fp)
     {
@@ -1102,7 +1130,7 @@ void scene_remove_selected_object(void)
 }
 
 // Scene Rendering
-void scene_display()
+void scene_display(void)
 {
     glPushMatrix();
     lighting_update();
@@ -1265,15 +1293,7 @@ void scene_display()
         glScalef(obj->scale, obj->scale, obj->scale);
         glColor3f(1.0f, 1.0f, 1.0f);
 
-        if (strcmp(obj->name, "CurvedScreen") == 0)
-        {
-            drawCurvedScreen(0, 0, 35.0, 10.0, 3.5, 25.0, 35.0, 0.5);
-        }
-        else if (strcmp(obj->name, "Door") == 0)
-        {
-            drawDoor(0, 0, 3.0, 7.0);
-        }
-        else if (obj->drawFunc)
+        if (obj->drawFunc)
         {
             obj->drawFunc(0, 0);
         }

@@ -3,6 +3,8 @@
 // Keyboard Input Handler
 void controls_key(unsigned char key, int x, int y)
 {
+    (void)x;
+    (void)y;
     const double speed = 0.8;
     const double radYaw = yaw * (M_PI / 180.0);
 
@@ -281,6 +283,8 @@ void controls_key(unsigned char key, int x, int y)
 // Special Keys (Arrow Keys)
 void controls_special(int key, int x, int y)
 {
+    (void)x;
+    (void)y;
     if (whiteboardMode)
         return;
 

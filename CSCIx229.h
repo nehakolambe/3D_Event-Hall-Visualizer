@@ -160,7 +160,7 @@ void Fatal(const char *format, ...);
     extern bool collidesWithAnyObject(SceneObject *movingObj, float newX, float newZ, bool adjustPlayerHeight, bool allowStageSnap);
 
     extern SceneObject *selectedObject;
-    SceneObject playerObj;
+    extern SceneObject playerObj;
     extern int dragging;
     extern bool snapToGridEnabled;
     extern bool bboxHighlightEnabled;
@@ -213,7 +213,7 @@ void Fatal(const char *format, ...);
     void scene_remove_selected_object(void);
 
     // Player collision
-    void initPlayerCollision();
+    void initPlayerCollision(void);
 
     // Whiteboard overlay
     extern int whiteboardMode;

@@ -280,7 +280,7 @@ void rotateObject(SceneObject *obj, float angle)
 }
 
 // Player bounding box
-void initPlayerCollision()
+void initPlayerCollision(void)
 {
     playerObj.subBoxCount = 1;
 
