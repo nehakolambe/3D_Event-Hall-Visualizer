@@ -39,21 +39,12 @@ void save_scene(const char *filename)
     {
         SceneObject *obj = &objects[i];
 
-        // skip non-movable objects except whiteboard
-        if (!obj->movable && strcmp(obj->name, "Whiteboard") != 0)
+        // skip non-movable objects
+        if (!obj->movable)
             continue;
 
         fprintf(f, "O,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n",
                 obj->name, obj->x, obj->y, obj->z, obj->rotation, obj->scale);
-    }
-
-    // save whiteboard strokes
-    int wCount = whiteboard_get_stroke_count();
-    for (int i = 0; i < wCount; i++)
-    {
-        Stroke s = whiteboard_get_stroke(i);
-        fprintf(f, "W,%.5f,%.5f,%.5f,%.5f,%d\n",
-                s.u1, s.v1, s.u2, s.v2, s.erase);
     }
 
     fclose(f);
@@ -84,8 +75,6 @@ void load_scene(const char *filename)
         }
     }
     selectedObject = NULL;
-    whiteboard_clear();
-    whiteboard_background_invalidate();
 
     // read file line by line
     char line[256];
@@ -115,17 +104,6 @@ void load_scene(const char *filename)
                         newObj->scale = scl;
                     }
                 }
-            }
-        }
-        else if (line[0] == 'W') // Whiteboard Stroke
-        {
-            float u1, v1, u2, v2;
-            int erase;
-
-            if (sscanf(line, "W,%f,%f,%f,%f,%d",
-                       &u1, &v1, &u2, &v2, &erase) == 5)
-            {
-                whiteboard_add_stroke(u1, v1, u2, v2, erase);
             }
         }
     }

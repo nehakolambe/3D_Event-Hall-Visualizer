@@ -476,9 +476,6 @@ void scene_init(void)
     // door lamp
     addObject("Lamp", -5.0f, 11.0f, drawLamp, 1);
 
-    // whiteboard trigger on left wall
-    addObject("Whiteboard", -19.5f, -5.0f, drawWhiteboardTrigger, 0);
-
     // meeting table
     float meetX = 0.0f;
     float meetZ = 11.0f;
@@ -952,18 +949,6 @@ static void configureObjectBounds(SceneObject *obj)
         obj->subBox[2][3] = 0.2f;
         obj->subBox[2][4] = -0.45f;
         obj->subBox[2][5] = 0.45f;
-        return;
-    }
-
-    if (nameHasPrefix(obj->name, "Whiteboard"))
-    {
-        obj->subBoxCount = 1;
-        obj->subBox[0][0] = -0.2f;
-        obj->subBox[0][1] = 0.2f;
-        obj->subBox[0][2] = 2.0f;
-        obj->subBox[0][3] = 6.2f;
-        obj->subBox[0][4] = -3.2f;
-        obj->subBox[0][5] = 3.2f;
         return;
     }
 

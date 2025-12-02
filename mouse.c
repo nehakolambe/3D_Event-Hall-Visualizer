@@ -1,11 +1,5 @@
 #include "CSCIx229.h"
 
-static int strokeActive = 0;
-static int strokeErase = 0;
-static float strokePrevU = 0.0f;
-static float strokePrevV = 0.0f;
-static double lastRightClickTime = 0.0;
-
 // Check if the mouse ray hits a sub-bounding-box of an object
 static int rayIntersectsSubBoxWorld(
     float rayOriginX, float rayOriginY, float rayOriginZ,
@@ -115,8 +109,8 @@ SceneObject *pickObject3D(int mouseX, int mouseY)
     for (int objectIndex = 0; objectIndex < objectCount; objectIndex++)
     {
         SceneObject *sceneObject = &objects[objectIndex];
-        // Ignore static objects except for the whiteboard, which should stay selectable
-        if (!sceneObject->movable && strcmp(sceneObject->name, "Whiteboard") != 0)
+        // Ignore static objects
+        if (!sceneObject->movable)
             continue;
 
         for (int subBoxIndex = 0; subBoxIndex < sceneObject->subBoxCount; subBoxIndex++)
@@ -142,66 +136,11 @@ SceneObject *pickObject3D(int mouseX, int mouseY)
 // Mouse button callback
 void mouse_button(int button, int state, int mouseX, int mouseY)
 {
-    if (whiteboardMode)
-    {
-        if (button == GLUT_LEFT_BUTTON || button == GLUT_RIGHT_BUTTON)
-        {
-            if (state == GLUT_DOWN)
-            {
-                if (button == GLUT_RIGHT_BUTTON)
-                {
-                    // Double right-click quickly to clear the whiteboard
-                    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-                    if (currentTime - lastRightClickTime < 0.3)
-                    {
-                        whiteboard_clear();
-                        whiteboard_background_invalidate();
-                        strokeActive = 0;
-                        glutPostRedisplay();
-                        lastRightClickTime = 0.0;
-                        return;
-                    }
-                    lastRightClickTime = currentTime;
-                }
-
-                float screenX = (float)mouseX;
-                float screenY = (float)(screenHeight - mouseY);
-                if (whiteboard_point_in_canvas(screenX, screenY))
-                {
-                    // Begin a stroke inside the canvas
-                    strokeActive = 1;
-                    strokeErase = (button == GLUT_RIGHT_BUTTON);
-                    whiteboard_screen_to_canvas(screenX, screenY, &strokePrevU, &strokePrevV);
-                }
-                else
-                {
-                    // Ignore clicks outside the canvas to avoid stray lines
-                    strokeActive = 0;
-                }
-            }
-            else if (state == GLUT_UP)
-            {
-                strokeActive = 0;
-            }
-        }
-        glutPostRedisplay();
-        return;
-    }
-
     if (button == GLUT_LEFT_BUTTON)
     {
         if (state == GLUT_DOWN)
         {
             SceneObject *pickedObject = pickObject3D(mouseX, mouseY);
-
-            if (pickedObject && strcmp(pickedObject->name, "Whiteboard") == 0)
-            {
-                // Clicking the 3D whiteboard switches to whiteboard mode
-                whiteboard_activate();
-                strokeActive = 0;
-                glutPostRedisplay();
-                return;
-            }
 
             if (pickedObject)
             {
@@ -259,38 +198,6 @@ static int rayPlaneIntersection(float rayOriginX, float rayOriginY, float rayOri
 // Mouse motion callback
 void mouse_motion(int mouseX, int mouseY)
 {
-    if (!whiteboardMode)
-    {
-        strokeActive = 0;
-    }
-
-    if (whiteboardMode)
-    {
-        if (strokeActive)
-        {
-            float screenX = (float)mouseX;
-            float screenY = (float)(screenHeight - mouseY);
-
-            if (!whiteboard_point_in_canvas(screenX, screenY))
-            {
-                // Stop drawing if the cursor leaves the canvas
-                strokeActive = 0;
-            }
-            else
-            {
-                float canvasU, canvasV;
-                // Convert the cursor position into canvas UVs and extend the stroke
-                whiteboard_screen_to_canvas(screenX, screenY, &canvasU, &canvasV);
-                whiteboard_add_stroke(strokePrevU, strokePrevV, canvasU, canvasV, strokeErase);
-                strokePrevU = canvasU;
-                strokePrevV = canvasV;
-            }
-        }
-
-        glutPostRedisplay();
-        return;
-    }
-
     if (dragging && selectedObject)
     {
         float rayOriginX, rayOriginY, rayOriginZ, rayDirX, rayDirY, rayDirZ;

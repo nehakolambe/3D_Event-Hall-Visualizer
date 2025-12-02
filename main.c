@@ -45,120 +45,97 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    // whiteboard scene rendering
-    int backgroundReady = whiteboard_background_ready();
-    if (whiteboardMode && backgroundReady)
+    Project();
+    glLoadIdentity();
+
+    if (mode == 0)
     {
-        whiteboard_draw_background(screenWidth, screenHeight);
+        // perspective mode
+        double camDist = 24.0 + (dim - 20.0);
+        gluLookAt(camX, camY, camDist,
+                  0.0, 6.0, -20.0,
+                  0.0, 1.0, 0.0);
+        glRotated(ph, 1, 0, 0);
+        glRotated(th, 0, 1, 0);
     }
-    // entire scene rendering
+    else if (mode == 1)
+    {
+        // FPV mode
+        double dirX = sin(yaw * PI / 180.0);
+        double dirZ = -cos(yaw * PI / 180.0);
+        double zoomOffset = (55.0 - fov) * 0.1;
+        double viewX = fpvX - dirX * zoomOffset;
+        double viewZ = fpvZ - dirZ * zoomOffset;
+
+        gluLookAt(viewX, fpvY, viewZ,
+                  fpvX + dirX,
+                  fpvY + tan(pitch * PI / 180.0),
+                  fpvZ + dirZ,
+                  0.0, 1.0, 0.0);
+    }
+    else if (mode == 2)
+    {
+        // orthogonal mode
+        glRotatef(ph, 1, 0, 0);
+        glRotatef(th, 0, 1, 0);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // draw scene
+    scene_display();
+
+    // HUD overlay
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, 1, 0, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glDisable(GL_LIGHTING);
+
+    glColor3f(1, 1, 1);
+
+    const char *modeStr =
+        (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
+                                                  : "Orthogonal";
+    glWindowPos2f(10, 40);
+    Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
+    glWindowPos2f(10, 80);
+    switch (lightState)
+    {
+    case 1:
+        Print("Light Mode: Moving ");
+        Print(" Light Radius:%.1f", radius);
+        Print(" Light Height (Y): %.1f", lightY);
+        break;
+
+    case 2:
+        Print("Light Mode: Spotlight");
+        break;
+
+    case 0:
+        break;
+    }
+    glWindowPos2f(10, 60);
+    if (selectedObject)
+    {
+        Print("Selected: %s", selectedObject->name);
+        Print(" Angle: %.1f°", selectedObject->rotation);
+    }
     else
     {
-        Project();
-        glLoadIdentity();
-
-        if (mode == 0)
-        {
-            // perspective mode
-            double camDist = 24.0 + (dim - 20.0);
-            gluLookAt(camX, camY, camDist,
-                      0.0, 6.0, -20.0,
-                      0.0, 1.0, 0.0);
-            glRotated(ph, 1, 0, 0);
-            glRotated(th, 0, 1, 0);
-        }
-        else if (mode == 1)
-        {
-            // FPV mode
-            double dirX = sin(yaw * PI / 180.0);
-            double dirZ = -cos(yaw * PI / 180.0);
-            double zoomOffset = (55.0 - fov) * 0.1;
-            double viewX = fpvX - dirX * zoomOffset;
-            double viewZ = fpvZ - dirZ * zoomOffset;
-
-            gluLookAt(viewX, fpvY, viewZ,
-                      fpvX + dirX,
-                      fpvY + tan(pitch * PI / 180.0),
-                      fpvZ + dirZ,
-                      0.0, 1.0, 0.0);
-        }
-        else if (mode == 2)
-        {
-            // orthogonal mode
-            glRotatef(ph, 1, 0, 0);
-            glRotatef(th, 0, 1, 0);
-        }
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // draw scene
-        scene_display();
-
-        if (whiteboardMode && !backgroundReady)
-        {
-            whiteboard_capture_background(screenWidth, screenHeight);
-            backgroundReady = whiteboard_background_ready();
-        }
+        Print("Selected: None");
     }
 
-    if (whiteboardMode)
-    {
-        drawWhiteboardOverlay();
-    }
-    else
-    {
-        // HUD overlay
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        gluOrtho2D(0, 1, 0, 1);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-
-        glDisable(GL_LIGHTING);
-
-        glColor3f(1, 1, 1);
-
-        const char *modeStr =
-            (mode == 0) ? "Perspective" : (mode == 1) ? "FPV"
-                                                      : "Orthogonal";
-        glWindowPos2f(10, 40);
-        Print("Mode: %s   FOV: %.1f°   DIM: %.1f", modeStr, fov, dim);
-        glWindowPos2f(10, 80);
-        switch (lightState)
-        {
-        case 1:
-            Print("Light Mode: Moving ");
-            Print(" Light Radius:%.1f", radius);
-            Print(" Light Height (Y): %.1f", lightY);
-            break;
-
-        case 2:
-            Print("Light Mode: Spotlight");
-            break;
-
-        case 0:
-            break;
-        }
-        glWindowPos2f(10, 60);
-        if (selectedObject)
-        {
-            Print("Selected: %s", selectedObject->name);
-            Print(" Angle: %.1f°", selectedObject->rotation);
-        }
-        else
-        {
-            Print("Selected: None");
-        }
-
-        glPopMatrix();
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-    }
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 
     ErrCheck("display");
     glutSwapBuffers();
@@ -170,7 +147,6 @@ void reshape(int width, int height)
     asp = (height > 0) ? (double)width / height : 1;
     screenWidth = width;
     screenHeight = height > 0 ? height : 1;
-    whiteboard_background_invalidate();
     glViewport(0, 0, width, height);
     Project();
 }
@@ -198,7 +174,6 @@ int main(int argc, char *argv[])
     scene_init();
     initPlayerCollision();
     lighting_init();
-    whiteboard_clear();
 
     // callbacks
     glutDisplayFunc(display);

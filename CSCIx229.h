@@ -215,39 +215,9 @@ void Fatal(const char *format, ...);
     // Player collision
     void initPlayerCollision(void);
 
-    // Whiteboard overlay
-    extern int whiteboardMode;
-    void whiteboard_activate(void);
-    void whiteboard_deactivate(void);
-    void whiteboard_clear(void);
-    void whiteboard_add_stroke(float u1, float v1, float u2, float v2, int erase);
-    void whiteboard_render(float x, float y, float width, float height);
-    void whiteboard_get_canvas_rect(float *x, float *y, float *width, float *height);
-    int whiteboard_point_in_canvas(float sx, float sy);
-    void whiteboard_screen_to_canvas(float sx, float sy, float *u, float *v);
-    void whiteboard_background_invalidate(void);
-    int whiteboard_background_ready(void);
-    void whiteboard_capture_background(int width, int height);
-    void whiteboard_draw_background(int width, int height);
-    void whiteboard_render_on_board(float boardBottom, float boardTop, float boardLeft, float boardRight);
-    void drawWhiteboardOverlay(void);
-    void drawWhiteboardTrigger(float x, float z);
-
-    // Whiteboard stroke data structure
-    typedef struct
-    {
-        float u1, v1;
-        float u2, v2;
-        int erase;
-    } Stroke;
-
     // Save/Load functions
     void save_scene(const char *filename);
     void load_scene(const char *filename);
-
-    // Accessors to read private whiteboard data
-    int whiteboard_get_stroke_count(void);
-    Stroke whiteboard_get_stroke(int index);
 
 #ifdef __cplusplus
 }
