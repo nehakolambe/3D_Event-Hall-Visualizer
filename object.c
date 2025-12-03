@@ -129,12 +129,11 @@ void drawTable(float posX, float posZ)
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
-            float angleRadians = angleDegrees * (M_PI / 180.0f);
-            float vertexX = cornerX + cornerRadius * cosf(angleRadians);
-            float vertexZ = cornerZ + cornerRadius * sinf(angleRadians);
+            float vertexX = cornerX + cornerRadius * Cos(angleDegrees);
+            float vertexZ = cornerZ + cornerRadius * Sin(angleDegrees);
 
-            float texU = 0.5f + 0.5f * cosf(angleRadians);
-            float texV = 0.5f + 0.5f * sinf(angleRadians);
+            float texU = 0.5f + 0.5f * Cos(angleDegrees);
+            float texV = 0.5f + 0.5f * Sin(angleDegrees);
 
             glTexCoord2f(texU, texV);
             glVertex3f(vertexX, tabletopTopY, vertexZ);
@@ -156,12 +155,11 @@ void drawTable(float posX, float posZ)
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
-            float angleRadians = angleDegrees * (M_PI / 180.0f);
 
-            float vertexX = cornerX + cornerRadius * cosf(angleRadians);
-            float vertexZ = cornerZ + cornerRadius * sinf(angleRadians);
-            float normalX = cosf(angleRadians);
-            float normalZ = sinf(angleRadians);
+            float vertexX = cornerX + cornerRadius * Cos(angleDegrees);
+            float vertexZ = cornerZ + cornerRadius * Sin(angleDegrees);
+            float normalX = Cos(angleDegrees);
+            float normalZ = Sin(angleDegrees);
 
             glNormal3f(normalX, 0, normalZ);
 
@@ -371,8 +369,8 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
     int verticalSegmentCount = 32;
 
     float halfH = height * 0.5f;
-    float angleH = width / radiusH;
-    float angleV = height / radiusV;
+    float angleHDeg = (width / radiusH) * (180.0f / PI);
+    float angleVDeg = (height / radiusV) * (180.0f / PI);
 
     glPushMatrix();
     glTranslatef(wallX, yBase + halfH, wallZ);
@@ -390,8 +388,8 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
         float uStart = (float)horizontalIndex / horizontalSegmentCount;
         float uEnd = (float)(horizontalIndex + 1) / horizontalSegmentCount;
 
-        float thetaStart = -angleH * 0.5f + angleH * uStart;
-        float thetaEnd = -angleH * 0.5f + angleH * uEnd;
+        float thetaStartDeg = -angleHDeg * 0.5f + angleHDeg * uStart;
+        float thetaEndDeg = -angleHDeg * 0.5f + angleHDeg * uEnd;
 
         // For each slice, cover the vertical bands
         for (int verticalIndex = 0; verticalIndex < verticalSegmentCount; verticalIndex++)
@@ -399,14 +397,14 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
             float vStart = (float)verticalIndex / verticalSegmentCount;
             float vEnd = (float)(verticalIndex + 1) / verticalSegmentCount;
 
-            float phiStart = -angleV * 0.5f + angleV * vStart;
-            float phiEnd = -angleV * 0.5f + angleV * vEnd;
+            float phiStartDeg = -angleVDeg * 0.5f + angleVDeg * vStart;
+            float phiEndDeg = -angleVDeg * 0.5f + angleVDeg * vEnd;
 
             // Precompute trig values
-            float sinThetaStart = sinf(thetaStart), cosThetaStart = cosf(thetaStart);
-            float sinThetaEnd = sinf(thetaEnd), cosThetaEnd = cosf(thetaEnd);
+            float sinThetaStart = Sin(thetaStartDeg), cosThetaStart = Cos(thetaStartDeg);
+            float sinThetaEnd = Sin(thetaEndDeg), cosThetaEnd = Cos(thetaEndDeg);
 
-            float sinPhiStart = sinf(phiStart), sinPhiEnd = sinf(phiEnd);
+            float sinPhiStart = Sin(phiStartDeg), sinPhiEnd = Sin(phiEndDeg);
 
             // Vertex positions
             float bottomLeftX = radiusH * sinThetaStart;
@@ -486,12 +484,12 @@ void drawLamp(float xPos, float zPos)
     // Step around the base disk circumference
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float t = 2.0f * M_PI * segmentIndex / segmentCount;
-        float u = (cosf(t) + 1.0f) * 0.5f;
-        float v = (sinf(t) + 1.0f) * 0.5f;
+        float angleDegrees = 360.0f * segmentIndex / segmentCount;
+        float u = (Cos(angleDegrees) + 1.0f) * 0.5f;
+        float v = (Sin(angleDegrees) + 1.0f) * 0.5f;
 
         glTexCoord2f(u, v);
-        glVertex3f(baseRadius * cosf(t), 0.0f, baseRadius * sinf(t));
+        glVertex3f(baseRadius * Cos(angleDegrees), 0.0f, baseRadius * Sin(angleDegrees));
     }
     glEnd();
 
@@ -499,16 +497,16 @@ void drawLamp(float xPos, float zPos)
     // Extrude the lamp shade cone in segments
     for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
-        float t1 = 2.0f * M_PI * segmentIndex / segmentCount;
-        float t2 = 2.0f * M_PI * (segmentIndex + 1) / segmentCount;
+        float angle1Deg = 360.0f * segmentIndex / segmentCount;
+        float angle2Deg = 360.0f * (segmentIndex + 1) / segmentCount;
 
-        float x1 = poleRadius * cosf(t1);
-        float z1 = poleRadius * sinf(t1);
-        float x2 = poleRadius * cosf(t2);
-        float z2 = poleRadius * sinf(t2);
+        float x1 = poleRadius * Cos(angle1Deg);
+        float z1 = poleRadius * Sin(angle1Deg);
+        float x2 = poleRadius * Cos(angle2Deg);
+        float z2 = poleRadius * Sin(angle2Deg);
 
-        float nx1 = cosf(t1), nz1 = sinf(t1);
-        float nx2 = cosf(t2), nz2 = sinf(t2);
+        float nx1 = Cos(angle1Deg), nz1 = Sin(angle1Deg);
+        float nx2 = Cos(angle2Deg), nz2 = Sin(angle2Deg);
 
         glBegin(GL_QUADS);
 
@@ -559,21 +557,21 @@ void drawLamp(float xPos, float zPos)
 
     for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
-        float t1 = 2.0f * M_PI * segmentIndex / segmentCount;
-        float t2 = 2.0f * M_PI * (segmentIndex + 1) / segmentCount;
+        float angle1Deg = 360.0f * segmentIndex / segmentCount;
+        float angle2Deg = 360.0f * (segmentIndex + 1) / segmentCount;
 
-        float x1b = shadeBottomRadius * cosf(t1);
-        float z1b = shadeBottomRadius * sinf(t1);
-        float x2b = shadeBottomRadius * cosf(t2);
-        float z2b = shadeBottomRadius * sinf(t2);
+        float x1b = shadeBottomRadius * Cos(angle1Deg);
+        float z1b = shadeBottomRadius * Sin(angle1Deg);
+        float x2b = shadeBottomRadius * Cos(angle2Deg);
+        float z2b = shadeBottomRadius * Sin(angle2Deg);
 
-        float x1t = shadeTopRadius * cosf(t1);
-        float z1t = shadeTopRadius * sinf(t1);
-        float x2t = shadeTopRadius * cosf(t2);
-        float z2t = shadeTopRadius * sinf(t2);
+        float x1t = shadeTopRadius * Cos(angle1Deg);
+        float z1t = shadeTopRadius * Sin(angle1Deg);
+        float x2t = shadeTopRadius * Cos(angle2Deg);
+        float z2t = shadeTopRadius * Sin(angle2Deg);
 
-        float nx1 = cosf(t1), nz1 = sinf(t1);
-        float nx2 = cosf(t2), nz2 = sinf(t2);
+        float nx1 = Cos(angle1Deg), nz1 = Sin(angle1Deg);
+        float nx2 = Cos(angle2Deg), nz2 = Sin(angle2Deg);
 
         glBegin(GL_QUADS);
 
@@ -956,14 +954,14 @@ void drawCocktailTable2(float x, float z)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail2Tex);
 
-    float wedgeAngle = 2.0f * M_PI / N;
+    float wedgeAngleDeg = 360.0f / N;
 
     // Top face
     glBegin(GL_TRIANGLES);
     for (int w = 0; w < N; w++)
     {
-        float a0 = w * wedgeAngle;
-        float a1 = (w + 1) * wedgeAngle;
+        float a0 = w * wedgeAngleDeg;
+        float a1 = (w + 1) * wedgeAngleDeg;
 
         float prevX = 0.0f, prevZ = 0.0f;
 
@@ -976,8 +974,8 @@ void drawCocktailTable2(float x, float z)
             float curve = CURVE_IN * (1.0f - mid);
             float r = R - curve;
 
-            float xArc = r * cosf(a);
-            float zArc = r * sinf(a);
+            float xArc = r * Cos(a);
+            float zArc = r * Sin(a);
 
             if (i > 0)
             {
@@ -985,10 +983,10 @@ void drawCocktailTable2(float x, float z)
                 glTexCoord2f(0.5f, 0.5f);
                 glVertex3f(0, HEIGHT + THICK, 0);
 
-                glTexCoord2f((cosf(a0) + 1) * 0.5f, (sinf(a0) + 1) * 0.5f);
+                glTexCoord2f((Cos(a0) + 1) * 0.5f, (Sin(a0) + 1) * 0.5f);
                 glVertex3f(prevX, HEIGHT + THICK, prevZ);
 
-                glTexCoord2f((cosf(a) + 1) * 0.5f, (sinf(a) + 1) * 0.5f);
+                glTexCoord2f((Cos(a) + 1) * 0.5f, (Sin(a) + 1) * 0.5f);
                 glVertex3f(xArc, HEIGHT + THICK, zArc);
             }
 
@@ -1002,18 +1000,18 @@ void drawCocktailTable2(float x, float z)
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= N * ARC_STEPS; i++)
     {
-        float a = (float)i / (N * ARC_STEPS) * (2.0f * M_PI);
-        float wedgePos = fmodf(a, wedgeAngle) / wedgeAngle;
+        float a = (float)i / (N * ARC_STEPS) * 360.0f;
+        float wedgePos = fmodf(a, wedgeAngleDeg) / wedgeAngleDeg;
 
         float mid = fabsf(wedgePos - 0.5f) * 2.0f;
         float curve = CURVE_IN * (1.0f - mid);
 
         float r = R - curve;
 
-        float xSide = r * cosf(a);
-        float zSide = r * sinf(a);
+        float xSide = r * Cos(a);
+        float zSide = r * Sin(a);
 
-        glNormal3f(cosf(a), 0, sinf(a));
+        glNormal3f(Cos(a), 0, Sin(a));
 
         float u = (float)i / (N * ARC_STEPS);
         glTexCoord2f(u, 1);
@@ -1027,8 +1025,8 @@ void drawCocktailTable2(float x, float z)
     glBegin(GL_TRIANGLES);
     for (int w = 0; w < N; w++)
     {
-        float a0 = w * wedgeAngle;
-        float a1 = (w + 1) * wedgeAngle;
+        float a0 = w * wedgeAngleDeg;
+        float a1 = (w + 1) * wedgeAngleDeg;
 
         float prevX = 0.0f, prevZ = 0.0f;
 
@@ -1041,8 +1039,8 @@ void drawCocktailTable2(float x, float z)
             float curve = CURVE_IN * (1.0f - mid);
             float r = R - curve;
 
-            float xArc = r * cosf(a);
-            float zArc = r * sinf(a);
+            float xArc = r * Cos(a);
+            float zArc = r * Sin(a);
 
             if (i > 0)
             {
@@ -1067,20 +1065,20 @@ void drawCocktailTable2(float x, float z)
     // Three legs
     for (int i = 0; i < 3; i++)
     {
-        float ang = i * 2.0f * M_PI / 3.0f;
-        float lx = 0.8f * cosf(ang);
-        float lz = 0.8f * sinf(ang);
+        float angDeg = i * 360.0f / 3.0f;
+        float lx = 0.8f * Cos(angDeg);
+        float lz = 0.8f * Sin(angDeg);
 
         glPushMatrix();
         glTranslatef(lx, HEIGHT, lz);
-        glRotatef(-10, sinf(ang), 0, -cosf(ang));
+        glRotatef(-10, Sin(angDeg), 0, -Cos(angDeg));
 
         glBegin(GL_QUAD_STRIP);
         for (int s = 0; s <= 24; s++)
         {
-            float t = 2.0f * M_PI * s / 24.0f;
-            float nx = cosf(t);
-            float nz = sinf(t);
+            float t = 360.0f * s / 24.0f;
+            float nx = Cos(t);
+            float nz = Sin(t);
             float u = (float)s / 24.0f;
 
             glNormal3f(nx, 0, nz);
@@ -1139,9 +1137,9 @@ void drawCocktailTable3(float x, float z)
 
     for (int i = 0; i <= slices; i++)
     {
-        float ang = 2.0f * M_PI * i / slices;
-        float cx = cosf(ang);
-        float cz = sinf(ang);
+        float angDeg = 360.0f * i / slices;
+        float cx = Cos(angDeg);
+        float cz = Sin(angDeg);
 
         glTexCoord2f((cx + 1) * 0.5f, (cz + 1) * 0.5f);
         glVertex3f(R * cx, topHeight, R * cz);
@@ -1223,10 +1221,10 @@ void drawMeetingTable(float x, float z)
     for (int i = 0; i < N; i++)
     {
         float t = (float)i / (N - 1);
-        float angle = t * 2.0f * M_PI;
+        float angleDeg = t * 360.0f;
 
-        float nx = cosf(angle);
-        float ny = sinf(angle);
+        float nx = Cos(angleDeg);
+        float ny = Sin(angleDeg);
 
         float rx = halfL * (0.7f + 0.3f * fabsf(ny));
         float ry = halfW;
@@ -1336,11 +1334,11 @@ void drawStarShape(void)
 
     for (int i = 0; i <= numPoints * 2; i++)
     {
-        float ang = i * M_PI / numPoints;
+        float ang = i * 180.0f / numPoints;
         float r = (i % 2 == 0 ? outerR : innerR);
 
-        float x = r * cosf(ang);
-        float y = r * sinf(ang);
+        float x = r * Cos(ang);
+        float y = r * Sin(ang);
 
         float u = (x / outerR + 1.0f) * 0.5f;
         float v = (y / outerR + 1.0f) * 0.5f;
@@ -1359,11 +1357,11 @@ void drawStarShape(void)
 
     for (int i = 0; i <= numPoints * 2; i++)
     {
-        float ang = i * M_PI / numPoints;
+        float ang = i * 180.0f / numPoints;
         float r = (i % 2 == 0 ? outerR : innerR);
 
-        float x = r * cosf(ang);
-        float y = r * sinf(ang);
+        float x = r * Cos(ang);
+        float y = r * Sin(ang);
 
         float u = (x / outerR + 1.0f) * 0.5f;
         float v = (y / outerR + 1.0f) * 0.5f;
@@ -1377,11 +1375,11 @@ void drawStarShape(void)
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= numPoints * 2; i++)
     {
-        float ang = i * M_PI / numPoints;
+        float ang = i * 180.0f / numPoints;
         float r = (i % 2 == 0 ? outerR : innerR);
 
-        float x = r * cosf(ang);
-        float y = r * sinf(ang);
+        float x = r * Cos(ang);
+        float y = r * Sin(ang);
 
         float len = sqrtf(x * x + y * y);
         glNormal3f(x / len, y / len, 0);
@@ -1476,18 +1474,18 @@ static void drawMoonShape(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = (float)i / steps * 2.0f * M_PI;
+        float a = (float)i / steps * 360.0f;
 
-        float ox = outerR * cos(a);
-        float oy = outerR * sin(a);
+        float ox = outerR * Cos(a);
+        float oy = outerR * Sin(a);
 
-        float ix = innerR * cos(a) + offset;
-        float iy = innerR * sin(a);
+        float ix = innerR * Cos(a) + offset;
+        float iy = innerR * Sin(a);
 
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
-            float u = (cos(a) + 1) * 0.5f;
-            float v = (sin(a) + 1) * 0.5f;
+            float u = (Cos(a) + 1) * 0.5f;
+            float v = (Sin(a) + 1) * 0.5f;
 
             glTexCoord2f(u, v);
             glVertex3f(ox, oy, depth);
@@ -1505,18 +1503,18 @@ static void drawMoonShape(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = (float)i / steps * 2.0f * M_PI;
+        float a = (float)i / steps * 360.0f;
 
-        float ox = outerR * cos(a);
-        float oy = outerR * sin(a);
+        float ox = outerR * Cos(a);
+        float oy = outerR * Sin(a);
 
-        float ix = innerR * cos(a) + offset;
-        float iy = innerR * sin(a);
+        float ix = innerR * Cos(a) + offset;
+        float iy = innerR * Sin(a);
 
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
-            float u = (cos(a) + 1) * 0.5f;
-            float v = (sin(a) + 1) * 0.5f;
+            float u = (Cos(a) + 1) * 0.5f;
+            float v = (Sin(a) + 1) * 0.5f;
 
             glTexCoord2f(u, v);
             glVertex3f(ox, oy, -depth);
@@ -1533,13 +1531,13 @@ static void drawMoonShape(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = (float)i / steps * 2.0f * M_PI;
+        float a = (float)i / steps * 360.0f;
 
-        float ox = outerR * cos(a);
-        float oy = outerR * sin(a);
+        float ox = outerR * Cos(a);
+        float oy = outerR * Sin(a);
 
-        float ix = innerR * cos(a) + offset;
-        float iy = innerR * sin(a);
+        float ix = innerR * Cos(a) + offset;
+        float iy = innerR * Sin(a);
 
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
@@ -1564,13 +1562,13 @@ static void drawMoonShape(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = (float)i / steps * 2.0f * M_PI;
+        float a = (float)i / steps * 360.0f;
 
-        float ix = innerR * cos(a) + offset;
-        float iy = innerR * sin(a);
+        float ix = innerR * Cos(a) + offset;
+        float iy = innerR * Sin(a);
 
-        float ox = outerR * cos(a);
-        float oy = outerR * sin(a);
+        float ox = outerR * Cos(a);
+        float oy = outerR * Sin(a);
 
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
@@ -1694,9 +1692,9 @@ void drawSeat(void)
     for (int i = 0; i <= steps; i++)
     {
         float t = (float)i / steps;
-        float a = M_PI * t;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * t;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
 
         glTexCoord2f(t, 0);
         glVertex3f(x, h / 2, z);
@@ -1713,9 +1711,9 @@ void drawSeat(void)
     for (int i = 0; i <= steps; i++)
     {
         float t = (float)i / steps;
-        float a = M_PI * t;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * t;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
 
         glTexCoord2f(t, 0);
         glVertex3f(x, -h / 2, z);
@@ -1739,9 +1737,9 @@ void drawSeat(void)
     for (int i = 0; i <= steps; i++)
     {
         float t = (float)i / steps;
-        float a = M_PI * t;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * t;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
 
         glTexCoord2f(t, 0);
         glVertex3f(x, -h / 2, z);
@@ -1809,9 +1807,9 @@ void drawSeatBase(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = M_PI * (float)i / (float)steps;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * (float)i / (float)steps;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
         glVertex3f(x, h / 2, z);
     }
     glEnd();
@@ -1823,9 +1821,9 @@ void drawSeatBase(void)
 
     for (int i = 0; i <= steps; i++)
     {
-        float a = M_PI * (float)i / (float)steps;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * (float)i / (float)steps;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
         glVertex3f(x, -h / 2, z);
     }
     glEnd();
@@ -1842,9 +1840,9 @@ void drawSeatBase(void)
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= steps; i++)
     {
-        float a = M_PI * (float)i / (float)steps;
-        float x = radius * cosf(a);
-        float z = -radius * sinf(a);
+        float a = 180.0f * (float)i / (float)steps;
+        float x = radius * Cos(a);
+        float z = -radius * Sin(a);
 
         glVertex3f(x, -h / 2, z);
         glVertex3f(x, +h / 2, z);
@@ -1902,7 +1900,7 @@ void drawFootBar(float x1, float z1, float x2, float z2, float y)
     float dz = z2 - z1;
     float len = sqrtf(dx * dx + dz * dz);
 
-    float ang = atan2f(dx, dz) * (180.0f / M_PI);
+    float ang = atan2f(dx, dz) * (180.0f / PI);
     glRotatef(ang, 0, 1, 0);
 
     glScalef(len, 0.08f, 0.08f);
@@ -1939,13 +1937,13 @@ void drawCurvedBackrest(void)
         float t0 = (float)j / steps;
         float t1 = (float)(j + 1) / steps;
 
-        float a1 = ((j - steps / 2) * (M_PI / 180.0f));
-        float a2 = ((j - steps / 2 + 1) * (M_PI / 180.0f));
+        float a1 = (float)(j - steps / 2);
+        float a2 = (float)(j - steps / 2 + 1);
 
-        float x1 = radius * sinf(a1);
-        float z1 = radius * cosf(a1);
-        float x2 = radius * sinf(a2);
-        float z2 = radius * cosf(a2);
+        float x1 = radius * Sin(a1);
+        float z1 = radius * Cos(a1);
+        float x2 = radius * Sin(a2);
+        float z2 = radius * Cos(a2);
 
         glBegin(GL_QUADS);
 

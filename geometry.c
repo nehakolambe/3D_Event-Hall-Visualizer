@@ -10,9 +10,9 @@ void drawCylinder(float radius, float height, int slices)
     // Sample around the circumference to build the curved surface
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float unitX = cos(angleRadians);
-        float unitZ = sin(angleRadians);
+        float angleDegrees = 360.0f * sliceIndex / slices;
+        float unitX = Cos(angleDegrees);
+        float unitZ = Sin(angleDegrees);
 
         glNormal3f(unitX, 0, unitZ);
 
@@ -33,11 +33,11 @@ void drawCylinder(float radius, float height, int slices)
     // Sweep a fan across the top disk
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float capX = cos(angleRadians) * radius;
-        float capZ = sin(angleRadians) * radius;
+        float angleDegrees = 360.0f * sliceIndex / slices;
+        float capX = Cos(angleDegrees) * radius;
+        float capZ = Sin(angleDegrees) * radius;
 
-        glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
+        glTexCoord2f(0.5f + 0.5f * Cos(angleDegrees), 0.5f + 0.5f * Sin(angleDegrees));
         glVertex3f(capX, cylinderHeight, capZ);
     }
     glEnd();
@@ -51,11 +51,11 @@ void drawCylinder(float radius, float height, int slices)
     // Sweep a fan across the bottom disk
     for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
     {
-        float angleRadians = 2.0f * M_PI * sliceIndex / slices;
-        float capX = cos(angleRadians) * radius;
-        float capZ = sin(angleRadians) * radius;
+        float angleDegrees = 360.0f * sliceIndex / slices;
+        float capX = Cos(angleDegrees) * radius;
+        float capZ = Sin(angleDegrees) * radius;
 
-        glTexCoord2f(0.5f + 0.5f * cos(angleRadians), 0.5f + 0.5f * sin(angleRadians));
+        glTexCoord2f(0.5f + 0.5f * Cos(angleDegrees), 0.5f + 0.5f * Sin(angleDegrees));
         glVertex3f(capX, 0.0f, capZ);
     }
     glEnd();
@@ -66,22 +66,22 @@ void drawSphere(float radius, int slices, int stacks)
 {
     for (int stackIndex = 0; stackIndex < stacks; stackIndex++)
     {
-        float latitudeStart = M_PI * (-0.5f + (float)stackIndex / stacks);
-        float latitudeEnd = M_PI * (-0.5f + (float)(stackIndex + 1) / stacks);
+        float latitudeStartDeg = 180.0f * (-0.5f + (float)stackIndex / stacks);
+        float latitudeEndDeg = 180.0f * (-0.5f + (float)(stackIndex + 1) / stacks);
 
-        float sinLatStart = sinf(latitudeStart);
-        float cosLatStart = cosf(latitudeStart);
-        float sinLatEnd = sinf(latitudeEnd);
-        float cosLatEnd = cosf(latitudeEnd);
+        float sinLatStart = Sin(latitudeStartDeg);
+        float cosLatStart = Cos(latitudeStartDeg);
+        float sinLatEnd = Sin(latitudeEndDeg);
+        float cosLatEnd = Cos(latitudeEndDeg);
 
         glBegin(GL_TRIANGLE_STRIP);
 
         // Sweep longitudinal slices for this latitude band
         for (int sliceIndex = 0; sliceIndex <= slices; sliceIndex++)
         {
-            float longitude = 2.0f * M_PI * (float)sliceIndex / slices;
-            float cosLng = cosf(longitude);
-            float sinLng = sinf(longitude);
+            float longitudeDeg = 360.0f * (float)sliceIndex / slices;
+            float cosLng = Cos(longitudeDeg);
+            float sinLng = Sin(longitudeDeg);
 
             // first vertex
             glNormal3f(cosLng * cosLatStart, sinLatStart, sinLng * cosLatStart);
@@ -120,12 +120,12 @@ void drawDisk(float radius, float y, float thickness)
     // Walk around the circle to form the top cap
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float ringX = radius * cosf(angleRadians);
-        float ringZ = radius * sinf(angleRadians);
+        float angleDegrees = 360.0f * segmentIndex / segmentCount;
+        float ringX = radius * Cos(angleDegrees);
+        float ringZ = radius * Sin(angleDegrees);
 
-        float texU = 0.5f + 0.5f * cosf(angleRadians);
-        float texV = 0.5f + 0.5f * sinf(angleRadians);
+        float texU = 0.5f + 0.5f * Cos(angleDegrees);
+        float texV = 0.5f + 0.5f * Sin(angleDegrees);
 
         glTexCoord2f(texU, texV);
         glVertex3f(ringX, topY, ringZ);
@@ -141,12 +141,12 @@ void drawDisk(float radius, float y, float thickness)
     // Walk around the circle to form the bottom cap
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float ringX = radius * cosf(angleRadians);
-        float ringZ = radius * sinf(angleRadians);
+        float angleDegrees = 360.0f * segmentIndex / segmentCount;
+        float ringX = radius * Cos(angleDegrees);
+        float ringZ = radius * Sin(angleDegrees);
 
-        float texU = 0.5f + 0.5f * cosf(angleRadians);
-        float texV = 0.5f + 0.5f * sinf(angleRadians);
+        float texU = 0.5f + 0.5f * Cos(angleDegrees);
+        float texV = 0.5f + 0.5f * Sin(angleDegrees);
 
         glTexCoord2f(texU, texV);
         glVertex3f(ringX, y, ringZ);
@@ -158,11 +158,11 @@ void drawDisk(float radius, float y, float thickness)
     // Extrude the perimeter to give the disk thickness
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
-        float angleRadians = 2.0f * M_PI * segmentIndex / segmentCount;
-        float ringX = radius * cosf(angleRadians);
-        float ringZ = radius * sinf(angleRadians);
+        float angleDegrees = 360.0f * segmentIndex / segmentCount;
+        float ringX = radius * Cos(angleDegrees);
+        float ringZ = radius * Sin(angleDegrees);
 
-        glNormal3f(cosf(angleRadians), 0, sinf(angleRadians));
+        glNormal3f(Cos(angleDegrees), 0, Sin(angleDegrees));
         float texU = (float)segmentIndex / segmentCount;
 
         glTexCoord2f(texU, 0);
@@ -262,7 +262,7 @@ void drawCuboid(float width, float height, float depth)
 // Draws a truncated cone with textured sides
 void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
 {
-    float angleStep = (2.0f * M_PI) / slices;
+    float angleStep = 360.0f / slices;
 
     glBegin(GL_TRIANGLES);
     // Iterate around the frustum perimeter to build side triangles
@@ -271,15 +271,15 @@ void drawFrustum(float bottomRadius, float topRadius, float height, int slices)
         float angleStart = sliceIndex * angleStep;
         float angleEnd = (sliceIndex + 1) * angleStep;
 
-        float bottomXStart = bottomRadius * cosf(angleStart);
-        float bottomZStart = bottomRadius * sinf(angleStart);
-        float bottomXEnd = bottomRadius * cosf(angleEnd);
-        float bottomZEnd = bottomRadius * sinf(angleEnd);
+        float bottomXStart = bottomRadius * Cos(angleStart);
+        float bottomZStart = bottomRadius * Sin(angleStart);
+        float bottomXEnd = bottomRadius * Cos(angleEnd);
+        float bottomZEnd = bottomRadius * Sin(angleEnd);
 
-        float topXStart = topRadius * cosf(angleStart);
-        float topZStart = topRadius * sinf(angleStart);
-        float topXEnd = topRadius * cosf(angleEnd);
-        float topZEnd = topRadius * sinf(angleEnd);
+        float topXStart = topRadius * Cos(angleStart);
+        float topZStart = topRadius * Sin(angleStart);
+        float topXEnd = topRadius * Cos(angleEnd);
+        float topZEnd = topRadius * Sin(angleEnd);
 
         // Cylindrical texture coordinates
         float texUStart = (float)sliceIndex / slices;

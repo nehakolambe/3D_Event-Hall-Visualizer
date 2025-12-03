@@ -61,8 +61,8 @@ void display(void)
     else if (mode == 1)
     {
         // FPV mode
-        double dirX = sin(yaw * PI / 180.0);
-        double dirZ = -cos(yaw * PI / 180.0);
+        double dirX = Sin(yaw);
+        double dirZ = -Cos(yaw);
         double zoomOffset = (55.0 - fov) * 0.1;
         double viewX = fpvX - dirX * zoomOffset;
         double viewZ = fpvZ - dirZ * zoomOffset;

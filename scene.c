@@ -269,9 +269,9 @@ void drawBBox(SceneObject *sceneObject)
     glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
     glLineWidth(2.0f);
 
-    float rotationRadians = -sceneObject->rotation * (M_PI / 180.0f); 
-    float cosRotation = cosf(rotationRadians);
-    float sinRotation = sinf(rotationRadians);
+    float rotationDegrees = -sceneObject->rotation;
+    float cosRotation = Cos(rotationDegrees);
+    float sinRotation = Sin(rotationDegrees);
 
     // Loop through each collision sub-box that belongs to this object
     for (int subBoxIdx = 0; subBoxIdx < sceneObject->subBoxCount; subBoxIdx++)

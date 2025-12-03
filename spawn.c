@@ -61,8 +61,8 @@ void configureObjectBounds(SceneObject *sceneObject)
         float halfWidth = width * 0.5f;
         float maxHeight = yBase + height;
         float minDepth = zOffset;
-        float halfAngle = (width * 0.5f) / radiusH;
-        float maxDepth = radiusH - radiusH * cosf(halfAngle) + zOffset;
+        float halfAngleDeg = (width * 0.5f / radiusH) * (180.0f / PI);
+        float maxDepth = radiusH - radiusH * Cos(halfAngleDeg) + zOffset;
 
         sceneObject->subBoxCount = 1;
         sceneObject->subBox[0][0] = -halfWidth;
@@ -163,7 +163,7 @@ void configureObjectBounds(SceneObject *sceneObject)
         const float legLength = 4.0f;
         const float legTiltDeg = 10.0f;
         const float legHalf = 0.12f;
-        const float horizShift = legLength * sinf(legTiltDeg * (M_PI / 180.0f));
+        const float horizShift = legLength * Sin(legTiltDeg);
 
         sceneObject->subBoxCount = 4;
 
@@ -177,9 +177,9 @@ void configureObjectBounds(SceneObject *sceneObject)
         // Three legs placed evenly around the table
         for (int i = 0; i < 3; i++)
         {
-            float ang = (2.0f * M_PI / 3.0f) * i;
-            float dirX = cosf(ang);
-            float dirZ = sinf(ang);
+            float angDeg = (360.0f / 3.0f) * i;
+            float dirX = Cos(angDeg);
+            float dirZ = Sin(angDeg);
             float topX = legSpread * dirX;
             float topZ = legSpread * dirZ;
             float bottomX = topX + horizShift * dirX;

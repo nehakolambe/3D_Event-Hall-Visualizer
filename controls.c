@@ -6,7 +6,7 @@ void controls_key(unsigned char key, int x, int y)
     (void)x;
     (void)y;
     const double speed = 0.8;
-    const double radYaw = yaw * (M_PI / 180.0);
+    const double yawDegrees = yaw;
 
     switch (key)
     {
@@ -122,8 +122,8 @@ void controls_key(unsigned char key, int x, int y)
     case 'W':
         if (mode == 1)
         {
-            float newX = fpvX + speed * sin(radYaw);
-            float newZ = fpvZ - speed * cos(radYaw);
+            float newX = fpvX + speed * Sin(yawDegrees);
+            float newZ = fpvZ - speed * Cos(yawDegrees);
 
             playerObj.y = fpvY - 1.6f;
             playerObj.x = fpvX;
@@ -142,8 +142,8 @@ void controls_key(unsigned char key, int x, int y)
     case 'S':
         if (mode == 1)
         {
-            float newX = fpvX - speed * sin(radYaw);
-            float newZ = fpvZ + speed * cos(radYaw);
+            float newX = fpvX - speed * Sin(yawDegrees);
+            float newZ = fpvZ + speed * Cos(yawDegrees);
 
             playerObj.y = fpvY - 1.6f;
             playerObj.x = fpvX;
@@ -162,8 +162,8 @@ void controls_key(unsigned char key, int x, int y)
     case 'A':
         if (mode == 1)
         {
-            float newX = fpvX - speed * cos(radYaw);
-            float newZ = fpvZ - speed * sin(radYaw);
+            float newX = fpvX - speed * Cos(yawDegrees);
+            float newZ = fpvZ - speed * Sin(yawDegrees);
 
             playerObj.y = fpvY - 1.6f;
             playerObj.x = fpvX;
@@ -182,8 +182,8 @@ void controls_key(unsigned char key, int x, int y)
     case 'D':
         if (mode == 1)
         {
-            float newX = fpvX + speed * cos(radYaw);
-            float newZ = fpvZ + speed * sin(radYaw);
+            float newX = fpvX + speed * Cos(yawDegrees);
+            float newZ = fpvZ + speed * Sin(yawDegrees);
 
             playerObj.y = fpvY - 1.6f;
             playerObj.x = fpvX;

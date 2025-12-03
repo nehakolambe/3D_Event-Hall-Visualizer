@@ -152,7 +152,7 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
   - https://www.rastertek.com/gl4linuxtut33.html
   - https://clockworkchilli.com/blog/8_a_fire_shader_in_glsl_for_your_webgl_games
   - https://godotshaders.com/shader/balatro-fire-shader/
-- **PreHighlight selected object**
+- **Highlight selected object**
   - Ex31.c
 - **Ray Intersection - Mouse**
   - https://www.cppstories.com/2012/06/select-mouse-opengl.html/

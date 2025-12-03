@@ -18,44 +18,46 @@ static void computeRotatedBounds(const SceneObject *sceneObject, int boxIndex,
                                  float *minY, float *maxY,
                                  float *minZ, float *maxZ)
 {
-    float xmin = sceneObject->subBox[boxIndex][0];
-    float xmax = sceneObject->subBox[boxIndex][1];
-    float ymin = sceneObject->subBox[boxIndex][2];
-    float ymax = sceneObject->subBox[boxIndex][3];
-    float zmin = sceneObject->subBox[boxIndex][4];
-    float zmax = sceneObject->subBox[boxIndex][5];
+    // Local-space bounds pulled from the sub-box definition
+    float localMinX = sceneObject->subBox[boxIndex][0];
+    float localMaxX = sceneObject->subBox[boxIndex][1];
+    float localMinY = sceneObject->subBox[boxIndex][2];
+    float localMaxY = sceneObject->subBox[boxIndex][3];
+    float localMinZ = sceneObject->subBox[boxIndex][4];
+    float localMaxZ = sceneObject->subBox[boxIndex][5];
 
-    float angle = -sceneObject->rotation * (M_PI / 180.0f);
-    float cosYaw = cosf(angle);
-    float sinYaw = sinf(angle);
+    // Precompute yaw rotation used for both axes
+    float yawDegrees = -sceneObject->rotation;
+    float cosYaw = Cos(yawDegrees);
+    float sinYaw = Sin(yawDegrees);
 
     *minX = *minZ = +1e9f;
     *maxX = *maxZ = -1e9f;
 
-    *minY = ymin + sceneObject->y;
-    *maxY = ymax + sceneObject->y;
+    *minY = localMinY + sceneObject->y;
+    *maxY = localMaxY + sceneObject->y;
 
     // Iterate over both min/max X corners
     for (int cornerXIndex = 0; cornerXIndex < 2; cornerXIndex++)
     {
-        float x = (cornerXIndex == 0) ? xmin : xmax;
+        float localCornerX = (cornerXIndex == 0) ? localMinX : localMaxX;
         // For each X corner, iterate across the Z limits
         for (int cornerZIndex = 0; cornerZIndex < 2; cornerZIndex++)
         {
-            float z = (cornerZIndex == 0) ? zmin : zmax;
+            float localCornerZ = (cornerZIndex == 0) ? localMinZ : localMaxZ;
 
-            float xr = cosYaw * x - sinYaw * z + worldX;
-            float zr = sinYaw * x + cosYaw * z + worldZ;
+            float rotatedX = cosYaw * localCornerX - sinYaw * localCornerZ + worldX;
+            float rotatedZ = sinYaw * localCornerX + cosYaw * localCornerZ + worldZ;
 
             // Track global min/max projections for the rotated bounds
-            if (xr < *minX)
-                *minX = xr;
-            if (xr > *maxX)
-                *maxX = xr;
-            if (zr < *minZ)
-                *minZ = zr;
-            if (zr > *maxZ)
-                *maxZ = zr;
+            if (rotatedX < *minX)
+                *minX = rotatedX;
+            if (rotatedX > *maxX)
+                *maxX = rotatedX;
+            if (rotatedZ < *minZ)
+                *minZ = rotatedZ;
+            if (rotatedZ > *maxZ)
+                *maxZ = rotatedZ;
         }
     }
 }
@@ -64,63 +66,66 @@ static void computeRotatedBounds(const SceneObject *sceneObject, int boxIndex,
 static void buildBoxOBB(const SceneObject *sceneObject, int boxIndex,
                         float worldX, float worldZ, BoxOBB *box)
 {
-    float xmin = sceneObject->subBox[boxIndex][0];
-    float xmax = sceneObject->subBox[boxIndex][1];
-    float ymin = sceneObject->subBox[boxIndex][2];
-    float ymax = sceneObject->subBox[boxIndex][3];
-    float zmin = sceneObject->subBox[boxIndex][4];
-    float zmax = sceneObject->subBox[boxIndex][5];
+    // Local-space corners for this sub-box prior to rotation
+    float localMinX = sceneObject->subBox[boxIndex][0];
+    float localMaxX = sceneObject->subBox[boxIndex][1];
+    float localMinY = sceneObject->subBox[boxIndex][2];
+    float localMaxY = sceneObject->subBox[boxIndex][3];
+    float localMinZ = sceneObject->subBox[boxIndex][4];
+    float localMaxZ = sceneObject->subBox[boxIndex][5];
 
-    float localCenterX = 0.5f * (xmin + xmax);
-    float localCenterZ = 0.5f * (zmin + zmax);
-    float halfX = 0.5f * (xmax - xmin);
-    float halfZ = 0.5f * (zmax - zmin);
+    // Derived center/half extents that define the OBB
+    float localCenterX = 0.5f * (localMinX + localMaxX);
+    float localCenterZ = 0.5f * (localMinZ + localMaxZ);
+    float halfExtentX = 0.5f * (localMaxX - localMinX);
+    float halfExtentZ = 0.5f * (localMaxZ - localMinZ);
 
-    float angle = -sceneObject->rotation * (M_PI / 180.0f);
-    float cosYaw = cosf(angle);
-    float sinYaw = sinf(angle);
+    // Rotation basis applied to this sub-box
+    float yawDegrees = -sceneObject->rotation;
+    float cosYaw = Cos(yawDegrees);
+    float sinYaw = Sin(yawDegrees);
 
     box->centerX = cosYaw * localCenterX - sinYaw * localCenterZ + worldX;
     box->centerZ = sinYaw * localCenterX + cosYaw * localCenterZ + worldZ;
-    box->halfX = halfX;
-    box->halfZ = halfZ;
+    box->halfX = halfExtentX;
+    box->halfZ = halfExtentZ;
     box->axis[0][0] = cosYaw;
     box->axis[0][1] = sinYaw;
     box->axis[1][0] = -sinYaw;
     box->axis[1][1] = cosYaw;
-    box->minY = ymin + sceneObject->y;
-    box->maxY = ymax + sceneObject->y;
+    box->minY = localMinY + sceneObject->y;
+    box->maxY = localMaxY + sceneObject->y;
 }
 
 // Calculate the projection radius of an OBB onto the given axis
 static float projectRadius(const BoxOBB *box, float axisX, float axisZ)
 {
-    float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    float axisLength = sqrtf(axisX * axisX + axisZ * axisZ);
     // Treat near-zero axis lengths as zero projection
-    if (axisLen < 1e-6f)
+    if (axisLength < 1e-6f)
         return 0.0f;
 
-    float nx = axisX / axisLen;
-    float nz = axisZ / axisLen;
+    float normalizedAxisX = axisX / axisLength;
+    float normalizedAxisZ = axisZ / axisLength;
 
-    float dotX = nx * box->axis[0][0] + nz * box->axis[0][1];
-    float dotZ = nx * box->axis[1][0] + nz * box->axis[1][1];
-    return box->halfX * fabsf(dotX) + box->halfZ * fabsf(dotZ);
+    float localXAxisAlignment = normalizedAxisX * box->axis[0][0] + normalizedAxisZ * box->axis[0][1];
+    float localZAxisAlignment = normalizedAxisX * box->axis[1][0] + normalizedAxisZ * box->axis[1][1];
+    return box->halfX * fabsf(localXAxisAlignment) + box->halfZ * fabsf(localZAxisAlignment);
 }
 
 // Check whether two OBBs overlap along a particular separating axis
 static int overlapOnAxis(const BoxOBB *a, const BoxOBB *b, float axisX, float axisZ)
 {
-    float ra = projectRadius(a, axisX, axisZ);
-    float rb = projectRadius(b, axisX, axisZ);
-    float dx = b->centerX - a->centerX;
-    float dz = b->centerZ - a->centerZ;
-    float axisLen = sqrtf(axisX * axisX + axisZ * axisZ);
+    float projectionRadiusA = projectRadius(a, axisX, axisZ);
+    float projectionRadiusB = projectRadius(b, axisX, axisZ);
+    float centerDeltaX = b->centerX - a->centerX;
+    float centerDeltaZ = b->centerZ - a->centerZ;
+    float axisLength = sqrtf(axisX * axisX + axisZ * axisZ);
     // Zero-length axis can't separate boxes, so treat as overlap
-    if (axisLen < 1e-6f)
+    if (axisLength < 1e-6f)
         return 1;
-    float distance = fabsf((dx * axisX + dz * axisZ) / axisLen);
-    return distance <= (ra + rb);
+    float centerProjectionDistance = fabsf((centerDeltaX * axisX + centerDeltaZ * axisZ) / axisLength);
+    return centerProjectionDistance <= (projectionRadiusA + projectionRadiusB);
 }
 
 // Run SAT tests using both box axes to confirm XZ overlap
@@ -152,9 +157,9 @@ bool collidesWithAnyObject(SceneObject *movingObject, float newX, float newZ,
     }
 
     // Iterate over every object in the scene to check collisions
-    for (int i = 0; i < objectCount; i++)
+    for (int objectIndex = 0; objectIndex < objectCount; objectIndex++)
     {
-        SceneObject *otherObject = &objects[i];
+        SceneObject *otherObject = &objects[objectIndex];
 
         // Skip self and non-solid objects
         if (otherObject == movingObject || !otherObject->solid)
@@ -163,33 +168,36 @@ bool collidesWithAnyObject(SceneObject *movingObject, float newX, float newZ,
         // Test each sub-box that composes the moving object
         for (int movingSubBoxIndex = 0; movingSubBoxIndex < movingObject->subBoxCount; movingSubBoxIndex++)
         {
-            float movingMinX, movingMaxX, movingMinY, movingMaxY, movingMinZ, movingMaxZ;
+            // World-space AABB bounds used for the cheap rejection test
+            float movingAabbMinX, movingAabbMaxX, movingAabbMinY, movingAabbMaxY, movingAabbMinZ, movingAabbMaxZ;
+            // Fully rotated oriented bounding box for SAT overlap checks
             BoxOBB movingObb;
 
             computeRotatedBounds(movingObject, movingSubBoxIndex, newX, newZ,
-                                 &movingMinX, &movingMaxX,
-                                 &movingMinY, &movingMaxY,
-                                 &movingMinZ, &movingMaxZ);
+                                 &movingAabbMinX, &movingAabbMaxX,
+                                 &movingAabbMinY, &movingAabbMaxY,
+                                 &movingAabbMinZ, &movingAabbMaxZ);
             buildBoxOBB(movingObject, movingSubBoxIndex, newX, newZ, &movingObb);
 
             // Compare with each sub-box of the other object
             for (int otherSubBoxIndex = 0; otherSubBoxIndex < otherObject->subBoxCount; otherSubBoxIndex++)
             {
-                float otherMinX, otherMaxX, otherMinY, otherMaxY, otherMinZ, otherMaxZ;
+                // Equivalent bounds for the candidate collider
+                float otherAabbMinX, otherAabbMaxX, otherAabbMinY, otherAabbMaxY, otherAabbMinZ, otherAabbMaxZ;
                 BoxOBB otherObb;
                 computeRotatedBounds(otherObject, otherSubBoxIndex, otherObject->x, otherObject->z,
-                                     &otherMinX, &otherMaxX,
-                                     &otherMinY, &otherMaxY,
-                                     &otherMinZ, &otherMaxZ);
+                                     &otherAabbMinX, &otherAabbMaxX,
+                                     &otherAabbMinY, &otherAabbMaxY,
+                                     &otherAabbMinZ, &otherAabbMaxZ);
                 buildBoxOBB(otherObject, otherSubBoxIndex, otherObject->x, otherObject->z, &otherObb);
 
                 // AABB horizontal overlap check
-                bool overlapXZ =
-                    (movingMaxX > otherMinX && movingMinX < otherMaxX &&
-                     movingMaxZ > otherMinZ && movingMinZ < otherMaxZ);
+                bool aabbOverlapXZ =
+                    (movingAabbMaxX > otherAabbMinX && movingAabbMinX < otherAabbMaxX &&
+                     movingAabbMaxZ > otherAabbMinZ && movingAabbMinZ < otherAabbMaxZ);
 
                 // Skip OBB test if the axis-aligned boxes already separate
-                if (!overlapXZ)
+                if (!aabbOverlapXZ)
                     continue;
 
                 // Perform the more expensive OBB check next
@@ -218,10 +226,10 @@ bool collidesWithAnyObject(SceneObject *movingObject, float newX, float newZ,
                 }
 
                 // normal vertical overlap check
-                bool overlapY =
+                bool yOverlap =
                     (movingObb.maxY > otherObb.minY && movingObb.minY < otherObb.maxY);
 
-                if (overlapY)
+                if (yOverlap)
                 {
                     // Side collision, then block movement
                     return true;
@@ -265,12 +273,12 @@ bool checkRotationCollision(SceneObject *sceneObject, float newRotation)
     sceneObject->rotation = newRotation;
     
     // Check if this new state hits anything
-    bool collides = collidesWithAnyObject(sceneObject, sceneObject->x, sceneObject->z, false, false);
+    bool collisionDetected = collidesWithAnyObject(sceneObject, sceneObject->x, sceneObject->z, false, false);
 
     // Restore original rotation immediately
     sceneObject->rotation = oldRotation;
 
-    return collides;
+    return collisionDetected;
 }
 
 // Rotate an object by the given angle when no collision occurs
