@@ -49,6 +49,31 @@ void configureObjectBounds(SceneObject *sceneObject)
     if (!sceneObject)
         return;
 
+    // Collision box for the curved screen
+    if (strcmp(sceneObject->name, "CurvedScreen") == 0)
+    {
+        const float width = 35.0f;
+        const float height = 10.0f;
+        const float yBase = 3.5f;
+        const float radiusH = 25.0f;
+        const float zOffset = 0.5f;
+
+        float halfWidth = width * 0.5f;
+        float maxHeight = yBase + height;
+        float minDepth = zOffset;
+        float halfAngle = (width * 0.5f) / radiusH;
+        float maxDepth = radiusH - radiusH * cosf(halfAngle) + zOffset;
+
+        sceneObject->subBoxCount = 1;
+        sceneObject->subBox[0][0] = -halfWidth;
+        sceneObject->subBox[0][1] = halfWidth;
+        sceneObject->subBox[0][2] = 0.0f;
+        sceneObject->subBox[0][3] = maxHeight;
+        sceneObject->subBox[0][4] = minDepth;
+        sceneObject->subBox[0][5] = maxDepth;
+        return;
+    }
+
     // Collision boxes for Event tables
     if (nameHasPrefix(sceneObject->name, "EventTable"))
     {
