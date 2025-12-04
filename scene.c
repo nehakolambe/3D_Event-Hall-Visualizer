@@ -683,30 +683,49 @@ void scene_display(void)
         glColor3f(1.0f, 1.0f, 1.0f);
     }
 
-    // Draw walls and ceiling
-    if (mode != 2)
+    int orthoView = (mode == 2);
+
+    // Draw ceiling (translucent in orthogonal mode)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    if (orthoView)
     {
-        // Ceiling
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-        drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-
-        // Walls (Back, Front, Left, Right)
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
-
-        // Back
-        drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
-        // Front
-        drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
-        // Left
-        drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
-        // Right
-        drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
-
-        glDisable(GL_TEXTURE_2D);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+        glDepthMask(GL_FALSE);
     }
+    drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
+    if (orthoView)
+    {
+        glDepthMask(GL_TRUE);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
+    glDisable(GL_TEXTURE_2D);
+
+    // Draw walls (translucent in orthogonal mode)
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, wallTex);
+    if (orthoView)
+    {
+        glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
+        glDepthMask(GL_FALSE);
+    }
+
+    // Back
+    drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
+    // Front
+    drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
+    // Left
+    drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
+    // Right
+    drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
+
+    if (orthoView)
+    {
+        glDepthMask(GL_TRUE);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    }
+
+    glDisable(GL_TEXTURE_2D);
 
     // Draw stage
     glEnable(GL_TEXTURE_2D);
@@ -866,12 +885,9 @@ void scene_display(void)
     }
 
     // Draw ceiling shapes
-    if (mode != 2)
-    {
-        glPushMatrix();
-        drawCeilingShapes();
-        glPopMatrix();
-    }
+    glPushMatrix();
+    drawCeilingShapes();
+    glPopMatrix();
 
     // Draw light position marker
     lighting_draw_debug_marker();
