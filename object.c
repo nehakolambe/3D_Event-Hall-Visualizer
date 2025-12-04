@@ -28,7 +28,7 @@ void drawTable(float posX, float posZ)
     glPushMatrix();
     glTranslatef(posX, 0, posZ);
 
-    // Table Dimension
+    // Table Dimensions
     float tabletopHeight = 2.0f;
     float tabletopThickness = 0.15f;
     float legHeight = tabletopHeight;
@@ -38,15 +38,17 @@ void drawTable(float posX, float posZ)
     float cornerRadius = 0.3f;
     int cornerSegmentCount = 20;
 
-    // Pre-calculate positions to make drawing easier
+    // Y Positions
     float tabletopBottomY = tabletopHeight;
     float tabletopTopY = tabletopHeight + tabletopThickness;
-    float tabletopHalfLength = tabletopLength * 0.5f;
-    float tabletopHalfWidth = tabletopWidth * 0.5f;
 
-    // The inner rectangle stops before the curved corners start
-    float innerHalfLength = tabletopHalfLength - cornerRadius;
-    float innerHalfWidth = tabletopHalfWidth - cornerRadius;
+    // Edge Calculations
+    float outerHalfLength = tabletopLength * 0.5f;
+    float outerHalfWidth = tabletopWidth * 0.5f;
+
+    // Inner edges for rounded corners
+    float innerHalfLength = outerHalfLength - cornerRadius;
+    float innerHalfWidth = outerHalfWidth - cornerRadius;
 
     // Apply table texture
     if (glIsEnabled(GL_LIGHTING))
@@ -62,11 +64,11 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 0);
     glVertex3f(-innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(-innerHalfLength, tabletopTopY, innerHalfWidth);
     glEnd();
 
     // Draw the flat strips on the sides (Front, Back, Left, Right)
@@ -75,51 +77,51 @@ void drawTable(float posX, float posZ)
     // Front Strip
     glNormal3f(0, 1, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(-innerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
+    glVertex3f(innerHalfLength, tabletopTopY, outerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopTopY, outerHalfWidth);
 
     // Back Strip
     glTexCoord2f(0, 0);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopTopY, -outerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
+    glVertex3f(innerHalfLength, tabletopTopY, -outerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth);
+    glVertex3f(-innerHalfLength, tabletopTopY, -innerHalfWidth);
 
     // Left Strip
     glTexCoord2f(0, 0);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth);
+    glVertex3f(-innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(-innerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopTopY, innerHalfWidth);
 
     // Right Strip
     glTexCoord2f(0, 0);
-    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, -innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
+    glVertex3f(innerHalfLength, tabletopTopY, innerHalfWidth);
     glEnd();
 
     // Draw the Rounded Corners (Top Surface)
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        // Determine center point of the current corner
-        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
-        float cornerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
+        // Determine center point of the current corner arc
+        float centerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
+        float centerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
 
         float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
@@ -129,14 +131,14 @@ void drawTable(float posX, float posZ)
 
         // Center of the fan
         glTexCoord2f(0.5f, 0.5f);
-        glVertex3f(cornerX, tabletopTopY, cornerZ);
+        glVertex3f(centerX, tabletopTopY, centerZ);
 
         // Sweep around the arc
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
-            float vertexX = cornerX + cornerRadius * Cos(angleDegrees);
-            float vertexZ = cornerZ + cornerRadius * Sin(angleDegrees);
+            float vertexX = centerX + cornerRadius * Cos(angleDegrees);
+            float vertexZ = centerZ + cornerRadius * Sin(angleDegrees);
 
             // Map circular coordinates to texture coordinates so texture wraps nicely
             float texU = 0.5f + 0.5f * Cos(angleDegrees);
@@ -151,8 +153,8 @@ void drawTable(float posX, float posZ)
     // Draw the Rounded Corners (Vertical Edges)
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
-        float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
-        float cornerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
+        float centerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
+        float centerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
 
         float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
@@ -162,8 +164,8 @@ void drawTable(float posX, float posZ)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
 
-            float vertexX = cornerX + cornerRadius * Cos(angleDegrees);
-            float vertexZ = cornerZ + cornerRadius * Sin(angleDegrees);
+            float vertexX = centerX + cornerRadius * Cos(angleDegrees);
+            float vertexZ = centerZ + cornerRadius * Sin(angleDegrees);
             float normalX = Cos(angleDegrees);
             float normalZ = Sin(angleDegrees);
 
@@ -187,46 +189,46 @@ void drawTable(float posX, float posZ)
     // Front Side
     glNormal3f(0, 0, 1);
     glTexCoord2f(0, 0);
-    glVertex3f(-innerHalfLength, tabletopBottomY, innerHalfWidth + cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopBottomY, outerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength, tabletopBottomY, innerHalfWidth + cornerRadius);
+    glVertex3f(innerHalfLength, tabletopBottomY, outerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
+    glVertex3f(innerHalfLength, tabletopTopY, outerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopTopY, outerHalfWidth);
 
     // Back Side
     glNormal3f(0, 0, -1);
     glTexCoord2f(0, 0);
-    glVertex3f(-tabletopHalfLength, tabletopBottomY, -innerHalfWidth - cornerRadius);
+    glVertex3f(innerHalfLength, tabletopBottomY, -outerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength, tabletopBottomY, -innerHalfWidth - cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopBottomY, -outerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
+    glVertex3f(-innerHalfLength, tabletopTopY, -outerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
+    glVertex3f(innerHalfLength, tabletopTopY, -outerHalfWidth);
 
     // Left Side
     glNormal3f(-1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopBottomY, -innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopBottomY, -innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopBottomY, innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopBottomY, innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
+    glVertex3f(-outerHalfLength, tabletopTopY, -innerHalfWidth);
 
     // Right Side
     glNormal3f(1, 0, 0);
     glTexCoord2f(0, 0);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopBottomY, -innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopBottomY, innerHalfWidth);
     glTexCoord2f(1, 0);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopBottomY, innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopBottomY, -innerHalfWidth);
     glTexCoord2f(1, 1);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(0, 1);
-    glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, -innerHalfWidth);
+    glVertex3f(outerHalfLength, tabletopTopY, innerHalfWidth);
 
     glEnd();
 
@@ -1286,7 +1288,7 @@ static void drawRope(float length)
     glPopMatrix();
 }
 
-//Draws a Star Shape
+// Draws a Star Shape
 void drawStarShape(void)
 {
     const float outerR = 1.0f;

@@ -160,3 +160,9 @@ This project is a fully interactive 3D event-hall environment built in OpenGL, f
   - https://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
   - https://stackoverflow.com/questions/28032910/opengl-picking-fastest-way
   - https://gamedev.stackexchange.com/questions/172308/c-mouse-picking-for-ray-to-plane-intersection
+- **Collision**
+   - https://dyn4j.org/2010/01/sat/
+   - https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/previousinformation/physics4collisiondetection/2017%20Tutorial%204%20-%20Collision%20Detection.pdf
+   - https://dev.to/pratyush_mohanty_6b8f2749/the-math-behind-bounding-box-collision-detection-aabb-vs-obbseparate-axis-theorem-1gdn
+- **Snap-to-grid**
+   - https://www.reddit.com/r/gamemaker/comments/14i7qw/snap_to_grid_code/
