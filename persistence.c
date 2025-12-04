@@ -1,9 +1,9 @@
 #include "CSCIx229.h"
 
-// map object name substrings to spawn types
+// Helper function to check which spawn type matches a given name
 static int get_type_from_name(const char *name)
 {
-    // Map substrings to spawn menu entries
+    // Check if the object name contains specific words
     if (strstr(name, "Lamp"))
         return SPAWN_LAMP;
     if (strstr(name, "EventTable"))
@@ -21,12 +21,13 @@ static int get_type_from_name(const char *name)
     if (strstr(name, "Cocktail_3"))
         return SPAWN_COCKTAIL_3;
 
-    return -1;
+    return -1; // Could not identify the object type
 }
 
-// save logic
+// Helper function to save the current room setup to a text file
 void save_scene(const char *filename)
 {
+    // Create a new file or overwrite existing one
     FILE *sceneFile = fopen(filename, "w");
     if (!sceneFile)
     {
@@ -34,15 +35,16 @@ void save_scene(const char *filename)
         return;
     }
 
-    // save objects
+    // Loop through every object currently in the scene
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject *sceneObject = &objects[i];
 
-        // skip non-movable objects
+        // Save furniture only (movable objects)
         if (!sceneObject->movable)
             continue;
 
+        // Format: O,Name,X,Y,Z,Rotation,Scale
         fprintf(sceneFile, "O,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n",
                 sceneObject->name,
                 sceneObject->x,
@@ -52,13 +54,15 @@ void save_scene(const char *filename)
                 sceneObject->scale);
     }
 
+    // Close the file (gets saved)
     fclose(sceneFile);
     printf("Scene saved to %s\n", filename);
 }
 
-// load logic
+// Helper function to load room setup from a text file
 void load_scene(const char *filename)
 {
+    // Open file
     FILE *sceneFile = fopen(filename, "r");
     if (!sceneFile)
     {
@@ -66,41 +70,48 @@ void load_scene(const char *filename)
         return;
     }
 
-    // remove all movable objects
+    // Delete all current furniture
     for (int i = objectCount - 1; i >= 0; i--)
     {
         if (objects[i].movable)
         {
-            // Shift the remaining objects down to fill the gap
+            // To remove an object, we shift everything after it down by one slot
             for (int j = i; j < objectCount - 1; j++)
             {
                 objects[j] = objects[j + 1];
                 objects[j].id = j;
             }
-            objectCount--;
+            objectCount--; // Reduce the total count of objects
         }
     }
     selectedObject = NULL;
 
-    // read file line by line
+    // Buffer to hold each line of text we read from the file
     char line[256];
+    
+    // Read the file line by line
     while (fgets(line, sizeof(line), sceneFile))
     {
-        // check line type
-        if (line[0] == 'O') // Object
+        // Check if this line describes an Object (starts with 'O')
+        if (line[0] == 'O') 
         {
             char nameBuffer[64];
             float savedX, savedY, savedZ, savedRotation, savedScale;
 
-            // parse object line
+            // Extract the numbers and name
             if (sscanf(line, "O,%[^,],%f,%f,%f,%f,%f",
                        nameBuffer, &savedX, &savedY, &savedZ, &savedRotation, &savedScale) == 6)
             {
+                // Figure out which type of furniture this name corresponds to
                 int spawnType = get_type_from_name(nameBuffer);
+                
+                // If it is a valid type, create it
                 if (spawnType >= 0)
                 {
-                    // spawn object
+                    // Create the new object in the scene
                     SceneObject *spawnedObject = scene_spawn_object((SceneSpawnType)spawnType);
+                    
+                    // Update its position and rotation to match what was in the file
                     if (spawnedObject)
                     {
                         spawnedObject->x = savedX;
@@ -114,7 +125,10 @@ void load_scene(const char *filename)
         }
     }
 
+    // Done reading, close the file
     fclose(sceneFile);
     printf("Scene loaded from %s\n", filename);
+    
+    // Redraw the screen with the new objects
     glutPostRedisplay();
 }

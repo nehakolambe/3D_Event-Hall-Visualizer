@@ -1,6 +1,6 @@
 #include "CSCIx229.h"
 
-// Draw a textured cylinder used for table legs
+// Draws a single table leg using a cylinder shape
 static void drawLeg(float legPosX, float legPosZ, float legHeight, float legRadius)
 {
     if (glIsEnabled(GL_LIGHTING))
@@ -22,12 +22,13 @@ static void drawLeg(float legPosX, float legPosZ, float legHeight, float legRadi
     }
 }
 
-// Render the rectangular event table with rounded corners and legs
+// Draws the Event Table (Rectangular with rounded corners)
 void drawTable(float posX, float posZ)
 {
     glPushMatrix();
     glTranslatef(posX, 0, posZ);
 
+    // Table Dimension
     float tabletopHeight = 2.0f;
     float tabletopThickness = 0.15f;
     float legHeight = tabletopHeight;
@@ -37,13 +38,17 @@ void drawTable(float posX, float posZ)
     float cornerRadius = 0.3f;
     int cornerSegmentCount = 20;
 
+    // Pre-calculate positions to make drawing easier
     float tabletopBottomY = tabletopHeight;
     float tabletopTopY = tabletopHeight + tabletopThickness;
     float tabletopHalfLength = tabletopLength * 0.5f;
     float tabletopHalfWidth = tabletopWidth * 0.5f;
+
+    // The inner rectangle stops before the curved corners start
     float innerHalfLength = tabletopHalfLength - cornerRadius;
     float innerHalfWidth = tabletopHalfWidth - cornerRadius;
 
+    // Apply table texture
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -51,7 +56,7 @@ void drawTable(float posX, float posZ)
         glColor3f(1, 1, 1);
     }
 
-    // top surface
+    // Draw the main center rectangle
     glNormal3f(0, 1, 0);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
@@ -64,10 +69,10 @@ void drawTable(float posX, float posZ)
     glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
     glEnd();
 
-    // flat edge pads
+    // Draw the flat strips on the sides (Front, Back, Left, Right)
     glBegin(GL_QUADS);
 
-    // front
+    // Front Strip
     glNormal3f(0, 1, 0);
     glTexCoord2f(0, 0);
     glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth);
@@ -78,7 +83,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
 
-    // back
+    // Back Strip
     glTexCoord2f(0, 0);
     glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
     glTexCoord2f(1, 0);
@@ -88,7 +93,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth);
 
-    // left
+    // Left Strip
     glTexCoord2f(0, 0);
     glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
@@ -98,7 +103,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, innerHalfWidth);
 
-    // right
+    // Right Strip
     glTexCoord2f(0, 0);
     glVertex3f(tabletopHalfLength, tabletopTopY, -innerHalfWidth);
     glTexCoord2f(1, 0);
@@ -107,12 +112,12 @@ void drawTable(float posX, float posZ)
     glVertex3f(tabletopHalfLength + cornerRadius, tabletopTopY, innerHalfWidth);
     glTexCoord2f(0, 1);
     glVertex3f(tabletopHalfLength, tabletopTopY, innerHalfWidth);
-
     glEnd();
 
-    // Generate rounded top corners at each end
+    // Draw the Rounded Corners (Top Surface)
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
+        // Determine center point of the current corner
         float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
         float cornerZ = (cornerIndex < 2) ? innerHalfWidth : -innerHalfWidth;
 
@@ -122,16 +127,18 @@ void drawTable(float posX, float posZ)
         glBegin(GL_TRIANGLE_FAN);
         glNormal3f(0, 1, 0);
 
+        // Center of the fan
         glTexCoord2f(0.5f, 0.5f);
         glVertex3f(cornerX, tabletopTopY, cornerZ);
 
-        // Sweep around this corner to create the fan
+        // Sweep around the arc
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
             float vertexX = cornerX + cornerRadius * Cos(angleDegrees);
             float vertexZ = cornerZ + cornerRadius * Sin(angleDegrees);
 
+            // Map circular coordinates to texture coordinates so texture wraps nicely
             float texU = 0.5f + 0.5f * Cos(angleDegrees);
             float texV = 0.5f + 0.5f * Sin(angleDegrees);
 
@@ -141,7 +148,7 @@ void drawTable(float posX, float posZ)
         glEnd();
     }
 
-    // Build curved side strips along each rounded corner
+    // Draw the Rounded Corners (Vertical Edges)
     for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
     {
         float cornerX = (cornerIndex == 0 || cornerIndex == 3) ? innerHalfLength : -innerHalfLength;
@@ -150,8 +157,7 @@ void drawTable(float posX, float posZ)
         float startDeg = (float)(cornerIndex * 90);
         float endDeg = startDeg + 90.0f;
 
-        glBegin(GL_QUAD_STRIP);
-        // Connect bottom/top edges for each angular step
+        glBegin(GL_QUAD_STRIP); // Connects top points to bottom points in a strip
         for (int segmentIndex = 0; segmentIndex <= cornerSegmentCount; segmentIndex++)
         {
             float angleDegrees = startDeg + segmentIndex * (endDeg - startDeg) / cornerSegmentCount;
@@ -165,18 +171,20 @@ void drawTable(float posX, float posZ)
 
             float texU = (float)segmentIndex / cornerSegmentCount;
 
+            // Bottom vertex
             glTexCoord2f(texU, 0);
             glVertex3f(vertexX, tabletopBottomY, vertexZ);
+            // Top vertex
             glTexCoord2f(texU, 1);
             glVertex3f(vertexX, tabletopTopY, vertexZ);
         }
         glEnd();
     }
 
-    // flat side walls
+    // Draw the flat side walls (Vertical Edges)
     glBegin(GL_QUADS);
 
-    // front
+    // Front Side
     glNormal3f(0, 0, 1);
     glTexCoord2f(0, 0);
     glVertex3f(-innerHalfLength, tabletopBottomY, innerHalfWidth + cornerRadius);
@@ -187,7 +195,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength, tabletopTopY, innerHalfWidth + cornerRadius);
 
-    // back
+    // Back Side
     glNormal3f(0, 0, -1);
     glTexCoord2f(0, 0);
     glVertex3f(-tabletopHalfLength, tabletopBottomY, -innerHalfWidth - cornerRadius);
@@ -198,7 +206,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength, tabletopTopY, -innerHalfWidth - cornerRadius);
 
-    // left
+    // Left Side
     glNormal3f(-1, 0, 0);
     glTexCoord2f(0, 0);
     glVertex3f(-tabletopHalfLength - cornerRadius, tabletopBottomY, -innerHalfWidth);
@@ -209,7 +217,7 @@ void drawTable(float posX, float posZ)
     glTexCoord2f(0, 1);
     glVertex3f(-tabletopHalfLength - cornerRadius, tabletopTopY, -innerHalfWidth);
 
-    // right
+    // Right Side
     glNormal3f(1, 0, 0);
     glTexCoord2f(0, 0);
     glVertex3f(tabletopHalfLength + cornerRadius, tabletopBottomY, -innerHalfWidth);
@@ -222,7 +230,7 @@ void drawTable(float posX, float posZ)
 
     glEnd();
 
-    // legs
+    // Positions for 4 legs relative to center
     float legOffsets[4][2] = {
         {innerHalfLength, innerHalfWidth},
         {-innerHalfLength, innerHalfWidth},
@@ -233,7 +241,9 @@ void drawTable(float posX, float posZ)
     for (int legIndex = 0; legIndex < 4; legIndex++)
     {
         glPushMatrix();
+        // Move to leg position
         glTranslatef(legOffsets[legIndex][0], legHeight * 0.5f, legOffsets[legIndex][1]);
+        // Draw leg
         drawCuboid(legThickness, legHeight, legThickness);
         glPopMatrix();
     }
@@ -245,7 +255,7 @@ void drawTable(float posX, float posZ)
     glPopMatrix();
 }
 
-// cocktail table
+// Draws the simple round cocktail table
 void drawCocktailTable(float x, float z)
 {
     float height = 4.0f;
@@ -262,9 +272,9 @@ void drawCocktailTable(float x, float z)
         glBindTexture(GL_TEXTURE_2D, cocktailTableTex);
     }
 
-    drawLeg(0.0f, 0.0f, height, legRadius);    // table leg
-    drawDisk(topRadius, height, topThickness); // tabletop
-    drawDisk(0.6f, 0.0f, 0.05f);               // base disk
+    drawLeg(0.0f, 0.0f, height, legRadius);    // Center pole
+    drawDisk(topRadius, height, topThickness); // Top circle
+    drawDisk(0.6f, 0.0f, 0.05f);               // Base circle
 
     if (glIsEnabled(GL_LIGHTING))
     {
@@ -273,7 +283,7 @@ void drawCocktailTable(float x, float z)
     glPopMatrix();
 }
 
-// door with frame and knob
+// Draws a door
 void drawDoor(float x, float z, float width, float height)
 {
     float yBottom = 0.0f;
@@ -282,13 +292,12 @@ void drawDoor(float x, float z, float width, float height)
 
     float nx = 0.0f, ny = 0.0f, nz = -1.0f;
 
-    // Door frame
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, doorFrameTex);
 
     glBegin(GL_QUADS);
 
-    // Left frame
+    // Left Frame
     glNormal3f(nx, ny, nz);
     glTexCoord2f(0, 0);
     glVertex3f(x - halfW - 0.1f, yBottom, z + 0.01f);
@@ -299,7 +308,7 @@ void drawDoor(float x, float z, float width, float height)
     glTexCoord2f(0, 1);
     glVertex3f(x - halfW - 0.1f, yTop, z + 0.01f);
 
-    // Right frame
+    // Right Frame
     glNormal3f(nx, ny, nz);
     glTexCoord2f(0, 0);
     glVertex3f(x + halfW, yBottom, z + 0.01f);
@@ -310,7 +319,7 @@ void drawDoor(float x, float z, float width, float height)
     glTexCoord2f(0, 1);
     glVertex3f(x + halfW, yTop, z + 0.01f);
 
-    // Top frame
+    // Top Frame
     glNormal3f(nx, ny, nz);
     glTexCoord2f(0, 0);
     glVertex3f(x - halfW - 0.1f, yTop, z + 0.01f);
@@ -340,13 +349,14 @@ void drawDoor(float x, float z, float width, float height)
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
-    // Door knob
+    // Knob
     glPushMatrix();
     glTranslatef(x + halfW - 0.3f, yBottom + height * 0.5f, z + 0.05f);
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, doorKnobTex);
 
+    // Make knob look shiny/reflective
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
     glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
     glEnable(GL_TEXTURE_GEN_S);
@@ -361,7 +371,7 @@ void drawDoor(float x, float z, float width, float height)
     glPopMatrix();
 }
 
-// Curved LED screen on wall
+// Draws a large curved screen
 void drawCurvedScreen(float wallX, float wallZ, float width, float height,
                       float yBase, float radiusH, float radiusV, float zOffset)
 {
@@ -369,6 +379,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
     int verticalSegmentCount = 32;
 
     float halfH = height * 0.5f;
+    // Calculate how much angle the screen covers
     float angleHDeg = (width / radiusH) * (180.0f / PI);
     float angleVDeg = (height / radiusV) * (180.0f / PI);
 
@@ -400,13 +411,11 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
             float phiStartDeg = -angleVDeg * 0.5f + angleVDeg * vStart;
             float phiEndDeg = -angleVDeg * 0.5f + angleVDeg * vEnd;
 
-            // Precompute trig values
             float sinThetaStart = Sin(thetaStartDeg), cosThetaStart = Cos(thetaStartDeg);
             float sinThetaEnd = Sin(thetaEndDeg), cosThetaEnd = Cos(thetaEndDeg);
-
             float sinPhiStart = Sin(phiStartDeg), sinPhiEnd = Sin(phiEndDeg);
 
-            // Vertex positions
+            // Calculate corner positions for the quad
             float bottomLeftX = radiusH * sinThetaStart;
             float bottomLeftZ = -radiusH * cosThetaStart + radiusH + zOffset;
             float bottomLeftY = radiusV * sinPhiStart;
@@ -423,11 +432,11 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
             float topLeftZ = bottomLeftZ;
             float topLeftY = radiusV * sinPhiEnd;
 
-            // Normals
+            // Normals point outwards from curve center
             float normalThetaStart = sinThetaStart, normalZThetaStart = cosThetaStart;
             float normalThetaEnd = sinThetaEnd, normalZThetaEnd = cosThetaEnd;
 
-            // Quad vertices
+            // Draw the quad with normals and texture coords
             glNormal3f(normalThetaStart, sinPhiStart, normalZThetaStart);
             glTexCoord2f(uStart, vStart);
             glVertex3f(bottomLeftX, bottomLeftY, bottomLeftZ);
@@ -452,7 +461,7 @@ void drawCurvedScreen(float wallX, float wallZ, float width, float height,
     glPopMatrix();
 }
 
-// lamp with bulb and light mode
+// Draws the standing floor lamp
 void drawLamp(float xPos, float zPos)
 {
     int segmentCount = 32;
@@ -468,7 +477,7 @@ void drawLamp(float xPos, float zPos)
     glPushMatrix();
     glTranslatef(xPos, baseHeight, zPos);
 
-    // Base disk
+    // Base Disk
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -481,7 +490,7 @@ void drawLamp(float xPos, float zPos)
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, 0.0f, 0.0f);
 
-    // Step around the base disk circumference
+    // Circle loop
     for (int segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex++)
     {
         float angleDegrees = 360.0f * segmentIndex / segmentCount;
@@ -493,8 +502,8 @@ void drawLamp(float xPos, float zPos)
     }
     glEnd();
 
-    // Build the cylindrical pole by connecting each segment
-    // Extrude the lamp shade cone in segments
+    // Pole
+    // Connects bottom circle to top circle to form cylinder
     for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
         float angle1Deg = 360.0f * segmentIndex / segmentCount;
@@ -509,27 +518,23 @@ void drawLamp(float xPos, float zPos)
         float nx2 = Cos(angle2Deg), nz2 = Sin(angle2Deg);
 
         glBegin(GL_QUADS);
-
         glNormal3f(nx1, 0.0f, nz1);
         glTexCoord2f((float)segmentIndex / segmentCount, 0.0f);
         glVertex3f(x1, 0.0f, z1);
-
         glNormal3f(nx2, 0.0f, nz2);
         glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 0.0f);
         glVertex3f(x2, 0.0f, z2);
-
         glNormal3f(nx2, 0.0f, nz2);
         glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 1.0f);
         glVertex3f(x2, poleHeight, z2);
-
         glNormal3f(nx1, 0.0f, nz1);
         glTexCoord2f((float)segmentIndex / segmentCount, 1.0f);
         glVertex3f(x1, poleHeight, z1);
-
         glEnd();
     }
 
-    // Transparent shade mode
+    // Lamp Shade
+    // If the lamp is ON (lightState == 2), make the shade semi-transparent
     if (glIsEnabled(GL_LIGHTING))
     {
         if (lightState == 2)
@@ -537,24 +542,20 @@ void drawLamp(float xPos, float zPos)
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glDepthMask(GL_FALSE);
-            glColor4f(1, 1, 1, 0.35f);
+            glColor4f(1, 1, 1, 0.35f); // 35% visible
         }
         else
         {
             glDisable(GL_BLEND);
-            glColor4f(1, 1, 1, 1);
+            glColor4f(1, 1, 1, 1); // Opaque
         }
-    }
-
-    // Shade sides (truncated cone)
-    if (glIsEnabled(GL_LIGHTING))
-    {
         glBindTexture(GL_TEXTURE_2D, lampShadeTex);
     }
 
     float shadeBottomY = poleHeight;
     float shadeTopY = poleHeight + shadeHeight;
 
+    // Draw Cone (Trunctated) for Shade
     for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
     {
         float angle1Deg = 360.0f * segmentIndex / segmentCount;
@@ -574,27 +575,22 @@ void drawLamp(float xPos, float zPos)
         float nx2 = Cos(angle2Deg), nz2 = Sin(angle2Deg);
 
         glBegin(GL_QUADS);
-
         glNormal3f(nx1, 0.0f, nz1);
         glTexCoord2f((float)segmentIndex / segmentCount, 0.0f);
         glVertex3f(x1b, shadeBottomY, z1b);
-
         glNormal3f(nx2, 0.0f, nz2);
         glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 0.0f);
         glVertex3f(x2b, shadeBottomY, z2b);
-
         glNormal3f(nx2, 0.0f, nz2);
         glTexCoord2f((float)(segmentIndex + 1) / segmentCount, 1.0f);
         glVertex3f(x2t, shadeTopY, z2t);
-
         glNormal3f(nx1, 0.0f, nz1);
         glTexCoord2f((float)segmentIndex / segmentCount, 1.0f);
         glVertex3f(x1t, shadeTopY, z1t);
-
         glEnd();
     }
 
-    // reset state after transparent shade
+    // Reset transparency settings
     if (lightState == 2 && glIsEnabled(GL_LIGHTING))
     {
         glDepthMask(GL_TRUE);
@@ -607,34 +603,32 @@ void drawLamp(float xPos, float zPos)
         glColor4f(1, 1, 1, 1);
     }
 
-    // light bulb
     glPushMatrix();
 
-    float bulbLocalY = shadeBottomY + 0.4f; // inside shade
+    float bulbLocalY = shadeBottomY + 0.4f; // Put bulb inside the shade
     glTranslatef(0.0f, bulbLocalY, 0.0f);
 
-    // Default bulb color
     glColor3f(1.0f, 1.0f, 0.8f);
 
-    // Glow only when lightState == 2
+    // Make the bulb actually glow when lightstate == 2
     if (glIsEnabled(GL_LIGHTING))
     {
         glColor3f(1.0f, 1.0f, 0.8f);
         if (lightState == 2)
         {
             float glow[] = {0.9f, 0.8f, 0.5f, 1.0f};
-            glMaterialfv(GL_FRONT, GL_EMISSION, glow);
+            glMaterialfv(GL_FRONT, GL_EMISSION, glow); // Emit light
         }
         else
         {
             float noGlow[] = {0, 0, 0, 1};
-            glMaterialfv(GL_FRONT, GL_EMISSION, noGlow);
+            glMaterialfv(GL_FRONT, GL_EMISSION, noGlow); // Stop emitting
         }
     }
 
-    drawSphere(0.25f, 20, 20); // bulb
+    drawSphere(0.25f, 20, 20);
 
-    // Clear the emission so other objects don't inherit the bulb glow
+    // Stop emission so other objects don't glow
     if (glIsEnabled(GL_LIGHTING))
     {
         float noGlow[] = {0, 0, 0, 1};
@@ -643,7 +637,7 @@ void drawLamp(float xPos, float zPos)
 
     glPopMatrix();
 
-    // set light position if lamp is on
+    // If the lamp is ON, tell OpenGL to calculate light rays originating here
     if (lightState == 2)
     {
         float bulbWorldX = xPos;
@@ -657,26 +651,21 @@ void drawLamp(float xPos, float zPos)
     glPopMatrix();
 }
 
-// banquet chair
+// Draws the banquet chair
 void drawBanquetChair(float x, float z)
 {
     glPushMatrix();
     glTranslatef(x, 0.0f, z);
 
-    // seat params
+    // Dimensions
     const float seatY = 1.0f;
     const float seatT = 0.25f;
     const float seatW = 1.0f;
     const float seatD = 1.0f;
-
-    // leg params
     const float legH = 1.0f;
     const float legW = 0.07f;
-
-    // backrest params
     const float backH = 1.3f;
     const float curveD = 0.25f;
-    const int backrestSegments = 20;
 
     const float halfT = seatT * 0.5f;
     const float backBaseY = seatY - halfT;
@@ -687,7 +676,7 @@ void drawBanquetChair(float x, float z)
         glEnable(GL_TEXTURE_2D);
     }
 
-    // seat block (6 faces)
+    // Seat Cushion
     if (glIsEnabled(GL_LIGHTING))
     {
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
@@ -698,7 +687,8 @@ void drawBanquetChair(float x, float z)
     float yTop = seatY + halfT;
     float yBot = seatY - halfT;
 
-    // top
+    // Draw cube faces for seat (Top, Bottom, Left, Right, Front, Back)
+    // Top
     glNormal3f(0, 1, 0);
     glTexCoord2f(0, 0);
     glVertex3f(-seatW / 2, yTop, -seatD / 2);
@@ -709,7 +699,7 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0, 1);
     glVertex3f(-seatW / 2, yTop, seatD / 2);
 
-    // bottom
+    // Bottom
     glNormal3f(0, -1, 0);
     glTexCoord2f(0, 0);
     glVertex3f(-seatW / 2, yBot, -seatD / 2);
@@ -720,7 +710,8 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0, 1);
     glVertex3f(-seatW / 2, yBot, seatD / 2);
 
-    // left
+    // Sides
+    // Left
     glNormal3f(-1, 0, 0);
     glTexCoord2f(0, 0);
     glVertex3f(-seatW / 2, yBot, -seatD / 2);
@@ -731,7 +722,7 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0, 1);
     glVertex3f(-seatW / 2, yBot, seatD / 2);
 
-    // right
+    // Right
     glNormal3f(1, 0, 0);
     glTexCoord2f(0, 0);
     glVertex3f(seatW / 2, yBot, -seatD / 2);
@@ -742,7 +733,7 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0, 1);
     glVertex3f(seatW / 2, yBot, seatD / 2);
 
-    // front
+    // Front
     glNormal3f(0, 0, 1);
     glTexCoord2f(0, 0);
     glVertex3f(-seatW / 2, yBot, seatD / 2);
@@ -753,7 +744,7 @@ void drawBanquetChair(float x, float z)
     glTexCoord2f(0, 1);
     glVertex3f(-seatW / 2, yTop, seatD / 2);
 
-    // back
+    // Back
     glNormal3f(0, 0, -1);
     glTexCoord2f(0, 0);
     glVertex3f(-seatW / 2, yBot, -seatD / 2);
@@ -763,10 +754,9 @@ void drawBanquetChair(float x, float z)
     glVertex3f(seatW / 2, yTop, -seatD / 2);
     glTexCoord2f(0, 1);
     glVertex3f(-seatW / 2, yTop, -seatD / 2);
-
     glEnd();
 
-    // chair legs (4 repeats)
+    // Legs
     if (glIsEnabled(GL_LIGHTING))
     {
         glBindTexture(GL_TEXTURE_2D, chairLegTex);
@@ -775,7 +765,7 @@ void drawBanquetChair(float x, float z)
     float legOffsetX = seatW / 2 - 0.1f;
     float legOffsetZ = seatD / 2 - 0.1f;
 
-    // Iterate over the four seat corners to place legs
+    // Use loop to place 4 legs at corners
     for (int legSignX = -1; legSignX <= 1; legSignX += 2)
         for (int legSignZ = -1; legSignZ <= 1; legSignZ += 2)
         {
@@ -784,8 +774,7 @@ void drawBanquetChair(float x, float z)
             float legBaseY = yBot - legH;
 
             glBegin(GL_QUADS);
-
-            // front face
+            // Front face of leg
             glNormal3f(0, 0, 1);
             glTexCoord2f(0, 0);
             glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ - legW / 2);
@@ -795,8 +784,7 @@ void drawBanquetChair(float x, float z)
             glVertex3f(legCenterX + legW / 2, yBot, legCenterZ - legW / 2);
             glTexCoord2f(0, 1);
             glVertex3f(legCenterX - legW / 2, yBot, legCenterZ - legW / 2);
-
-            // back
+            // Back
             glNormal3f(0, 0, -1);
             glTexCoord2f(0, 0);
             glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ + legW / 2);
@@ -806,8 +794,7 @@ void drawBanquetChair(float x, float z)
             glVertex3f(legCenterX + legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
             glVertex3f(legCenterX - legW / 2, yBot, legCenterZ + legW / 2);
-
-            // left
+            // Left
             glNormal3f(-1, 0, 0);
             glTexCoord2f(0, 0);
             glVertex3f(legCenterX - legW / 2, legBaseY, legCenterZ - legW / 2);
@@ -817,8 +804,7 @@ void drawBanquetChair(float x, float z)
             glVertex3f(legCenterX - legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
             glVertex3f(legCenterX - legW / 2, yBot, legCenterZ - legW / 2);
-
-            // right
+            // Right
             glNormal3f(1, 0, 0);
             glTexCoord2f(0, 0);
             glVertex3f(legCenterX + legW / 2, legBaseY, legCenterZ - legW / 2);
@@ -828,17 +814,17 @@ void drawBanquetChair(float x, float z)
             glVertex3f(legCenterX + legW / 2, yBot, legCenterZ + legW / 2);
             glTexCoord2f(0, 1);
             glVertex3f(legCenterX + legW / 2, yBot, legCenterZ - legW / 2);
-
             glEnd();
         }
 
-    // curved backrest
+    // Curved Backrest
     if (glIsEnabled(GL_LIGHTING))
     {
         glBindTexture(GL_TEXTURE_2D, chairCushionTex);
     }
 
-    // Sweep along the curved backrest segments
+    int backrestSegments = 20;
+    // Sweep vertically to build the backrest
     for (int segmentIndex = 0; segmentIndex < backrestSegments; segmentIndex++)
     {
         float t1 = (float)segmentIndex / backrestSegments;
@@ -847,18 +833,19 @@ void drawBanquetChair(float x, float z)
         float y1 = backBaseY + t1 * backH;
         float y2 = backBaseY + t2 * backH;
 
+        // Quadratic curve formula for Z depth
         float z1 = baseZ - curveD * (t1 * t1);
         float z2 = baseZ - curveD * (t2 * t2);
 
+        // Calculate normal vector based on slope of curve
         float dy = y2 - y1;
         float dz = z2 - z1;
         float len = sqrtf(dy * dy + dz * dz);
-
         float ny = dy / len;
         float nz = dz / len;
 
-        // front surface
         glBegin(GL_QUADS);
+        // Front face of backrest
         glNormal3f(0, ny, nz);
         glTexCoord2f(0, t1);
         glVertex3f(-seatW / 2, y1, z1 + halfT);
@@ -868,10 +855,8 @@ void drawBanquetChair(float x, float z)
         glVertex3f(seatW / 2, y2, z2 + halfT);
         glTexCoord2f(0, t2);
         glVertex3f(-seatW / 2, y2, z2 + halfT);
-        glEnd();
 
-        // back surface
-        glBegin(GL_QUADS);
+        // Back face
         glNormal3f(0, ny, -nz);
         glTexCoord2f(0, t1);
         glVertex3f(-seatW / 2, y1, z1 - halfT);
@@ -881,11 +866,9 @@ void drawBanquetChair(float x, float z)
         glVertex3f(seatW / 2, y2, z2 - halfT);
         glTexCoord2f(0, t2);
         glVertex3f(-seatW / 2, y2, z2 - halfT);
-        glEnd();
 
-        // left edge
-        glBegin(GL_QUADS);
-        glNormal3f(-1, 0, 0);
+        // Side edges
+        glNormal3f(-1, 0, 0); // Left edge
         glTexCoord2f(0, t1);
         glVertex3f(-seatW / 2, y1, z1 - halfT);
         glTexCoord2f(1, t1);
@@ -894,11 +877,8 @@ void drawBanquetChair(float x, float z)
         glVertex3f(-seatW / 2, y2, z2 + halfT);
         glTexCoord2f(0, t2);
         glVertex3f(-seatW / 2, y2, z2 - halfT);
-        glEnd();
 
-        // right edge
-        glBegin(GL_QUADS);
-        glNormal3f(1, 0, 0);
+        glNormal3f(1, 0, 0); // Right edge
         glTexCoord2f(0, t1);
         glVertex3f(seatW / 2, y1, z1 - halfT);
         glTexCoord2f(1, t1);
@@ -910,7 +890,7 @@ void drawBanquetChair(float x, float z)
         glEnd();
     }
 
-    // backrest top cap
+    // Cap the top of the backrest
     float yCap = backBaseY + backH;
     float zCap = baseZ - curveD;
 
@@ -933,43 +913,40 @@ void drawBanquetChair(float x, float z)
     glPopMatrix();
 }
 
-// Snowflake cocktail table
+// Draws a Snowflake shaped cocktail table
 void drawCocktailTable2(float x, float z)
 {
-    const int N = 8;
+    // Dimensions
+    const int N = 8; // Number of points on snowflake
     const int ARC_STEPS = 12;
     const float R = 1.4f;
     const float CURVE_IN = 0.22f;
     const float THICK = 0.12f;
-
     const float HEIGHT = 4.0f;
-    const float LEG_H = HEIGHT;
-    const float LEG_TOP_R = 0.10f;
-    const float LEG_BOTTOM_R = 0.04f;
 
     glPushMatrix();
     glTranslatef(x, 0, z);
 
-    // Tabletop texture
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail2Tex);
 
-    float wedgeAngleDeg = 360.0f / N;
-
-    // Top face
+    // Draw table top surface
     glBegin(GL_TRIANGLES);
     for (int w = 0; w < N; w++)
     {
+        float wedgeAngleDeg = 360.0f / N;
         float a0 = w * wedgeAngleDeg;
         float a1 = (w + 1) * wedgeAngleDeg;
 
         float prevX = 0.0f, prevZ = 0.0f;
 
+        // Curve the edge of each wedge
         for (int i = 0; i <= ARC_STEPS; i++)
         {
             float t = (float)i / ARC_STEPS;
             float a = a0 + t * (a1 - a0);
 
+            // Pinch the radius in the middle of the wedge
             float mid = fabsf(t - 0.5f) * 2.0f;
             float curve = CURVE_IN * (1.0f - mid);
             float r = R - curve;
@@ -983,6 +960,7 @@ void drawCocktailTable2(float x, float z)
                 glTexCoord2f(0.5f, 0.5f);
                 glVertex3f(0, HEIGHT + THICK, 0);
 
+                // Map texture based on angle
                 glTexCoord2f((Cos(a0) + 1) * 0.5f, (Sin(a0) + 1) * 0.5f);
                 glVertex3f(prevX, HEIGHT + THICK, prevZ);
 
@@ -996,16 +974,16 @@ void drawCocktailTable2(float x, float z)
     }
     glEnd();
 
-    // Side wall
+    // Connect top edge to bottom edge
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= N * ARC_STEPS; i++)
     {
         float a = (float)i / (N * ARC_STEPS) * 360.0f;
+        float wedgeAngleDeg = 360.0f / N;
         float wedgePos = fmodf(a, wedgeAngleDeg) / wedgeAngleDeg;
 
         float mid = fabsf(wedgePos - 0.5f) * 2.0f;
         float curve = CURVE_IN * (1.0f - mid);
-
         float r = R - curve;
 
         float xSide = r * Cos(a);
@@ -1021,10 +999,11 @@ void drawCocktailTable2(float x, float z)
     }
     glEnd();
 
-    // Underside
+    // Same as top, but facing down
     glBegin(GL_TRIANGLES);
     for (int w = 0; w < N; w++)
     {
+        float wedgeAngleDeg = 360.0f / N;
         float a0 = w * wedgeAngleDeg;
         float a1 = (w + 1) * wedgeAngleDeg;
 
@@ -1055,14 +1034,12 @@ void drawCocktailTable2(float x, float z)
         }
     }
     glEnd();
-
     glDisable(GL_TEXTURE_2D);
 
-    // Leg texture
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail2LegTex);
 
-    // Three legs
+    // 3 Angled Legs
     for (int i = 0; i < 3; i++)
     {
         float angDeg = i * 360.0f / 3.0f;
@@ -1071,9 +1048,15 @@ void drawCocktailTable2(float x, float z)
 
         glPushMatrix();
         glTranslatef(lx, HEIGHT, lz);
+        // Tilt the legs outward
         glRotatef(-10, Sin(angDeg), 0, -Cos(angDeg));
 
+        // Draw a tapered cylinder
         glBegin(GL_QUAD_STRIP);
+        float LEG_BOTTOM_R = 0.04f;
+        float LEG_TOP_R = 0.10f;
+        float LEG_H = HEIGHT;
+
         for (int s = 0; s <= 24; s++)
         {
             float t = 360.0f * s / 24.0f;
@@ -1098,7 +1081,7 @@ void drawCocktailTable2(float x, float z)
     glPopMatrix();
 }
 
-// Frustum cocktail table
+// Draws a Hourglass shaped cocktail table
 void drawCocktailTable3(float x, float z)
 {
     int slices = 40;
@@ -1109,27 +1092,24 @@ void drawCocktailTable3(float x, float z)
     glPushMatrix();
     glTranslatef(x, 0, z);
 
-    // Leg texture
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail3LegTex);
 
     // Bottom frustum
     drawFrustum(0.85f, 0.45f, bottomHeight, slices);
-
     glTranslatef(0, bottomHeight, 0);
     glDisable(GL_TEXTURE_2D);
 
-    // Upper frustum
+    // Top frustum
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail3Tex);
     drawFrustum(0.45f, 1.35f, topHeight, slices);
     glDisable(GL_TEXTURE_2D);
 
-    // Tabletop texture
+    // Top disk
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cocktail3Tex);
 
-    // Top disk
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 1, 0);
     glTexCoord2f(0.5f, 0.5f);
@@ -1151,26 +1131,19 @@ void drawCocktailTable3(float x, float z)
     glPopMatrix();
 }
 
-// Big wavy table
+// Draws a Wavy Meeting Table
 void drawMeetingTable(float x, float z)
 {
     float length = 8.0f;
     float width = 2.6f;
-
     float tabletopY = 1.7f;
     float thickness = 0.15f;
     float legHeight = 1.6f;
     float legSize = 0.25f;
 
-    int segments = 140;
-
-    float halfL = length * 0.5f;
-    float halfW = width * 0.5f;
-
-    // Draw legs
     glPushMatrix();
-    glTranslatef(x, legHeight * 0.5f, z);
 
+    glTranslatef(x, legHeight * 0.5f, z);
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -1178,9 +1151,12 @@ void drawMeetingTable(float x, float z)
         glColor3f(1, 1, 1);
     }
 
+    float halfL = length * 0.5f;
+    float halfW = width * 0.5f;
     float lx = halfL * 0.55f;
     float lz = halfW * 0.45f;
 
+    // Draw 4 legs
     glPushMatrix();
     glTranslatef(lx, 0, lz);
     drawCuboid(legSize, legHeight, legSize);
@@ -1201,7 +1177,7 @@ void drawMeetingTable(float x, float z)
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
-    // Tabletop
+    // Table top
     glPushMatrix();
     glTranslatef(x, tabletopY, z);
 
@@ -1212,23 +1188,22 @@ void drawMeetingTable(float x, float z)
         glColor3f(1, 1, 1);
     }
 
-    // tabletop shape
+    // Generate Wavy Edge Geometry
     static float px[200], pz[200];
-    int N = segments;
-    if (N > 200)
-        N = 200;
+    int N = 140;
 
     for (int i = 0; i < N; i++)
     {
         float t = (float)i / (N - 1);
         float angleDeg = t * 360.0f;
-
         float nx = Cos(angleDeg);
         float ny = Sin(angleDeg);
 
+        // Deform a basic oval
         float rx = halfL * (0.7f + 0.3f * fabsf(ny));
         float ry = halfW;
 
+        // Apply bulge and pinch effects
         float bulge = 1.0f + 0.20f * expf(-powf((fabsf(nx) - 0.3f) * 5.0f, 2.0f));
         float pinch = 1.0f - 0.08f * expf(-powf(nx * 4.0f, 2.0f));
 
@@ -1238,7 +1213,7 @@ void drawMeetingTable(float x, float z)
         pz[i] = finalWidth * ny;
     }
 
-    // Top surface
+    // Draw Top Surface
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 1, 0);
     glTexCoord2f(0.5f, 0.5f);
@@ -1251,7 +1226,7 @@ void drawMeetingTable(float x, float z)
     }
     glEnd();
 
-    // Bottom surface
+    // Draw Bottom Surface
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, -1, 0);
     glTexCoord2f(0.5f, 0.5f);
@@ -1264,20 +1239,20 @@ void drawMeetingTable(float x, float z)
     }
     glEnd();
 
-    // Side walls
+    // Draw Side Edges (Connecting top to bottom loop)
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= N; i++)
     {
         int k = i % N;
         float sx = px[k];
         float sz = pz[k];
-        float len = sqrtf(sx * sx + sz * sz);
 
+        // Calculate normal vector pointing out from center
+        float len = sqrtf(sx * sx + sz * sz);
         float nx = sx / len;
         float nz = sz / len;
 
         glNormal3f(nx, 0, nz);
-
         float u = (float)i / N;
 
         glTexCoord2f(u, 0);
@@ -1294,13 +1269,11 @@ void drawMeetingTable(float x, float z)
     glPopMatrix();
 }
 
-// Rope for ceiling shapes
+// Draws a rope for ceiling shapes
 static void drawRope(float length)
 {
     glColor3f(1, 1, 1);
-
     glPushMatrix();
-
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, threadTex);
 
@@ -1310,10 +1283,10 @@ static void drawRope(float length)
     drawCuboid(1, 1, 1);
 
     glDisable(GL_TEXTURE_2D);
-
     glPopMatrix();
 }
 
+//Draws a Star Shape
 void drawStarShape(void)
 {
     const float outerR = 1.0f;
@@ -1325,13 +1298,13 @@ void drawStarShape(void)
     glBindTexture(GL_TEXTURE_2D, starTex);
     glColor3f(1, 1, 1);
 
-    // Front face
+    // Front Face
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 0, 1);
-
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, 0, depth);
 
+    // Create star points by alternating radius length
     for (int i = 0; i <= numPoints * 2; i++)
     {
         float ang = i * 180.0f / numPoints;
@@ -1348,10 +1321,9 @@ void drawStarShape(void)
     }
     glEnd();
 
-    // Back face
+    // Back Face
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0, 0, -1);
-
     glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0, 0, -depth);
 
@@ -1359,10 +1331,8 @@ void drawStarShape(void)
     {
         float ang = i * 180.0f / numPoints;
         float r = (i % 2 == 0 ? outerR : innerR);
-
         float x = r * Cos(ang);
         float y = r * Sin(ang);
-
         float u = (x / outerR + 1.0f) * 0.5f;
         float v = (y / outerR + 1.0f) * 0.5f;
 
@@ -1371,21 +1341,18 @@ void drawStarShape(void)
     }
     glEnd();
 
-    // Side walls
+    // Side Walls
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= numPoints * 2; i++)
     {
         float ang = i * 180.0f / numPoints;
         float r = (i % 2 == 0 ? outerR : innerR);
-
         float x = r * Cos(ang);
         float y = r * Sin(ang);
-
         float len = sqrtf(x * x + y * y);
         glNormal3f(x / len, y / len, 0);
 
         float u = (float)i / (numPoints * 2);
-
         glTexCoord2f(u, 0);
         glVertex3f(x, y, depth);
         glTexCoord2f(u, 1);
@@ -1396,6 +1363,7 @@ void drawStarShape(void)
     glDisable(GL_TEXTURE_2D);
 }
 
+// Draws a cloud shape
 void drawCloudShape(void)
 {
     glEnable(GL_TEXTURE_2D);
@@ -1454,6 +1422,7 @@ void drawCloudShape(void)
     glDisable(GL_TEXTURE_2D);
 }
 
+// Draws a Crescent Moon shape
 static void drawMoonShape(void)
 {
     float outerR = 0.9f;
@@ -1468,46 +1437,38 @@ static void drawMoonShape(void)
 
     glPushMatrix();
 
-    // Front face
+    // Front Face
     glNormal3f(0, 0, 1);
     glBegin(GL_TRIANGLE_STRIP);
-
     for (int i = 0; i <= steps; i++)
     {
         float a = (float)i / steps * 360.0f;
-
         float ox = outerR * Cos(a);
         float oy = outerR * Sin(a);
-
         float ix = innerR * Cos(a) + offset;
         float iy = innerR * Sin(a);
 
+        // Only draw where Outer is bigger than Inner
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
             float u = (Cos(a) + 1) * 0.5f;
             float v = (Sin(a) + 1) * 0.5f;
-
             glTexCoord2f(u, v);
             glVertex3f(ox, oy, depth);
-
             glTexCoord2f(u, v);
             glVertex3f(ix, iy, depth);
         }
     }
-
     glEnd();
 
-    // Back face
+    // Back Face
     glNormal3f(0, 0, -1);
     glBegin(GL_TRIANGLE_STRIP);
-
     for (int i = 0; i <= steps; i++)
     {
         float a = (float)i / steps * 360.0f;
-
         float ox = outerR * Cos(a);
         float oy = outerR * Sin(a);
-
         float ix = innerR * Cos(a) + offset;
         float iy = innerR * Sin(a);
 
@@ -1515,27 +1476,21 @@ static void drawMoonShape(void)
         {
             float u = (Cos(a) + 1) * 0.5f;
             float v = (Sin(a) + 1) * 0.5f;
-
             glTexCoord2f(u, v);
             glVertex3f(ox, oy, -depth);
-
             glTexCoord2f(u, v);
             glVertex3f(ix, iy, -depth);
         }
     }
-
     glEnd();
 
     // Outer walls
     glBegin(GL_QUAD_STRIP);
-
     for (int i = 0; i <= steps; i++)
     {
         float a = (float)i / steps * 360.0f;
-
         float ox = outerR * Cos(a);
         float oy = outerR * Sin(a);
-
         float ix = innerR * Cos(a) + offset;
         float iy = innerR * Sin(a);
 
@@ -1543,57 +1498,47 @@ static void drawMoonShape(void)
         {
             float len = sqrtf(ox * ox + oy * oy);
             glNormal3f(ox / len, oy / len, 0);
-
             float u = (float)i / steps;
-            float v1 = 0.0f;
-            float v2 = 1.0f;
-
-            glTexCoord2f(u, v1);
+            glTexCoord2f(u, 0);
             glVertex3f(ox, oy, depth);
-            glTexCoord2f(u, v2);
+            glTexCoord2f(u, 1);
             glVertex3f(ox, oy, -depth);
         }
     }
-
     glEnd();
 
     // Inner walls
     glBegin(GL_QUAD_STRIP);
-
     for (int i = 0; i <= steps; i++)
     {
         float a = (float)i / steps * 360.0f;
-
         float ix = innerR * Cos(a) + offset;
         float iy = innerR * Sin(a);
-
         float ox = outerR * Cos(a);
         float oy = outerR * Sin(a);
 
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
+            // Normal points inward
             float len = sqrtf((ix - offset) * (ix - offset) + iy * iy);
             float nx = -(ix - offset) / len;
             float ny = -iy / len;
             glNormal3f(nx, ny, 0);
 
             float u = (float)i / steps;
-            float v1 = 0.0f;
-            float v2 = 1.0f;
-
-            glTexCoord2f(u, v1);
+            glTexCoord2f(u, 0);
             glVertex3f(ix, iy, -depth);
-            glTexCoord2f(u, v2);
+            glTexCoord2f(u, 1);
             glVertex3f(ix, iy, depth);
         }
     }
-
     glEnd();
 
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
 }
 
+// Draws all ceiling shapes tied using a rope from the ceiling
 void drawCeilingShape(float x, float y, float z, int shapeType)
 {
     float ropeLength = 2.0f;
@@ -1621,8 +1566,6 @@ void drawCeilingShape(float x, float y, float z, int shapeType)
     case 2:
         drawMoonShape();
         break;
-    default:
-        break;
     }
 
     glPopMatrix();
@@ -1632,9 +1575,9 @@ void drawCeilingShape(float x, float y, float z, int shapeType)
 void drawCeilingShapes(void)
 {
     // Row 1
-    drawCeilingShape(-10, 14.5f, -10, 0);
-    drawCeilingShape(0, 14.5f, -10, 1);
-    drawCeilingShape(10, 14.5f, -10, 2);
+    drawCeilingShape(-10, 14.5f, -10, 0); // Star
+    drawCeilingShape(0, 14.5f, -10, 1);   // Cloud
+    drawCeilingShape(10, 14.5f, -10, 2);  // Moon
 
     // Row 2
     drawCeilingShape(-10, 14.5f, 0, 1);
@@ -1647,9 +1590,8 @@ void drawCeilingShapes(void)
     drawCeilingShape(10, 14.5f, 10, 1);
 }
 
-// Dimensions for bar chair
+// Bar chair dimensions
 float CHAIR_SCALE = 1.8f;
-
 float BASE_THICK;
 float CUSHION_THICK;
 float LEG_HEIGHT;
@@ -1657,10 +1599,10 @@ float SEAT_HEIGHT;
 float ROD_HEIGHT;
 float ROD_BOTTOM;
 float ROD_TOP;
-
 float LEG_OFFSET_X = 0.45f;
 float LEG_OFFSET_Z = 0.35f;
 
+// Draws the soft seat cushion
 void drawSeat(void)
 {
     float width = 1.0f;
@@ -1682,45 +1624,42 @@ void drawSeat(void)
     float bottomY = SEAT_HEIGHT - h;
     glTranslatef(0.0f, bottomY + h * 0.5f, 0.0f);
 
-    // Top face
+    // Top Face
     glBegin(GL_TRIANGLE_FAN);
     glTexCoord2f(0, 1);
     glVertex3f(-halfW, h / 2, rectDepth);
     glTexCoord2f(1, 1);
     glVertex3f(+halfW, h / 2, rectDepth);
-
+    // Fan for curved front
     for (int i = 0; i <= steps; i++)
     {
         float t = (float)i / steps;
         float a = 180.0f * t;
         float x = radius * Cos(a);
         float z = -radius * Sin(a);
-
         glTexCoord2f(t, 0);
         glVertex3f(x, h / 2, z);
     }
     glEnd();
 
-    // Bottom face
+    // Bottom Face
     glBegin(GL_TRIANGLE_FAN);
     glTexCoord2f(0, 1);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glTexCoord2f(1, 1);
     glVertex3f(+halfW, -h / 2, rectDepth);
-
     for (int i = 0; i <= steps; i++)
     {
         float t = (float)i / steps;
         float a = 180.0f * t;
         float x = radius * Cos(a);
         float z = -radius * Sin(a);
-
         glTexCoord2f(t, 0);
         glVertex3f(x, -h / 2, z);
     }
     glEnd();
 
-    // Front wall
+    // Flat Back Wall
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
     glVertex3f(-halfW, -h / 2, rectDepth);
@@ -1732,7 +1671,7 @@ void drawSeat(void)
     glVertex3f(-halfW, +h / 2, rectDepth);
     glEnd();
 
-    // Curved back wall
+    // Curved Front Wall
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= steps; i++)
     {
@@ -1740,7 +1679,6 @@ void drawSeat(void)
         float a = 180.0f * t;
         float x = radius * Cos(a);
         float z = -radius * Sin(a);
-
         glTexCoord2f(t, 0);
         glVertex3f(x, -h / 2, z);
         glTexCoord2f(t, 1);
@@ -1748,7 +1686,7 @@ void drawSeat(void)
     }
     glEnd();
 
-    // Left wall
+    // Side Walls
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
     glVertex3f(-halfW, -h / 2, rectDepth);
@@ -1758,10 +1696,8 @@ void drawSeat(void)
     glVertex3f(-halfW, +h / 2, 0);
     glTexCoord2f(0, 1);
     glVertex3f(-halfW, +h / 2, rectDepth);
-    glEnd();
 
-    // Right wall
-    glBegin(GL_QUADS);
+    // Right walls
     glTexCoord2f(0, 0);
     glVertex3f(+halfW, -h / 2, rectDepth);
     glTexCoord2f(1, 0);
@@ -1779,7 +1715,7 @@ void drawSeat(void)
     glPopMatrix();
 }
 
-// Seat base under the cushion
+// Draws the wooden base under the seat
 void drawSeatBase(void)
 {
     glPushMatrix();
@@ -1788,7 +1724,7 @@ void drawSeatBase(void)
         glColor3f(0.55f, 0.38f, 0.22f);
     }
 
-    // dimensions
+    // Dimensions
     const float width = 1.12f;
     const float halfW = width * 0.5f;
     const float rectDepth = 0.62f;
@@ -1796,68 +1732,55 @@ void drawSeatBase(void)
     const int steps = 48;
     const float h = BASE_THICK;
 
-    // position base under cushion
+    // Position base under cushion
     float bottomY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK;
     glTranslatef(0.0f, bottomY + h * 0.5f, 0.0f);
 
-    // top face
+    // Top face
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(-halfW, h / 2, rectDepth);
     glVertex3f(+halfW, h / 2, rectDepth);
-
     for (int i = 0; i <= steps; i++)
     {
-        float a = 180.0f * (float)i / (float)steps;
-        float x = radius * Cos(a);
-        float z = -radius * Sin(a);
-        glVertex3f(x, h / 2, z);
+        float a = 180.0f * i / steps;
+        glVertex3f(radius * Cos(a), h / 2, -radius * Sin(a));
     }
     glEnd();
-
-    // bottom face
+    // Bottom face
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glVertex3f(+halfW, -h / 2, rectDepth);
-
     for (int i = 0; i <= steps; i++)
     {
-        float a = 180.0f * (float)i / (float)steps;
-        float x = radius * Cos(a);
-        float z = -radius * Sin(a);
-        glVertex3f(x, -h / 2, z);
+        float a = 180.0f * i / steps;
+        glVertex3f(radius * Cos(a), -h / 2, -radius * Sin(a));
     }
     glEnd();
-
-    // front wall
+    // Front wall
     glBegin(GL_QUADS);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glVertex3f(+halfW, -h / 2, rectDepth);
     glVertex3f(+halfW, +h / 2, rectDepth);
     glVertex3f(-halfW, +h / 2, rectDepth);
     glEnd();
-
-    // curved back wall
+    // Curve
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= steps; i++)
     {
-        float a = 180.0f * (float)i / (float)steps;
+        float a = 180.0f * i / steps;
         float x = radius * Cos(a);
         float z = -radius * Sin(a);
-
         glVertex3f(x, -h / 2, z);
         glVertex3f(x, +h / 2, z);
     }
     glEnd();
-
-    // left side
+    // Sides
     glBegin(GL_QUADS);
     glVertex3f(-halfW, -h / 2, rectDepth);
     glVertex3f(-halfW, +h / 2, rectDepth);
     glVertex3f(-halfW, +h / 2, 0);
     glVertex3f(-halfW, -h / 2, 0);
     glEnd();
-
-    // right side
     glBegin(GL_QUADS);
     glVertex3f(+halfW, -h / 2, rectDepth);
     glVertex3f(+halfW, +h / 2, rectDepth);
@@ -1868,14 +1791,12 @@ void drawSeatBase(void)
     glPopMatrix();
 }
 
-// Bar chair legs
+// Single Chair Leg
 void drawLegN(float x, float z)
 {
     glPushMatrix();
     if (glIsEnabled(GL_LIGHTING))
-    {
         glColor3f(0.45f, 0.30f, 0.18f);
-    }
 
     float legStartY = SEAT_HEIGHT - CUSHION_THICK - BASE_THICK;
     glTranslatef(x, legStartY - LEG_HEIGHT * 0.5f, z);
@@ -1885,31 +1806,7 @@ void drawLegN(float x, float z)
     glPopMatrix();
 }
 
-// Horizontal bar between two legs
-void drawFootBar(float x1, float z1, float x2, float z2, float y)
-{
-    glPushMatrix();
-    if (glIsEnabled(GL_LIGHTING))
-    {
-        glColor3f(0.45f, 0.30f, 0.18f);
-    }
-
-    glTranslatef((x1 + x2) * 0.5f, y, (z1 + z2) * 0.5f);
-
-    float dx = x2 - x1;
-    float dz = z2 - z1;
-    float len = sqrtf(dx * dx + dz * dz);
-
-    float ang = atan2f(dx, dz) * (180.0f / PI);
-    glRotatef(ang, 0, 1, 0);
-
-    glScalef(len, 0.08f, 0.08f);
-    drawCuboid(1, 1, 1);
-
-    glPopMatrix();
-}
-
-// Curved wooden backrest
+// Draws a curved backrest for the bar chair
 void drawCurvedBackrest(void)
 {
     float rodBottom = SEAT_HEIGHT - CUSHION_THICK + 0.02f;
@@ -1932,22 +1829,22 @@ void drawCurvedBackrest(void)
     const float thickness = 0.30f;
     const int steps = 160;
 
+    // Draw thin vertical slices
     for (int j = 0; j < steps; j++)
     {
-        float t0 = (float)j / steps;
-        float t1 = (float)(j + 1) / steps;
-
+        // Calculate angles for slice
         float a1 = (float)(j - steps / 2);
         float a2 = (float)(j - steps / 2 + 1);
-
         float x1 = radius * Sin(a1);
         float z1 = radius * Cos(a1);
         float x2 = radius * Sin(a2);
         float z2 = radius * Cos(a2);
+        float t0 = (float)j / steps;
+        float t1 = (float)(j + 1) / steps;
 
         glBegin(GL_QUADS);
 
-        // front plate
+        // Front
         glTexCoord2f(t0, 1);
         glVertex3f(x1, 0, z1);
         glTexCoord2f(t1, 1);
@@ -1957,7 +1854,7 @@ void drawCurvedBackrest(void)
         glTexCoord2f(t0, 0);
         glVertex3f(x1, height, z1);
 
-        // back plate
+        // Back
         glTexCoord2f(t0, 1);
         glVertex3f(x1, 0, z1 - thickness);
         glTexCoord2f(t1, 1);
@@ -1967,7 +1864,7 @@ void drawCurvedBackrest(void)
         glTexCoord2f(t0, 0);
         glVertex3f(x1, height, z1 - thickness);
 
-        // top edge
+        // Top
         glTexCoord2f(t0, 1);
         glVertex3f(x1, height, z1);
         glTexCoord2f(t1, 1);
@@ -1977,7 +1874,7 @@ void drawCurvedBackrest(void)
         glTexCoord2f(t0, 0);
         glVertex3f(x1, height, z1 - thickness);
 
-        // bottom edge
+        // Bottom
         glTexCoord2f(t0, 1);
         glVertex3f(x1, 0, z1);
         glTexCoord2f(t1, 1);
@@ -1987,8 +1884,8 @@ void drawCurvedBackrest(void)
         glTexCoord2f(t0, 0);
         glVertex3f(x1, 0, z1 - thickness);
 
-        // left side
-        if (j == 0)
+        // Caps for ends
+        if (j == 0) // Left Cap
         {
             glTexCoord2f(0, 1);
             glVertex3f(x1, 0, z1);
@@ -1999,9 +1896,7 @@ void drawCurvedBackrest(void)
             glTexCoord2f(0, 0);
             glVertex3f(x1, height, z1);
         }
-
-        // right side
-        if (j == steps - 1)
+        if (j == steps - 1) // Right Cap
         {
             glTexCoord2f(0, 1);
             glVertex3f(x2, 0, z2);
@@ -2012,14 +1907,11 @@ void drawCurvedBackrest(void)
             glTexCoord2f(0, 0);
             glVertex3f(x2, height, z2);
         }
-
         glEnd();
     }
 
     if (glIsEnabled(GL_LIGHTING))
-    {
         glDisable(GL_TEXTURE_2D);
-    }
     glPopMatrix();
 }
 
@@ -2028,9 +1920,7 @@ void drawBackrestRod(float x, float z)
 {
     glPushMatrix();
     if (glIsEnabled(GL_LIGHTING))
-    {
         glColor3f(0.45f, 0.30f, 0.18f);
-    }
 
     glTranslatef(x, ROD_BOTTOM + ROD_HEIGHT * 0.5f, z);
     glScalef(0.08f, ROD_HEIGHT, 0.08f);
@@ -2039,22 +1929,20 @@ void drawBackrestRod(float x, float z)
     glPopMatrix();
 }
 
-// Bar chair
+// Full Bar Chair Assembly
 void drawBarChair(void)
 {
     BASE_THICK = 0.15f * CHAIR_SCALE;
     CUSHION_THICK = 0.18f * CHAIR_SCALE;
     LEG_HEIGHT = 1.2f * CHAIR_SCALE;
-
     ROD_HEIGHT = 0.75f * CHAIR_SCALE;
     ROD_BOTTOM = SEAT_HEIGHT - CUSHION_THICK + 0.02f;
     ROD_TOP = ROD_BOTTOM + ROD_HEIGHT;
-
     SEAT_HEIGHT = LEG_HEIGHT + BASE_THICK + CUSHION_THICK;
 
     glPushMatrix();
 
-    // seat base
+    // Seat base
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -2064,10 +1952,10 @@ void drawBarChair(void)
     if (glIsEnabled(GL_LIGHTING))
         glDisable(GL_TEXTURE_2D);
 
-    // cushion
+    // Soft Cushion
     drawSeat();
 
-    // legs
+    // Legs
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -2080,7 +1968,7 @@ void drawBarChair(void)
     if (glIsEnabled(GL_LIGHTING))
         glDisable(GL_TEXTURE_2D);
 
-    // backrest rods
+    // Backrest Supports
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -2092,27 +1980,23 @@ void drawBarChair(void)
     if (glIsEnabled(GL_LIGHTING))
         glDisable(GL_TEXTURE_2D);
 
-    // curved backrest
+    // Curved backrest
     drawCurvedBackrest();
 
     glPopMatrix();
 }
 
-// bar chair object
+// Wrapper for Bar Chair
 void drawBarChairObj(float x, float z)
 {
     glPushMatrix();
-
-    float yOffset = 0.0f;
-
-    glTranslatef(x, yOffset, z);
+    glTranslatef(x, 0.0f, z);
     glScalef(1.0f, 1.2f, 1.0f);
-
     drawBarChair();
     glPopMatrix();
 }
 
-// log for fireplace
+// Draws a log for the fireplace
 static void drawLog(float x, float y, float z, float rotY)
 {
     float radius = 0.12f;
@@ -2120,7 +2004,6 @@ static void drawLog(float x, float y, float z, float rotY)
 
     glPushMatrix();
     glTranslatef(x, y, z);
-
     glRotatef(rotY, 0, 1, 0);
     glRotatef(90, 0, 0, 1);
 
@@ -2131,6 +2014,7 @@ static void drawLog(float x, float y, float z, float rotY)
         glColor3f(0.7f, 0.5f, 0.4f);
     }
 
+    // Center the cylinder
     glTranslatef(0, -length * 0.5f, 0);
     drawCylinder(radius, length, 16);
 
@@ -2142,14 +2026,14 @@ static void drawLog(float x, float y, float z, float rotY)
     glPopMatrix();
 }
 
-// fireplace object
+// Draws the fireplace
 void drawFireplace(float x, float z)
 {
     glPushMatrix();
     glTranslatef(x, 0, z);
-
     glRotatef(-90, 0, 1, 0);
 
+    // Apply Brick Texture
     if (glIsEnabled(GL_LIGHTING))
     {
         glEnable(GL_TEXTURE_2D);
@@ -2157,11 +2041,13 @@ void drawFireplace(float x, float z)
         glColor3f(1.0f, 1.0f, 1.0f);
     }
 
+    // Base Slab
     glPushMatrix();
     glTranslatef(0.0f, 0.15f, 0.0f);
     drawCuboid(2.4f, 0.3f, 1.2f);
     glPopMatrix();
 
+    // Pillars
     float pillarH = 2.0f;
     float pillarW = 0.5f;
     float pillarD = 0.8f;
@@ -2179,7 +2065,7 @@ void drawFireplace(float x, float z)
     drawCuboid(pillarW, pillarH, pillarD);
     glPopMatrix();
 
-    // top
+    // Top
     glPushMatrix();
     glTranslatef(0.0f, 0.3f + pillarH + 0.2f, 0.1f);
     drawCuboid(2.6f, 0.4f, 1.4f);
@@ -2189,8 +2075,9 @@ void drawFireplace(float x, float z)
     {
         glDisable(GL_TEXTURE_2D);
     }
-    glColor3f(0.2f, 0.2f, 0.2f);
 
+    // Back Wall
+    glColor3f(0.2f, 0.2f, 0.2f);
     glPushMatrix();
     glTranslatef(0.0f, 0.3f + pillarH * 0.5f, -0.2f);
     drawCuboid(1.2f, pillarH, 0.1f);
@@ -2210,7 +2097,7 @@ void drawFireplace(float x, float z)
     glPopMatrix();
 }
 
-// fire effect plane
+// Simple quad for the fire shader to paint on
 void drawFirePlane(void)
 {
     // Dimensions
@@ -2221,7 +2108,6 @@ void drawFirePlane(void)
     glNormal3f(0, 0, 1);
 
     glBegin(GL_QUADS);
-
     glTexCoord2f(0, 0);
     glVertex3f(-w, yBase, 0);
     glTexCoord2f(1, 0);
@@ -2230,6 +2116,5 @@ void drawFirePlane(void)
     glVertex3f(w, yBase + h * 2.0f, 0);
     glTexCoord2f(0, 1);
     glVertex3f(-w, yBase + h * 2.0f, 0);
-
     glEnd();
 }

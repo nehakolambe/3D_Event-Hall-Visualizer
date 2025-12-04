@@ -1,18 +1,20 @@
 #include "CSCIx229.h"
 
-// Stage grid and elevation settings
+// Grid snapping settings
 const float GRID_SNAP_SIZE = 5.0f;
+
+// Stage dimensions
 static const float STAGE_MIN_X = -10.0f;
 static const float STAGE_MAX_X = 10.0f;
 static const float STAGE_MIN_Z = -30.0f;
 static const float STAGE_MAX_Z = -20.0f;
 static const float STAGE_HEIGHT = 2.0f;
 
-// Door measurements
+// Door dimensions
 #define DOOR_WIDTH 3.0f
 #define DOOR_HEIGHT 7.0f
 
-// Curved screen display geometry
+// Curved screen dimensions
 #define CURVED_SCREEN_WIDTH 35.0f
 #define CURVED_SCREEN_HEIGHT 10.0f
 #define CURVED_SCREEN_Y_BASE 3.5f
@@ -20,10 +22,9 @@ static const float STAGE_HEIGHT = 2.0f;
 #define CURVED_SCREEN_RADIUS_V 35.0f
 #define CURVED_SCREEN_Z_OFFSET 0.5f
 
-// Toggles that can be switched at runtime
+// Toggle to enable/disable highlight on bounding boxes
 bool bboxHighlightEnabled = false;
 
-// Object system globals
 SceneObject objects[MAX_OBJECTS];
 int objectCount = 0;
 SceneObject *selectedObject = NULL;
@@ -59,25 +60,23 @@ unsigned int barChairBackTex;
 unsigned int fireplaceTex;
 unsigned int fireNoiseTex;
 
-// GLSL shader for animated fire plane
+// ID for the fire shader
 int fireShader = 0;
 
-static int positionOnStage(float x, float z);
-
-// Returns true when a point is inside the stage area
+// Checks if a specific (X, Z) spot is on top of the raised stage
 static int positionOnStage(float x, float z)
 {
     return (x >= STAGE_MIN_X && x <= STAGE_MAX_X &&
             z >= STAGE_MIN_Z && z <= STAGE_MAX_Z);
 }
 
-// Helper used when spawning the door
+// Helper function to draw the door
 static void drawDoorObject(float x, float z)
 {
     drawDoor(x, z, DOOR_WIDTH, DOOR_HEIGHT);
 }
 
-// Helper used when spawning the curved screen
+// Helper function to draw the curved screen
 static void drawCurvedScreenObject(float x, float z)
 {
     drawCurvedScreen(x,
@@ -90,21 +89,22 @@ static void drawCurvedScreenObject(float x, float z)
                      CURVED_SCREEN_Z_OFFSET);
 }
 
-// Lifts objects placed on the stage platform
+// Automatically adjusts an object's height (Y)
+// If you drag a chair onto the stage, this pops it up so it sits on the stage, not inside it
 void scene_apply_stage_height(SceneObject *sceneObject)
 {
-    // Only movable objects should be adjusted
+    // Don't move static walls, only furniture
     if (!sceneObject || !sceneObject->movable)
         return;
-    // If object sits on stage, raise it to stage height
+
+    // Check if the object is inside the stage rectangle
     if (positionOnStage(sceneObject->x, sceneObject->z))
-        sceneObject->y = STAGE_HEIGHT;
-    // Otherwise keep it on floor
+        sceneObject->y = STAGE_HEIGHT; // Lift it up
     else
-        sceneObject->y = 0.0f;
+        sceneObject->y = 0.0f; // Put it on the floor
 }
 
-// Helper used to draw quads
+// Helper function to draw a quad
 static void drawQuadN(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -114,15 +114,14 @@ static void drawQuadN(
     float r, float g, float b)
 {
     GLboolean texEnabled;
-    glGetBooleanv(GL_TEXTURE_2D, &texEnabled); // check if textures are active
+    glGetBooleanv(GL_TEXTURE_2D, &texEnabled);
 
     if (!texEnabled)
-        glColor3f(r, g, b); // fallback color when no texture
+        glColor3f(r, g, b);
 
     glNormal3f(nx, ny, nz);
     glBegin(GL_QUADS);
 
-    // Emit texture coordinates only when textures are active
     if (texEnabled)
     {
         glTexCoord2f(0, 0);
@@ -145,7 +144,7 @@ static void drawQuadN(
     glEnd();
 }
 
-// Helper used to draw textured rectangle surfaces with tiling
+// Helper function to draw a floor and walls
 void drawTiledSurface(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -154,35 +153,36 @@ void drawTiledSurface(
 {
     int planeOrientation;
 
-    // Decide which axis-aligned plane this quad lies on
+    // Check if this is a floor (XZ), a front wall (XY), or side wall (ZY)
     if (y1 == y2)
-        planeOrientation = 0; // XZ plane
+        planeOrientation = 0; // Floor/Ceiling
     else if (z1 == z2)
-        planeOrientation = 1; // XY plane
+        planeOrientation = 1; // Front/Back Wall
     else
-        planeOrientation = 2; // ZY plane
+        planeOrientation = 2; // Left/Right Wall
 
     glNormal3f(nx, ny, nz);
 
-    // XZ plane (floor/ceiling)
-    // Handle each plane orientation separately
+    // Floor/Ceiling (XZ)
     if (planeOrientation == 0)
     {
         float xmin = x1, xmax = x2;
         float zmin = z1, zmax = z2;
         float y = y1;
 
-        // Step through X and Z to draw each floor tile quad
+        // Loop through the area in grid steps
         for (float x = xmin; x < xmax; x += tileSize)
         {
             // For each X column, iterate down the Z rows
             for (float z = zmin; z < zmax; z += tileSize)
             {
+                // Calculate corners
                 float tileMinX = x;
                 float tileMaxX = fminf(x + tileSize, xmax);
                 float tileMinZ = z;
                 float tileMaxZ = fminf(z + tileSize, zmax);
 
+                // Draw the tile
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
                 glVertex3f(tileMinX, y, tileMinZ);
@@ -197,7 +197,7 @@ void drawTiledSurface(
         }
     }
 
-    // XY plane (front/back walls)
+    // Front/Back Walls (XY)
     else if (planeOrientation == 1)
     {
         float xmin = x1, xmax = x2;
@@ -210,11 +210,13 @@ void drawTiledSurface(
             // For each X column, step upward in Y
             for (float y = ymin; y < ymax; y += tileSize)
             {
+                // Calculate corners
                 float tileMinX = x;
                 float tileMaxX = fminf(x + tileSize, xmax);
                 float tileMinY = y;
                 float tileMaxY = fminf(y + tileSize, ymax);
 
+                // Draw the tile
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
                 glVertex3f(tileMinX, tileMinY, z);
@@ -229,7 +231,7 @@ void drawTiledSurface(
         }
     }
 
-    // ZY plane (left/right walls)
+    // Side Walls (ZY)
     else
     {
         float zmin = z1, zmax = z2;
@@ -242,11 +244,13 @@ void drawTiledSurface(
             // For each row, step up in Y to fill the column
             for (float y = ymin; y < ymax; y += tileSize)
             {
+                // Calculate corners
                 float tileMinZ = z;
                 float tileMaxZ = fminf(z + tileSize, zmax);
                 float tileMinY = y;
                 float tileMaxY = fminf(y + tileSize, ymax);
 
+                // Draw the tile
                 glBegin(GL_QUADS);
                 glTexCoord2f(0, 0);
                 glVertex3f(x, tileMinY, tileMinZ);
@@ -262,20 +266,22 @@ void drawTiledSurface(
     }
 }
 
-// draws a simple bounding box
+// Draw the highlighted bounding box for an object
 void drawBBox(SceneObject *sceneObject)
 {
     glPushMatrix();
-    glColor3f(1.0f, 0.0f, 0.0f); // red wireframe
+    glColor3f(1.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
 
+    // Rotation angle
     float rotationDegrees = -sceneObject->rotation;
     float cosRotation = Cos(rotationDegrees);
     float sinRotation = Sin(rotationDegrees);
 
-    // Loop through each collision sub-box that belongs to this object
+    // Loop through every subbox
     for (int subBoxIdx = 0; subBoxIdx < sceneObject->subBoxCount; subBoxIdx++)
     {
+        // Get raw box dimensions
         float xmin = sceneObject->subBox[subBoxIdx][0];
         float xmax = sceneObject->subBox[subBoxIdx][1];
         float ymin = sceneObject->subBox[subBoxIdx][2];
@@ -283,62 +289,71 @@ void drawBBox(SceneObject *sceneObject)
         float zmin = sceneObject->subBox[subBoxIdx][4];
         float zmax = sceneObject->subBox[subBoxIdx][5];
 
-        // We need the 8 corners of the box
+        // Define the 8 corners of the box in local space
         float corners[8][3] = {
-            {xmin, ymin, zmin}, {xmax, ymin, zmin},
-            {xmax, ymax, zmin}, {xmin, ymax, zmin},
-            {xmin, ymin, zmax}, {xmax, ymin, zmax},
-            {xmax, ymax, zmax}, {xmin, ymax, zmax}
-        };
+            {xmin, ymin, zmin}, {xmax, ymin, zmin}, {xmax, ymax, zmin}, {xmin, ymax, zmin}, {xmin, ymin, zmax}, {xmax, ymin, zmax}, {xmax, ymax, zmax}, {xmin, ymax, zmax}};
 
-        // Transform corners manually
-        // Loop over every box corner to rotate/translate it into world space
-        for (int cornerIdx = 0; cornerIdx < 8; cornerIdx++) {
+        // Rotate and move each corner to where the object actually is in the room
+        for (int cornerIdx = 0; cornerIdx < 8; cornerIdx++)
+        {
             float localX = corners[cornerIdx][0];
-            float localY = corners[cornerIdx][1]; // Y is mostly unaffected by Y-axis rotation
+            float localY = corners[cornerIdx][1];
             float localZ = corners[cornerIdx][2];
 
-            // Rotate
+            // Apply rotation formula
             float rotatedX = cosRotation * localX - sinRotation * localZ;
             float rotatedZ = sinRotation * localX + cosRotation * localZ;
 
-            // Translate
+            // Apply translation (position)
             corners[cornerIdx][0] = rotatedX + sceneObject->x;
             corners[cornerIdx][1] = localY + sceneObject->y;
             corners[cornerIdx][2] = rotatedZ + sceneObject->z;
         }
 
+        // Draw lines connecting the corners
         glBegin(GL_LINES);
-        // Bottom Face
-        glVertex3fv(corners[0]); glVertex3fv(corners[1]);
-        glVertex3fv(corners[1]); glVertex3fv(corners[5]);
-        glVertex3fv(corners[5]); glVertex3fv(corners[4]);
-        glVertex3fv(corners[4]); glVertex3fv(corners[0]);
+        // Bottom Square
+        glVertex3fv(corners[0]);
+        glVertex3fv(corners[1]);
+        glVertex3fv(corners[1]);
+        glVertex3fv(corners[5]);
+        glVertex3fv(corners[5]);
+        glVertex3fv(corners[4]);
+        glVertex3fv(corners[4]);
+        glVertex3fv(corners[0]);
 
-        // Top Face
-        glVertex3fv(corners[3]); glVertex3fv(corners[2]);
-        glVertex3fv(corners[2]); glVertex3fv(corners[6]);
-        glVertex3fv(corners[6]); glVertex3fv(corners[7]);
-        glVertex3fv(corners[7]); glVertex3fv(corners[3]);
+        // Top Square
+        glVertex3fv(corners[3]);
+        glVertex3fv(corners[2]);
+        glVertex3fv(corners[2]);
+        glVertex3fv(corners[6]);
+        glVertex3fv(corners[6]);
+        glVertex3fv(corners[7]);
+        glVertex3fv(corners[7]);
+        glVertex3fv(corners[3]);
 
-        // Vertical lines
-        glVertex3fv(corners[0]); glVertex3fv(corners[3]);
-        glVertex3fv(corners[1]); glVertex3fv(corners[2]);
-        glVertex3fv(corners[5]); glVertex3fv(corners[6]);
-        glVertex3fv(corners[4]); glVertex3fv(corners[7]);
+        // Vertical Pillars
+        glVertex3fv(corners[0]);
+        glVertex3fv(corners[3]);
+        glVertex3fv(corners[1]);
+        glVertex3fv(corners[2]);
+        glVertex3fv(corners[5]);
+        glVertex3fv(corners[6]);
+        glVertex3fv(corners[4]);
+        glVertex3fv(corners[7]);
         glEnd();
     }
 
     glPopMatrix();
 }
 
-// Adds an object to the scene array and returns a pointer to it
+// Creates a new object and puts it in the list
 SceneObject *addObject(const char *name,
                        float positionX, float positionZ,
                        void (*drawFunc)(float, float),
                        int movable)
 {
-    // Stop if we've already reached the maximum allowed objects
+    // Check if we can add more objects
     if (objectCount >= MAX_OBJECTS)
         return NULL;
 
@@ -346,36 +361,36 @@ SceneObject *addObject(const char *name,
 
     newObject->id = objectCount;
 
-    // Safe copy
+    // Set Name
     strncpy(newObject->name, name, sizeof(newObject->name) - 1);
     newObject->name[sizeof(newObject->name) - 1] = '\0';
 
+    // Set Position
     newObject->x = positionX;
     newObject->y = 0.0f;
     newObject->z = positionZ;
 
+    // Set Defaults
     newObject->scale = 1.0f;
     newObject->rotation = 0.0f;
     newObject->drawFunc = drawFunc;
     newObject->movable = movable;
     newObject->solid = 1;
 
-    // Reset bbox
+    // Clear any collision data
     newObject->subBoxCount = 0;
-    // Clear every possible sub-box slot and each of their six values
     for (int subBoxIdx = 0; subBoxIdx < MAX_SUBBOXES; subBoxIdx++)
-        // Within each slot, iterate through its six faces
         for (int faceIdx = 0; faceIdx < 6; faceIdx++)
             newObject->subBox[subBoxIdx][faceIdx] = 0.0f;
 
-    // Track how many objects currently exist
+    // Increment count so next object goes in the next slot
     objectCount++;
     return newObject;
 }
 
 void scene_init(void)
 {
-    // Load textures
+    // Load Textures
     wallTex = LoadTexBMP("textures/wall.bmp");
     floorTex = LoadTexBMP("textures/carpet.bmp");
     screenTex = LoadTexBMP("textures/screen.bmp");
@@ -404,26 +419,25 @@ void scene_init(void)
     fireplaceTex = LoadTexBMP("textures/brick.bmp");
     fireNoiseTex = LoadTexBMP("textures/cloud.bmp");
 
+    // Load the fire animation shader
     fireShader = CreateShaderProg("fire.vert", "fire.frag");
 
     objectCount = 0;
     scene_spawn_reset();
 
-    // Fixed objects
+    // Spawn fixed objects
     addObject("Door", 0.0f, 29.9f, drawDoorObject, 0);
     addObject("CurvedScreen", 0.0f, -30.0f, drawCurvedScreenObject, 0);
     SceneObject *fireplaceObject = addObject("Fireplace", 19.5f, -18.0f, drawFireplace, 0);
     if (fireplaceObject)
     {
-        // Slightly scale the fireplace for better room presence
         fireplaceObject->scale = 1.2f;
     }
 
-    // Event tables
+    // Place 4 event tables
     float eventTablePosX[4] = {-10, -10, 10, 10};
     float eventTablePosZ[4] = {-10, 0, -10, 0};
 
-    // Create four default event tables at the preset positions
     for (int i = 0; i < 4; i++)
     {
         char name[32];
@@ -431,7 +445,7 @@ void scene_init(void)
         addObject(name, eventTablePosX[i], eventTablePosZ[i], drawTable, 1);
     }
 
-    // Event chairs
+    // Place 2 chairs at each event table
     float chairOffsetX[2] = {0.0f, 0.0f};
     float chairOffsetZ[2] = {-1.8f, 1.8f};
     float chairRotation[2] = {0.0f, 180.0f};
@@ -444,16 +458,14 @@ void scene_init(void)
         {
             char cname[32];
             sprintf(cname, "EventChair_T%d_C%d", t + 1, c + 1);
-
             float chairPosX = eventTablePosX[t] + chairOffsetX[c];
             float chairPosZ = eventTablePosZ[t] + chairOffsetZ[c];
-
             addObject(cname, chairPosX, chairPosZ, drawBanquetChair, 1);
             objects[objectCount - 1].rotation = chairRotation[c];
         }
     }
 
-    // Cocktail tables
+    // Place Cocktail Tables
     float cocktailTablePosX[3] = {0, -12, 12};
     float cocktailTablePosZ[3] = {-5, -3, -3};
 
@@ -461,66 +473,52 @@ void scene_init(void)
     addObject("Cocktail_2", cocktailTablePosX[1], cocktailTablePosZ[1] + 10.0f, drawCocktailTable2, 1);
     addObject("Cocktail_3", cocktailTablePosX[2], cocktailTablePosZ[2] + 10.0f, drawCocktailTable3, 1);
 
-    // Bar chairs
+    // Place Bar Chairs near Cocktail Table 3
     addObject("BarChair_1",
               cocktailTablePosX[2] + 1.25f,
               cocktailTablePosZ[2] + 11.8f,
-              drawBarChairObj,
-              1);
+              drawBarChairObj, 1);
     objects[objectCount - 1].rotation = 200.0f;
 
     addObject("BarChair_2",
               cocktailTablePosX[2] - 1.25f,
               cocktailTablePosZ[2] + 11.8f,
-              drawBarChairObj,
-              1);
+              drawBarChairObj, 1);
     objects[objectCount - 1].rotation = 160.0f;
 
-    // Lamp
+    // Place Lamp
     addObject("Lamp", -5.0f, 11.0f, drawLamp, 1);
 
-    // Meeting table
+    // Place Meeting Table
     float meetingTableX = 0.0f;
     float meetingTableZ = 11.0f;
-
     addObject("MeetingTable", meetingTableX, meetingTableZ, drawMeetingTable, 1);
 
-    // Meeting chairs
+    // Place Meeting Chairs (Front and Back)
     float meetingChairOffsetX[2] = {-1.8f, 1.8f};
     float meetingChairFrontZ = -2.2f;
     float meetingChairBackZ = 2.2f;
 
-    // Spawn two chairs on the front side of the meeting table
+    // Place 2 chairs on the front side of the meeting table
     for (int i = 0; i < 2; i++)
     {
         char cname[32];
         sprintf(cname, "MeetChair_F%d", i + 1);
-
-        addObject(cname,
-                  meetingTableX + meetingChairOffsetX[i],
-                  meetingTableZ + meetingChairFrontZ,
-                  drawBanquetChair,
-                  1);
-
+        addObject(cname, meetingTableX + meetingChairOffsetX[i], meetingTableZ + meetingChairFrontZ, drawBanquetChair, 1);
         objects[objectCount - 1].rotation = 0.0f;
     }
 
-    // Spawn two chairs on the back side of the meeting table
+    // Place 2 chairs on the back side of the meeting table
     for (int i = 0; i < 2; i++)
     {
         char cname[32];
         sprintf(cname, "MeetChair_B%d", i + 1);
-
-        addObject(cname,
-                  meetingTableX + meetingChairOffsetX[i],
-                  meetingTableZ + meetingChairBackZ,
-                  drawBanquetChair,
-                  1);
-
+        addObject(cname, meetingTableX + meetingChairOffsetX[i], meetingTableZ + meetingChairBackZ, drawBanquetChair, 1);
         objects[objectCount - 1].rotation = 180.0f;
     }
 
-    // Back wall collision box
+    // Collision box for walls
+    // Back Wall
     addObject("Wall_Back", 0.0f, -30.0f, NULL, 0);
     objects[objectCount - 1].subBoxCount = 1;
     objects[objectCount - 1].subBox[0][0] = -20.0f;
@@ -530,7 +528,7 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -1.0f;
     objects[objectCount - 1].subBox[0][5] = 1.0f;
 
-    // Front wall collision box
+    // Front Wall
     addObject("Wall_Front", 0.0f, 30.0f, NULL, 0);
     objects[objectCount - 1].subBoxCount = 1;
     objects[objectCount - 1].subBox[0][0] = -20.0f;
@@ -540,7 +538,7 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -1.0f;
     objects[objectCount - 1].subBox[0][5] = 1.0f;
 
-    // Left wall collision box
+    // Left Wall
     addObject("Wall_Left", -20.0f, 0.0f, NULL, 0);
     objects[objectCount - 1].subBoxCount = 1;
     objects[objectCount - 1].subBox[0][0] = -1.0f;
@@ -550,7 +548,7 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -30.0f;
     objects[objectCount - 1].subBox[0][5] = 30.0f;
 
-    // Right wall collision box
+    // Right Wall
     addObject("Wall_Right", 20.0f, 0.0f, NULL, 0);
     objects[objectCount - 1].subBoxCount = 1;
     objects[objectCount - 1].subBox[0][0] = -1.0f;
@@ -560,7 +558,7 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -30.0f;
     objects[objectCount - 1].subBox[0][5] = 30.0f;
 
-    // Stage collision box
+    // Stage
     addObject("Stage", 0.0f, -25.0f, NULL, 0);
     objects[objectCount - 1].subBoxCount = 1;
     objects[objectCount - 1].subBox[0][0] = -10.0f;
@@ -570,36 +568,33 @@ void scene_init(void)
     objects[objectCount - 1].subBox[0][4] = -5.0f;
     objects[objectCount - 1].subBox[0][5] = 5.0f;
 
-    // Initialize bounds and apply stage height for every preloaded object
-    // Visit every object so we can snap the ones that support it
-    // Find the array index for the selected object
-    // Render every object with its current transform
+    // Loop through everything we just created and configure bounding boxes and stage heights
     for (int i = 0; i < objectCount; i++)
     {
         configureObjectBounds(&objects[i]);
         scene_apply_stage_height(&objects[i]);
     }
 
-    // Optionally snap everything right after initialization
-    // Only draw the placement grid overlay when snapping is enabled
+    // If Grid Snap is enabled in code, run it to align everything perfectly
     if (snapToGridEnabled)
         scene_snap_all_objects();
 }
 
-// Deletes the currently selected movable object
+// Deletes currently selected object
 void scene_remove_selected_object(void)
 {
-    // Nothing to remove if no selection
+    // Can't delete if the obejct is not selected
     if (!selectedObject)
     {
         printf("No object selected to remove.\n");
         return;
     }
 
+    // Find where this object is in the array
     int index = -1;
     for (int i = 0; i < objectCount; i++)
     {
-        // Look for the array slot that matches the current selection
+        // Look for the array that matches the current selection
         if (&objects[i] == selectedObject)
         {
             index = i;
@@ -607,11 +602,11 @@ void scene_remove_selected_object(void)
         }
     }
 
-    // Safety: selection must exist inside the array
+    // Selection must exist inside the array
     if (index < 0)
         return;
 
-    // Static fixtures cannot be deleted
+    // Don't allow user to delete walls or the door
     if (!objects[index].movable)
     {
         printf("Object %s cannot be removed.\n", objects[index].name);
@@ -620,7 +615,7 @@ void scene_remove_selected_object(void)
 
     printf("Removed %s.\n", objects[index].name);
 
-    // Shift every later object forward to fill the gap
+    // Delete it by shifting all subsequent objects left by one slot
     for (int i = index; i < objectCount - 1; i++)
     {
         objects[i] = objects[i + 1];
@@ -628,11 +623,11 @@ void scene_remove_selected_object(void)
     }
 
     objectCount--;
-    selectedObject = NULL;
+    selectedObject = NULL; // Clear selection
     dragging = 0;
 }
 
-// Scene Rendering
+// The Main Drawing Loop: Renders the scene
 void scene_display(void)
 {
     glPushMatrix();
@@ -645,6 +640,7 @@ void scene_display(void)
     drawTiledSurface(-20, 0, -30, 20, 0, 30, 0, 1, 0, 2.0);
     glDisable(GL_TEXTURE_2D);
 
+    // Draw grid (if enabled)
     if (snapToGridEnabled)
     {
         const float minX = ROOM_MIN_X;
@@ -665,15 +661,16 @@ void scene_display(void)
         glVertex3f(minX, 0.01f, maxZ);
         glEnd();
 
+        // Draw grid lines
         glColor4f(0.2f, 0.9f, 0.2f, 0.35f);
         glBegin(GL_LINES);
-        // Draw vertical grid lines across the floor
+        // Vertical lines
         for (float x = minX; x <= maxX; x += GRID_SNAP_SIZE)
         {
             glVertex3f(x, 0.02f, minZ);
             glVertex3f(x, 0.02f, maxZ);
         }
-        // Draw horizontal grid lines across the floor
+        // Horizontal lines
         for (float z = minZ; z <= maxZ; z += GRID_SNAP_SIZE)
         {
             glVertex3f(minX, 0.02f, z);
@@ -686,8 +683,7 @@ void scene_display(void)
         glColor3f(1.0f, 1.0f, 1.0f);
     }
 
-    // Only draw the ceiling when not inside VR mode
-    // Only draw ceiling fixtures outside VR mode
+    // Draw walls and ceiling
     if (mode != 2)
     {
         // Ceiling
@@ -695,49 +691,24 @@ void scene_display(void)
         glBindTexture(GL_TEXTURE_2D, wallTex);
         drawTiledSurface(-20, 15, -30, 20, 15, 30, 0, -1, 0, 2.0);
         glDisable(GL_TEXTURE_2D);
-    }
 
-    // Draw the back wall only in non-VR view
-    if (mode != 2)
-    {
-        // Back wall
+        // Walls (Back, Front, Left, Right)
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, wallTex);
+
+        // Back
         drawTiledSurface(-20, 0, -30, 20, 15, -30, 0, 0, 1, 2.0);
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    // Draw the front wall only in non-VR view
-    if (mode != 2)
-    {
-        // Front wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
+        // Front
         drawTiledSurface(-20, 0, 30, 20, 15, 30, 0, 0, -1, 2.0);
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    // Draw the left wall only in non-VR view
-    if (mode != 2)
-    {
-        // Left wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
+        // Left
         drawTiledSurface(-20, 0, -30, -20, 15, 30, 1, 0, 0, 2.0);
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    // Draw the right wall only in non-VR view
-    if (mode != 2)
-    {
-        // Right wall
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, wallTex);
+        // Right
         drawTiledSurface(20, 0, -30, 20, 15, 30, -1, 0, 0, 2.0);
+
         glDisable(GL_TEXTURE_2D);
     }
 
-    // Stage parameters
+    // Draw stage
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, stageTex);
 
@@ -746,65 +717,61 @@ void scene_display(void)
     float stageFront = stageBack + 10.0f;
     float stageWidth = 10.0f;
 
-    // Stage top
+    // Stage Top
     drawQuadN(
         -stageWidth, stageTop, stageBack,
         stageWidth, stageTop, stageBack,
         stageWidth, stageTop, stageFront,
         -stageWidth, stageTop, stageFront,
-        0, 1, 0,
-        1, 1, 1);
+        0, 1, 0, 1, 1, 1);
 
-    // Stage front
+    // Stage Front Face
     drawQuadN(
         -stageWidth, 0, stageFront,
         stageWidth, 0, stageFront,
         stageWidth, stageTop, stageFront,
         -stageWidth, stageTop, stageFront,
-        0, 0, -1,
-        1, 1, 1);
+        0, 0, -1, 1, 1, 1);
 
-    // Stage left
+    // Stage Left Face
     drawQuadN(
         -stageWidth, 0, stageBack,
         -stageWidth, 0, stageFront,
         -stageWidth, stageTop, stageFront,
         -stageWidth, stageTop, stageBack,
-        -1, 0, 0,
-        1, 1, 1);
+        -1, 0, 0, 1, 1, 1);
 
-    // Stage right
+    // Stage Right Face
     drawQuadN(
         stageWidth, 0, stageFront,
         stageWidth, 0, stageBack,
         stageWidth, stageTop, stageBack,
         stageWidth, stageTop, stageFront,
-        1, 0, 0,
-        1, 1, 1);
+        1, 0, 0, 1, 1, 1);
 
-    // Stage back
+    // Stage Back Face
     drawQuadN(
         -stageWidth, 0, stageBack,
         stageWidth, 0, stageBack,
         stageWidth, stageTop, stageBack,
         -stageWidth, stageTop, stageBack,
-        0, 0, 1,
-        1, 1, 1);
+        0, 0, 1, 1, 1, 1);
 
     glDisable(GL_TEXTURE_2D);
 
-    // Scene objects
+    // Draw objects
     for (int i = 0; i < objectCount; i++)
     {
         SceneObject *sceneObject = &objects[i];
 
         glPushMatrix();
+        // Move to object location
         glTranslatef(sceneObject->x, sceneObject->y, sceneObject->z);
         glRotatef(sceneObject->rotation, 0, 1, 0);
         glScalef(sceneObject->scale, sceneObject->scale, sceneObject->scale);
         glColor3f(1.0f, 1.0f, 1.0f);
 
-        // Only draw objects that provide a callback
+        // Call the draw function
         if (sceneObject->drawFunc)
         {
             sceneObject->drawFunc(0, 0);
@@ -812,7 +779,7 @@ void scene_display(void)
 
         glPopMatrix();
 
-        // Highlight bounding box of selected object when enabled
+        // Highlight boundingbox if enabled
         if (bboxHighlightEnabled && selectedObject == sceneObject)
         {
             glDisable(GL_LIGHTING);
@@ -842,10 +809,10 @@ void scene_display(void)
             glLineWidth(3.0f);
             glColor3f(1.0f, 0.0f, 0.0f);
 
-            // Only re-draw if there is a mesh callback
             if (sceneObject->drawFunc)
                 sceneObject->drawFunc(0, 0);
 
+            // Restore normal drawing mode
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_LINE);
 
@@ -856,35 +823,32 @@ void scene_display(void)
         }
     }
 
-    // Render animated fire plane if shader compiled successfully
+    // Draw fire
     if (fireShader > 0)
     {
-        // Render the heat plane with animated shader
         glUseProgram(fireShader);
 
-        // shader uniforms
+        // Get time
         float time = glutGet(GLUT_ELAPSED_TIME) * 0.001f;
         int timeLoc = glGetUniformLocation(fireShader, "time");
-        // Upload elapsed time uniform when found
         if (timeLoc >= 0)
             glUniform1f(timeLoc, time);
 
+        // Bind noise texture
         int noiseLoc = glGetUniformLocation(fireShader, "noiseTex");
-        // Bind the noise texture uniform when found
         if (noiseLoc >= 0)
             glUniform1i(noiseLoc, 0);
 
-        // bind noise texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, fireNoiseTex);
 
-        // render state changes
+        // Make fire semi-transparent
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         glDisable(GL_LIGHTING);
         glDepthMask(GL_FALSE);
 
-        // position the fire plane in the fireplace
+        // Position fire inside the fireplace
         glPushMatrix();
         glTranslatef(19.5f, 0.0f, -18.0f);
         glRotatef(-90, 0, 1, 0);
@@ -894,20 +858,22 @@ void scene_display(void)
         drawFirePlane();
         glPopMatrix();
 
+        // Cleanup
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
         glEnable(GL_LIGHTING);
         glUseProgram(0);
     }
 
+    // Draw ceiling shapes
     if (mode != 2)
     {
-        // Ceiling lights
         glPushMatrix();
         drawCeilingShapes();
         glPopMatrix();
     }
 
+    // Draw light position marker
     lighting_draw_debug_marker();
     glPopMatrix();
 }
