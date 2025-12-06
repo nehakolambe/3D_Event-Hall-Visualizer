@@ -1205,9 +1205,11 @@ void drawMeetingTable(float x, float z)
         float rx = halfL * (0.7f + 0.3f * fabsf(ny));
         float ry = halfW;
 
+        /* --- START AI GENERATED CODE --- */
         // Apply bulge and pinch effects
         float bulge = 1.0f + 0.20f * expf(-powf((fabsf(nx) - 0.3f) * 5.0f, 2.0f));
         float pinch = 1.0f - 0.08f * expf(-powf(nx * 4.0f, 2.0f));
+        /* --- END AI GENERATED CODE --- */
 
         float finalWidth = ry * bulge * pinch;
 
@@ -1379,6 +1381,7 @@ void drawCloudShape(void)
     drawSphere(0.5f, 32, 32);
     glPopMatrix();
 
+    /* --- START AI GENERATED CODE --- */
     // Right big puff
     glPushMatrix();
     glTranslatef(0.65f, -0.05f, 0.0f);
@@ -1420,6 +1423,7 @@ void drawCloudShape(void)
     glScalef(0.8f, 0.8f, 1.0f);
     drawSphere(0.30f, 32, 32);
     glPopMatrix();
+    /* --- END AI GENERATED CODE --- */
 
     glDisable(GL_TEXTURE_2D);
 }
@@ -1450,6 +1454,7 @@ static void drawMoonShape(void)
         float ix = innerR * Cos(a) + offset;
         float iy = innerR * Sin(a);
 
+         /* --- START AI GENERATED CODE --- */
         // Only draw where Outer is bigger than Inner
         if ((ox * ox + oy * oy) > (ix * ix + iy * iy))
         {
@@ -1460,6 +1465,7 @@ static void drawMoonShape(void)
             glTexCoord2f(u, v);
             glVertex3f(ix, iy, depth);
         }
+        /* --- END AI GENERATED CODE --- */
     }
     glEnd();
 

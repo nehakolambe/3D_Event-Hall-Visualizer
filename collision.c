@@ -115,6 +115,7 @@ static void buildBoxOBB(const SceneObject *sceneObject, int boxIndex,
     box->maxY = localMaxY + sceneObject->y;
 }
 
+/* --- START AI GENERATED CODE --- */
 // Calculates how long the box looks when viewed from a specific angle
 static float projectRadius(const BoxOBB *box, float axisX, float axisZ)
 {
@@ -159,7 +160,9 @@ static int overlapOnAxis(const BoxOBB *a, const BoxOBB *b, float axisX, float ax
     // If the distance between centers is smaller than the two shadow lengths combined, they overlap
     return centerProjectionDistance <= (projectionRadiusA + projectionRadiusB);
 }
+/* --- END AI GENERATED CODE --- */
 
+/* --- START AI GENERATED CODE --- */
 // Separating Axis Theorem (SAT) to check for overlap between two rotated boxes in XZ plane
 static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
 {
@@ -177,6 +180,7 @@ static int obbOverlapXZ(const BoxOBB *a, const BoxOBB *b)
         
     return 1; // No gaps found on any side, so they must be hitting
 }
+/* --- END AI GENERATED CODE --- */
 
 // Check if moving an object to a new spot causes a crash
 bool collidesWithAnyObject(SceneObject *movingObject, float newX, float newZ,

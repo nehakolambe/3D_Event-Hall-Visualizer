@@ -8,7 +8,7 @@ void main()
     // 's' is horizontal (0 to 1), 't' is vertical (0 to 1)
     vec2 st = gl_TexCoord[0].st;
 
-    // Males fire look like it's rising
+    // Makes fire look like it's rising
     vec2 scrollPos = st;
     scrollPos.y -= time * 1.5; 
 
